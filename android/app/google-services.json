@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "613180327334",
+    "project_id": "pscexam",
+    "storage_bucket": "pscexam.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:613180327334:android:e735890c325f790068fb67",
+        "android_client_info": {
+          "package_name": "com.example.psc_exam"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "613180327334-cfu7uttjotlftkv2o206jb4j1i1o8djp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoPveyhcg-SmRhDrpNvYMMaQ5J6XEUE1w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "613180327334-cfu7uttjotlftkv2o206jb4j1i1o8djp.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "613180327334-pm77bbipmndsh6tljbdfhr1gn9i7lil9.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.pscExam"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
