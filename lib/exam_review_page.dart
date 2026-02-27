@@ -9,68 +9,93 @@ class ReviewPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Review Exam")),
+
       body: Obx(() {
-        if (controller.questions.isEmpty) {
+        // 🔄 Wait for snapshot
+        if (controller.snapshot.isEmpty) {
           return Center(child: CircularProgressIndicator());
         }
 
-        var i = controller.current.value;
-        var q = controller.questions[i];
-        var userAns = controller.answers[i];
+        int i = controller.current.value;
+        var q = controller.snapshot[i.toString()];
 
         return Padding(
           padding: EdgeInsets.all(16),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 🔢 Question Number
+
+              // 🔢 Question number
               Text(
-                "Question ${i + 1} / ${controller.questions.length}",
-                style: TextStyle(fontSize: 20),
+                "Question ${i + 1} / ${controller.snapshot.length}",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
 
-              SizedBox(height: 10),
+              SizedBox(height: 15),
 
-              // ❓ Question
-              Text(q.question, style: TextStyle(fontSize: 18)),
+              // ❓ Question text
+              Text(
+                q['question'],
+                style: TextStyle(fontSize: 18),
+              ),
 
               SizedBox(height: 20),
 
-              // 🎨 OPTIONS
-              ...q.options
-                  .where((o) => o.toString().isNotEmpty)
-                  .map((o) {
-                Color color = Colors.grey.shade200;
+              // 🎨 OPTIONS (COLORED)
+              ...List.from(q['options'])
+                  // 🔥 remove empty options
+                  .where((o) => o.toString().trim().isNotEmpty)
+                  .map((option) {
 
-                // 🟩 Correct answer
-                if (o == q.answer) {
-                  color = Colors.green;
-                }
+                String selected =
+                    (q['selected'] ?? "").toString().trim();
 
-                // 🟥 Wrong selected answer
-                if (o == userAns && userAns != q.answer) {
-                  color = Colors.red;
-                }
+                String correct =
+                    (q['correct'] ?? "").toString().trim();
+
+                String opt = option.toString().trim();
+
+                // ⭐ FINAL COLOR LOGIC
+                Color color =
+                    opt == correct
+                        ? Colors.green              // 🟩 Correct
+                        : (opt == selected &&
+                           selected != correct)
+                            ? Colors.red           // 🟥 Wrong
+                            : Colors.grey.shade200;
 
                 return Container(
+                  width: double.infinity,
                   margin: EdgeInsets.symmetric(vertical: 6),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: color,
                       foregroundColor: Colors.black,
+                      padding: EdgeInsets.all(14),
                     ),
-                    onPressed: null, // disabled
-                    child: Text(o.toString()),
+
+                    // 🔥 IMPORTANT FIX — NOT NULL
+                    onPressed: () {},
+
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(option.toString()),
+                    ),
                   ),
                 );
               }),
 
               Spacer(),
 
-              // ⬅️➡️ NAVIGATION BUTTONS
+              // ⬅️➡️ Navigation
               Row(
                 mainAxisAlignment:
                     MainAxisAlignment.spaceBetween,
                 children: [
+
                   ElevatedButton(
                     onPressed: controller.current.value > 0
                         ? controller.previous
@@ -80,7 +105,7 @@ class ReviewPage extends StatelessWidget {
 
                   ElevatedButton(
                     onPressed: controller.current.value <
-                            controller.questions.length - 1
+                            controller.snapshot.length - 1
                         ? controller.next
                         : null,
                     child: Text("Next"),

@@ -34,7 +34,7 @@ class AnalysisPage extends StatelessWidget {
                 onPressed: () async {
                   // 🔥 FETCH RESULT FROM SERVER
                   await controller.fetchResult();
-
+                  controller.current.value = 0;
                   // 🔥 GO REVIEW PAGE
                   Get.toNamed('/review');
                 },
