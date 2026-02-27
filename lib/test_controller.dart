@@ -304,6 +304,9 @@ class TestController extends GetxController {
   }
 
   Future<void> clearProgress() async {
+    if (timer.isActive) {
+      timer.cancel();
+    }
     final prefs = await SharedPreferences.getInstance();
     prefs.clear();
   }
