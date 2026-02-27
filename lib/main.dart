@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:psc_exam/exam_review_page.dart';
+import 'package:psc_exam/test_controller.dart';
 import 'firebase_options.dart';
 
 import 'auth_controller.dart';
@@ -10,6 +12,9 @@ import 'exam_list_page.dart';
 import 'exam_page.dart';
 import 'result_page.dart';
 
+// 🔥 ADD THESE IMPORTS
+import 'result_analysis_page.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -17,8 +22,8 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // 🔥 Register Auth Controller
   Get.put(AuthController());
+  Get.put(TestController(), permanent: true);
 
   runApp(MyApp());
 }
@@ -29,25 +34,30 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
 
-      // ⭐ Start page
       initialRoute: '/examlist',
 
       getPages: [
 
-        // 🔐 Login
+        // 🔐 LOGIN
         GetPage(name: '/login', page: () => LoginPage()),
 
-        // 🏠 Home
+        // 🏠 HOME
         GetPage(name: '/home', page: () => HomePage()),
 
-        // 📚 Exam List
+        // 📚 EXAM LIST
         GetPage(name: '/examlist', page: () => ExamListPage()),
 
-        // 🧠 Exam Questions Page
+        // 🧠 EXAM PAGE
         GetPage(name: '/exam', page: () => ExamPage()),
 
-        // 📊 Result / Summary Page
+        // 📊 OLD RESULT PAGE (optional)
         GetPage(name: '/result', page: () => ResultPage()),
+
+        // ⭐ NEW RESULT ANALYSIS PAGE
+        GetPage(name: '/analysis', page: () => AnalysisPage()),
+
+        // 🔍 REVIEW PAGE
+        GetPage(name: '/review', page: () => ReviewPage()),
       ],
     );
   }

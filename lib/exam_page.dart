@@ -113,6 +113,7 @@ class ExamPage extends StatelessWidget {
       }),
 
       // 🧭 BOTTOM NAV (Bookmark + Review + Palette)
+      // 🧭 BOTTOM NAV (Bookmark + Review + Palette + Finish)
       bottomNavigationBar: Container(
         color: Colors.black87,
         padding: EdgeInsets.symmetric(vertical: 8),
@@ -135,6 +136,27 @@ class ExamPage extends StatelessWidget {
                   isScrollControlled: true,
                 );
               },
+            ),
+
+            // 🔥 NEW FINISH BUTTON
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () {
+                Get.defaultDialog(
+                  title: "Submit Exam",
+                  middleText: "Are you sure you want to finish?",
+                  textCancel: "No",
+                  textConfirm: "Yes",
+                  onConfirm: () async {
+                    Get.back();
+
+                    await controller.submitResult(); // 🔥 submit
+
+                    Get.offAllNamed('/analysis'); // 🔥 go analysis
+                  },
+                );
+              },
+              child: Text("Finish"),
             ),
           ],
         ),
