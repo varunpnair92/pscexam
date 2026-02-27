@@ -21,7 +21,7 @@ class ExamPage extends StatelessWidget {
     }
 
     return Scaffold(
-      // 🧠 TOP BAR (like real exam)
+      // 🧠 TOP BAR
       appBar: AppBar(
         title: Obx(
           () => Text(
@@ -29,10 +29,23 @@ class ExamPage extends StatelessWidget {
           ),
         ),
         actions: [
+
+          // ⏱ TIMER ICON
           Icon(Icons.timer),
+
+          // ⏱ REAL TIMER
           Padding(
             padding: EdgeInsets.all(12),
-            child: Text("89:16"), // 🔥 later add real timer
+            child: Obx(() {
+              int sec = controller.remainingSeconds.value;
+              int min = sec ~/ 60;
+              int s = sec % 60;
+
+              return Text(
+                "$min:${s.toString().padLeft(2, '0')}",
+                style: TextStyle(fontSize: 16),
+              );
+            }),
           ),
         ],
       ),
@@ -46,30 +59,40 @@ class ExamPage extends StatelessWidget {
 
         return Column(
           children: [
-            // 🧾 MCQ Header
+
+            // 🧾 MCQ HEADER
             Container(
               padding: EdgeInsets.all(12),
               color: Colors.grey.shade200,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [Text("MCQ"), Text("Marks: +1  -0.33")],
+                children: [
+                  Text("MCQ"),
+                  Text("Marks: +1  -0.33"),
+                ],
               ),
             ),
 
-            // 📄 Question + Options
+            // 📄 QUESTION + OPTIONS
             Expanded(
               child: Padding(
                 padding: EdgeInsets.all(16),
                 child: ListView(
                   children: [
-                    Text(q.question, style: TextStyle(fontSize: 18)),
+
+                    Text(q.question,
+                        style: TextStyle(fontSize: 18)),
 
                     SizedBox(height: 20),
 
-                    // 🎨 OPTIONS WITH SELECTED COLOR
-                    ...q.options.where((o) => o.toString().isNotEmpty).map((o) {
+                    // 🎨 OPTIONS
+                    ...q.options
+                        .where((o) => o.toString().isNotEmpty)
+                        .map((o) {
+
                       final selected =
-                          controller.answers[controller.current.value] == o;
+                          controller.answers[
+                              controller.current.value] == o;
 
                       return Container(
                         margin: EdgeInsets.symmetric(vertical: 6),
@@ -82,24 +105,36 @@ class ExamPage extends StatelessWidget {
                                 ? Colors.white
                                 : Colors.black,
                           ),
-                          onPressed: () =>
-                              controller.selectAnswer(o.toString()),
+                          onPressed: () {
+                            controller.selectAnswer(o.toString());
+                            controller.saveProgress(); // ⭐ SAVE
+                          },
                           child: Text(o.toString()),
                         ),
                       );
                     }),
+
                     SizedBox(height: 10),
 
+                    // ⬅️➡️ NAVIGATION
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
                       children: [
+
                         ElevatedButton(
-                          onPressed: controller.previous,
+                          onPressed: () {
+                            controller.previous();
+                            controller.saveProgress();
+                          },
                           child: Text("Previous"),
                         ),
 
                         ElevatedButton(
-                          onPressed: controller.next,
+                          onPressed: () {
+                            controller.next();
+                            controller.saveProgress();
+                          },
                           child: Text("Next"),
                         ),
                       ],
@@ -112,21 +147,27 @@ class ExamPage extends StatelessWidget {
         );
       }),
 
-      // 🧭 BOTTOM NAV (Bookmark + Review + Palette)
-      // 🧭 BOTTOM NAV (Bookmark + Review + Palette + Finish)
+      // 🧭 BOTTOM NAVIGATION
       bottomNavigationBar: Container(
         color: Colors.black87,
         padding: EdgeInsets.symmetric(vertical: 8),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
+
+            // 🔖 Bookmark (optional)
             Icon(Icons.bookmark, color: Colors.white),
 
+            // ⭐ MARK FOR REVIEW
             ElevatedButton(
-              onPressed: controller.markReview,
+              onPressed: () {
+                controller.markReview();
+                controller.saveProgress();
+              },
               child: Text("Mark for Review"),
             ),
 
+            // 📊 PALETTE
             IconButton(
               icon: Icon(Icons.grid_view, color: Colors.white),
               onPressed: () {
@@ -138,21 +179,26 @@ class ExamPage extends StatelessWidget {
               },
             ),
 
-            // 🔥 NEW FINISH BUTTON
+            // 🔥 FINISH BUTTON
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red),
               onPressed: () {
                 Get.defaultDialog(
                   title: "Submit Exam",
-                  middleText: "Are you sure you want to finish?",
+                  middleText:
+                      "Are you sure you want to finish?",
                   textCancel: "No",
                   textConfirm: "Yes",
                   onConfirm: () async {
                     Get.back();
 
-                    await controller.submitResult(); // 🔥 submit
+                    await controller.submitResult();
 
-                    Get.offAllNamed('/analysis'); // 🔥 go analysis
+                    // ⭐ CLEAR RESUME DATA
+                    await controller.clearProgress();
+
+                    Get.offAllNamed('/analysis');
                   },
                 );
               },
