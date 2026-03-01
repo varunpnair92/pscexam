@@ -4,7 +4,6 @@ import 'package:psc_exam/exam_controller.dart';
 import 'package:psc_exam/test_controller.dart';
 
 class ExamListPage extends StatelessWidget {
-
   final examController = Get.put(ExamController());
   final testController = Get.put(TestController());
 
@@ -14,7 +13,6 @@ class ExamListPage extends StatelessWidget {
       appBar: AppBar(title: Text("Select Exam")),
 
       body: Obx(() {
-
         if (examController.exams.isEmpty) {
           return Center(child: CircularProgressIndicator());
         }
@@ -22,29 +20,42 @@ class ExamListPage extends StatelessWidget {
         return ListView.builder(
           itemCount: examController.exams.length,
           itemBuilder: (_, i) {
-
             var exam = examController.exams[i];
 
             return ListTile(
               title: Text(exam.specialization),
 
               onTap: () async {
-
-                bool resume =
-                    await testController.hasProgressForExam(exam.id);
+                bool resume = await testController.hasProgressForExam(exam.id);
 
                 if (resume) {
+                  // 🔥 ASK USER RESUME OR RESTART
+                  Get.defaultDialog(
+                    title: "Resume Exam",
+                    middleText: "You have unfinished progress",
+                    textCancel: "Restart",
+                    textConfirm: "Resume",
 
-                  await testController.loadProgress();
+                    onConfirm: () async {
+                      Get.back();
 
-                  // 🔥 PASS EXAM ID HERE ALSO
-                  Get.toNamed('/exam', arguments: {'id': exam.id});
+                      await testController.loadProgress(exam.id);
 
+                      Get.toNamed('/exam', arguments: {'id': exam.id});
+                    },
+
+                    onCancel: () async {
+                      Get.back();
+
+                      await testController.clearProgress(exam.id);
+                      await testController.loadQuestions(exam.id);
+
+                      Get.toNamed('/exam', arguments: {'id': exam.id});
+                    },
+                  );
                 } else {
-
                   await testController.loadQuestions(exam.id);
 
-                  // 🔥 PASS EXAM ID HERE ALSO
                   Get.toNamed('/exam', arguments: {'id': exam.id});
                 }
               },

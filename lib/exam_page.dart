@@ -4,10 +4,13 @@ import 'package:psc_exam/paletee_bottom_sheet.dart';
 import 'package:psc_exam/test_controller.dart';
 
 class ExamPage extends StatelessWidget {
-  final TestController controller = Get.put(TestController());
+
+  // 🔥 USE EXISTING CONTROLLER (do NOT create new)
+  final TestController controller = Get.find();
 
   @override
   Widget build(BuildContext context) {
+
     final args = Get.arguments as Map?;
     final int? examId = args?['id'];
 
@@ -15,12 +18,13 @@ class ExamPage extends StatelessWidget {
       return Scaffold(body: Center(child: Text("Invalid Exam ID")));
     }
 
-    // 🔥 Load only once
-    if (controller.questions.isEmpty) {
+    // 🔥 LOAD ONLY IF NOT SAME EXAM
+    if (controller.examId != examId) {
       controller.loadQuestions(examId);
     }
 
     return Scaffold(
+
       // 🧠 TOP BAR
       appBar: AppBar(
         title: Obx(
@@ -30,10 +34,8 @@ class ExamPage extends StatelessWidget {
         ),
         actions: [
 
-          // ⏱ TIMER ICON
           Icon(Icons.timer),
 
-          // ⏱ REAL TIMER
           Padding(
             padding: EdgeInsets.all(12),
             child: Obx(() {
@@ -51,6 +53,7 @@ class ExamPage extends StatelessWidget {
       ),
 
       body: Obx(() {
+
         if (controller.questions.isEmpty) {
           return Center(child: CircularProgressIndicator());
         }
@@ -85,7 +88,6 @@ class ExamPage extends StatelessWidget {
 
                     SizedBox(height: 20),
 
-                    // 🎨 OPTIONS
                     ...q.options
                         .where((o) => o.toString().isNotEmpty)
                         .map((o) {
@@ -107,7 +109,7 @@ class ExamPage extends StatelessWidget {
                           ),
                           onPressed: () {
                             controller.selectAnswer(o.toString());
-                            controller.saveProgress(); // ⭐ SAVE
+                            controller.saveProgress();
                           },
                           child: Text(o.toString()),
                         ),
@@ -116,7 +118,6 @@ class ExamPage extends StatelessWidget {
 
                     SizedBox(height: 10),
 
-                    // ⬅️➡️ NAVIGATION
                     Row(
                       mainAxisAlignment:
                           MainAxisAlignment.spaceBetween,
@@ -155,10 +156,8 @@ class ExamPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
 
-            // 🔖 Bookmark (optional)
             Icon(Icons.bookmark, color: Colors.white),
 
-            // ⭐ MARK FOR REVIEW
             ElevatedButton(
               onPressed: () {
                 controller.markReview();
@@ -167,7 +166,6 @@ class ExamPage extends StatelessWidget {
               child: Text("Mark for Review"),
             ),
 
-            // 📊 PALETTE
             IconButton(
               icon: Icon(Icons.grid_view, color: Colors.white),
               onPressed: () {
@@ -191,12 +189,15 @@ class ExamPage extends StatelessWidget {
                   textCancel: "No",
                   textConfirm: "Yes",
                   onConfirm: () async {
+
                     Get.back();
+
+                    controller.timer?.cancel();
 
                     await controller.submitResult();
 
-                    // ⭐ CLEAR RESUME DATA
-                    await controller.clearProgress();
+                    // 🔥 FIX — pass examId
+                    await controller.clearProgress(examId);
 
                     Get.offAllNamed('/analysis');
                   },

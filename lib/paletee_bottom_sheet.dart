@@ -54,23 +54,27 @@ class PaletteBottomSheet extends StatelessWidget {
               backgroundColor: Colors.red,
               minimumSize: Size(double.infinity, 50),
             ),
-           onPressed: () {
-                Get.defaultDialog(
-                  title: "Submit Exam",
-                  middleText: "Are you sure you want to finish?",
-                  textCancel: "No",
-                  textConfirm: "Yes",
-                  onConfirm: () async {
-                    Get.back();
+            onPressed: () {
+              Get.defaultDialog(
+                title: "Submit Exam",
+                middleText: "Are you sure you want to finish?",
+                textCancel: "No",
+                textConfirm: "Yes",
+                onConfirm: () async {
+                  Get.back();
 
-                    await controller.submitResult(); // 🔥 submit
-                    await controller.clearProgress();
+                  // 🔥 SAFE TIMER CANCEL
+                  controller.timer?.cancel();
 
+                  await controller.submitResult();
 
-                    Get.offAllNamed('/analysis'); // 🔥 go analysis
-                  },
-                );
-              },
+                  // 🔥 FIX — pass examId
+                  await controller.clearProgress(controller.examId);
+
+                  Get.offAllNamed('/analysis');
+                },
+              );
+            },
             child: Text("FINISH EXAM"),
           ),
         ],

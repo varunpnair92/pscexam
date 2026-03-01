@@ -21,7 +21,7 @@ class TestController extends GetxController {
   var snapshot = <String, dynamic>{}.obs;
 
   int examId = 0;
-  late Timer timer;
+  Timer? timer; // 🔥 nullable for safety
 
   var remainingSeconds = 0.obs;
   var totalSeconds = 0;
@@ -41,11 +41,12 @@ class TestController extends GetxController {
       List data = json.decode(res.body);
       questions.value = data.map((e) => Question.fromJson(e)).toList();
     }
-    remainingSeconds.value = 0; // fresh exam
+
+    remainingSeconds.value = 0;
     startTimer();
   }
 
-  // ⭐ LOAD QUESTIONS WITHOUT RESET (FOR RESUME)
+  // ================= LOAD QUESTIONS ONLY (RESUME) =================
 
   Future<void> loadQuestionsOnly(int id) async {
     examId = id;
@@ -58,8 +59,12 @@ class TestController extends GetxController {
     }
   }
 
-  //sart timer
+  // ================= TIMER =================
+
   void startTimer() {
+    // 🔥 Cancel previous timer if exists
+    timer?.cancel();
+
     // If resumed exam → remainingSeconds already loaded
     if (remainingSeconds.value == 0) {
       totalSeconds = questions.length * 45;
@@ -70,20 +75,20 @@ class TestController extends GetxController {
       if (remainingSeconds.value > 0) {
         remainingSeconds.value--;
 
-        // ⭐ SAVE TIME EVERY SECOND
+        // ⭐ KEEP YOUR FEATURE — save every second
         saveProgress();
       } else {
-        timer.cancel();
+        timer?.cancel();
 
         await submitResult();
-        await clearProgress();
+        await clearProgress(examId);
 
         Get.offAllNamed('/analysis');
-
         Get.snackbar("Time Up", "Exam auto submitted");
       }
     });
   }
+
   // ================= RESULT CALCULATIONS =================
 
   int get total => questions.length;
@@ -93,15 +98,12 @@ class TestController extends GetxController {
   int get correct {
     int c = 0;
     for (int i = 0; i < questions.length; i++) {
-      if (answers[i] == questions[i].answer) {
-        c++;
-      }
+      if (answers[i] == questions[i].answer) c++;
     }
     return c;
   }
 
   int get wrong => attempted - correct;
-
   double get percentage => total == 0 ? 0 : (correct / total) * 100;
 
   // ================= SELECT ANSWER =================
@@ -110,11 +112,9 @@ class TestController extends GetxController {
     answers[current.value] = ans;
     status[current.value] = QuestionStatus.answered;
 
-    saveProgress(); // 🔥 AUTO SAVE
+    saveProgress();
 
-    if (current.value < questions.length - 1) {
-      current.value++;
-    }
+    if (current.value < questions.length - 1) current.value++;
   }
 
   // ================= MARK REVIEW =================
@@ -148,17 +148,13 @@ class TestController extends GetxController {
   // ================= PALETTE COLORS =================
 
   Color getColor(int index) {
-    if (!status.containsKey(index)) {
-      return Colors.grey.shade300; // unseen
-    }
+    if (!status.containsKey(index)) return Colors.grey.shade300;
 
     switch (status[index]) {
       case QuestionStatus.answered:
         return Colors.blue;
-
       case QuestionStatus.review:
         return Colors.orange;
-
       default:
         return Colors.grey.shade300;
     }
@@ -171,10 +167,7 @@ class TestController extends GetxController {
     var userAns = answers[index];
 
     if (option == q.answer) return Colors.green;
-
-    if (option == userAns && userAns != q.answer) {
-      return Colors.red;
-    }
+    if (option == userAns && userAns != q.answer) return Colors.red;
 
     return Colors.grey.shade200;
   }
@@ -214,7 +207,7 @@ class TestController extends GetxController {
 
     print(response.body);
 
-    clearProgress(); // 🔥 CLEAR AFTER SUBMIT
+    await clearProgress(examId); // 🔥 FIXED
   }
 
   // ================= FETCH RESULT =================
@@ -228,67 +221,60 @@ class TestController extends GetxController {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-
       snapshot.value = Map<String, dynamic>.from(data['qresponse']);
     }
   }
 
-  // ================= RESUME FEATURE =================
+  // ================= SAVE PROGRESS (PER EXAM) =================
 
   Future<void> saveProgress() async {
     final prefs = await SharedPreferences.getInstance();
 
-    prefs.setInt("examId", examId);
-    prefs.setInt("current", current.value);
+    prefs.setInt("exam_${examId}_current", current.value);
 
     prefs.setString(
-      "answers",
+      "exam_${examId}_answers",
       jsonEncode(answers.map((k, v) => MapEntry(k.toString(), v))),
     );
 
     prefs.setString(
-      "status",
+      "exam_${examId}_status",
       jsonEncode(status.map((k, v) => MapEntry(k.toString(), v.index))),
     );
 
-    prefs.setInt("remainingSeconds", remainingSeconds.value);
+    prefs.setInt("exam_${examId}_remainingSeconds", remainingSeconds.value);
   }
 
-  Future<bool> loadProgress() async {
+  // ================= LOAD PROGRESS =================
+
+  Future<bool> loadProgress(int id) async {
     final prefs = await SharedPreferences.getInstance();
 
-    // ❌ No saved exam
-    if (!prefs.containsKey("examId")) return false;
+    if (!prefs.containsKey("exam_${id}_current")) return false;
 
-    // ⭐ Restore exam id + current question
-    examId = prefs.getInt("examId")!;
-    current.value = prefs.getInt("current") ?? 0;
+    examId = id;
 
-    // ⭐ Restore remaining time
-    remainingSeconds.value = prefs.getInt("remainingSeconds") ?? 0;
+    current.value = prefs.getInt("exam_${id}_current") ?? 0;
+    remainingSeconds.value =
+        prefs.getInt("exam_${id}_remainingSeconds") ?? 0;
 
-    // ⭐ Restore answers
-    String? ansStr = prefs.getString("answers");
+    // restore answers
+    String? ansStr = prefs.getString("exam_${id}_answers");
     if (ansStr != null) {
       Map<String, dynamic> map = jsonDecode(ansStr);
-
       answers.value = map.map((k, v) => MapEntry(int.parse(k), v));
     }
 
-    // ⭐ Restore palette status
-    String? statStr = prefs.getString("status");
+    // restore status
+    String? statStr = prefs.getString("exam_${id}_status");
     if (statStr != null) {
       Map<String, dynamic> map = jsonDecode(statStr);
-
       status.value = map.map(
         (k, v) => MapEntry(int.parse(k), QuestionStatus.values[v]),
       );
     }
 
-    // 🔥 IMPORTANT: Load questions WITHOUT RESET
-    await loadQuestionsOnly(examId);
-
-    // ⭐ Restart timer with saved time
+    await loadQuestionsOnly(id);
     startTimer();
 
     return true;
@@ -296,18 +282,19 @@ class TestController extends GetxController {
 
   Future<bool> hasProgressForExam(int id) async {
     final prefs = await SharedPreferences.getInstance();
-
-    if (!prefs.containsKey("examId")) return false;
-
-    int savedExamId = prefs.getInt("examId")!;
-    return savedExamId == id;
+    return prefs.containsKey("exam_${id}_current");
   }
 
-  Future<void> clearProgress() async {
-    if (timer.isActive) {
-      timer.cancel();
-    }
+  // ================= CLEAR PROGRESS =================
+
+  Future<void> clearProgress(int id) async {
+    timer?.cancel();
+
     final prefs = await SharedPreferences.getInstance();
-    prefs.clear();
+
+    await prefs.remove("exam_${id}_current");
+    await prefs.remove("exam_${id}_answers");
+    await prefs.remove("exam_${id}_status");
+    await prefs.remove("exam_${id}_remainingSeconds");
   }
 }
