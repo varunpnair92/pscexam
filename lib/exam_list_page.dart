@@ -25,40 +25,64 @@ class ExamListPage extends StatelessWidget {
             return ListTile(
               title: Text(exam.specialization),
 
-              onTap: () async {
-                bool resume = await testController.hasProgressForExam(exam.id);
+              // 🔒 SHOW LOCK ICON
+              trailing: exam.locked
+                  ? Icon(Icons.lock, color: Colors.red)
+                  : Icon(Icons.lock_open, color: Colors.green),
 
-                if (resume) {
-                  // 🔥 ASK USER RESUME OR RESTART
-                  Get.defaultDialog(
-                    title: "Resume Exam",
-                    middleText: "You have unfinished progress",
-                    textCancel: "Restart",
-                    textConfirm: "Resume",
+              // 🔒 GREY OUT LOCKED EXAM
+              tileColor:
+                  exam.locked ? Colors.grey.shade300 : Colors.white,
 
-                    onConfirm: () async {
-                      Get.back();
+              onTap: exam.locked
+                  ? () {
+                      // 🔒 LOCKED MESSAGE
+                      Get.snackbar(
+                        "Exam Locked",
+                        "This exam is currently locked",
+                        snackPosition: SnackPosition.BOTTOM,
+                      );
+                    }
+                  : () async {
+                      // 🔓 UNLOCKED → NORMAL FLOW
 
-                      await testController.loadProgress(exam.id);
+                      bool resume =
+                          await testController.hasProgressForExam(exam.id);
 
-                      Get.toNamed('/exam', arguments: {'id': exam.id});
+                      if (resume) {
+                        // 🔥 ASK USER RESUME OR RESTART
+                        Get.defaultDialog(
+                          title: "Resume Exam",
+                          middleText: "You have unfinished progress",
+                          textCancel: "Restart",
+                          textConfirm: "Resume",
+
+                          onConfirm: () async {
+                            Get.back();
+
+                            await testController.loadProgress(exam.id);
+
+                            Get.toNamed('/exam',
+                                arguments: {'id': exam.id});
+                          },
+
+                          onCancel: () async {
+                            Get.back();
+
+                            await testController.clearProgress(exam.id);
+                            await testController.loadQuestions(exam.id);
+
+                            Get.toNamed('/exam',
+                                arguments: {'id': exam.id});
+                          },
+                        );
+                      } else {
+                        await testController.loadQuestions(exam.id);
+
+                        Get.toNamed('/exam',
+                            arguments: {'id': exam.id});
+                      }
                     },
-
-                    onCancel: () async {
-                      Get.back();
-
-                      await testController.clearProgress(exam.id);
-                      await testController.loadQuestions(exam.id);
-
-                      Get.toNamed('/exam', arguments: {'id': exam.id});
-                    },
-                  );
-                } else {
-                  await testController.loadQuestions(exam.id);
-
-                  Get.toNamed('/exam', arguments: {'id': exam.id});
-                }
-              },
             );
           },
         );

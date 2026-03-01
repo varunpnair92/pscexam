@@ -205,7 +205,7 @@ class TestController extends GetxController {
       }),
     );
 
-    print(response.body);
+    //print(response.body);
 
     await clearProgress(examId); // 🔥 FIXED
   }
