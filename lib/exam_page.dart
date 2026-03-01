@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:psc_exam/math_formula.dart';
 import 'package:psc_exam/paletee_bottom_sheet.dart';
 import 'package:psc_exam/test_controller.dart';
 
@@ -83,8 +84,7 @@ class ExamPage extends StatelessWidget {
                 child: ListView(
                   children: [
 
-                    Text(q.question,
-                        style: TextStyle(fontSize: 18)),
+                     MathText(text: q.question),
 
                     SizedBox(height: 20),
 
