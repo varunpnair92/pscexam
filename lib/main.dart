@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:psc_exam/exam_review_page.dart';
+import 'package:psc_exam/home_page.dart';
 import 'package:psc_exam/test_controller.dart';
 import 'firebase_options.dart';
 
@@ -34,15 +35,17 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
 
-      initialRoute: '/examlist',
+      initialRoute: '/home',
 
       getPages: [
+
+        GetPage(name: '/home', page: () => HomePage()),
 
         // 🔐 LOGIN
         GetPage(name: '/login', page: () => LoginPage()),
 
         // 🏠 HOME
-        GetPage(name: '/home', page: () => HomePage()),
+        //GetPage(name: '/home', page: () => HomePage()),
 
         // 📚 EXAM LIST
         GetPage(name: '/examlist', page: () => ExamListPage()),

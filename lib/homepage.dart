@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:psc_exam/auth_controller.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage2 extends StatelessWidget {
   final AuthController auth = Get.find();
 
   @override
