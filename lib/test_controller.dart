@@ -108,13 +108,18 @@ class TestController extends GetxController {
 
   // ================= SELECT ANSWER =================
 
-  void selectAnswer(String ans) {
+  Future<void> selectAnswer(String ans) async {
     answers[current.value] = ans;
     status[current.value] = QuestionStatus.answered;
 
     saveProgress();
 
-    if (current.value < questions.length - 1) current.value++;
+    // 🕒 WAIT 400 ms so user sees selection
+    await Future.delayed(Duration(milliseconds: 400));
+
+    if (current.value < questions.length - 1) {
+      current.value++;
+    }
   }
 
   // ================= MARK REVIEW =================
@@ -255,8 +260,7 @@ class TestController extends GetxController {
     examId = id;
 
     current.value = prefs.getInt("exam_${id}_current") ?? 0;
-    remainingSeconds.value =
-        prefs.getInt("exam_${id}_remainingSeconds") ?? 0;
+    remainingSeconds.value = prefs.getInt("exam_${id}_remainingSeconds") ?? 0;
 
     // restore answers
     String? ansStr = prefs.getString("exam_${id}_answers");

@@ -178,33 +178,7 @@ class ExamPage extends StatelessWidget {
             ),
 
             // 🔥 FINISH BUTTON
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red),
-              onPressed: () {
-                Get.defaultDialog(
-                  title: "Submit Exam",
-                  middleText:
-                      "Are you sure you want to finish?",
-                  textCancel: "No",
-                  textConfirm: "Yes",
-                  onConfirm: () async {
-
-                    Get.back();
-
-                    controller.timer?.cancel();
-
-                    await controller.submitResult();
-
-                    // 🔥 FIX — pass examId
-                    await controller.clearProgress(examId);
-
-                    Get.offAllNamed('/analysis');
-                  },
-                );
-              },
-              child: Text("Finish"),
-            ),
+            
           ],
         ),
       ),
