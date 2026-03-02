@@ -5,7 +5,7 @@ class AppConfig {
   // Endpoints
   static const String listExams = "${baseUrl}listexams/";
   static const String testExam = "${baseUrl}testexam/";
-  static const String hierarchy = "${baseUrl}hirarchykey/";
+  static const String hierarchy = "${baseUrl}hirarchykey";
   static const String keywordQuestions =
-      "${baseUrl}qbkeywordmultiplecombinedsimilar/";
+      "${baseUrl}qbkeywordmultiplecombinedsimilar";
 }

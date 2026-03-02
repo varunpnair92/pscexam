@@ -7,47 +7,107 @@ class StudyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
+    return Obx(
+      () => Scaffold(
+        // 🧠 BREADCRUMB TITLE
+        appBar: AppBar(
+          title: Text(controller.keys.join(" > ")),
 
-      // 🔥 SHOW QUESTIONS IF END
-      if (controller.showQuestions.value) {
-        return ListView.builder(
-          itemCount: controller.questions.length,
-          itemBuilder: (_, i) {
-            final q = controller.questions[i];
-            return Card(
-              margin: EdgeInsets.all(10),
-              child: Padding(
-                padding: EdgeInsets.all(12),
-                child: Text(q["question"]),
-              ),
-            );
-          },
-        );
-      }
-
-      // 🔥 SHOW HIERARCHY TILES
-      return GridView.builder(
-        padding: EdgeInsets.all(16),
-        itemCount: controller.items.length,
-        gridDelegate:
-            SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+          leading: controller.keys.length > 1
+              ? IconButton(
+                  icon: Icon(Icons.arrow_back),
+                  onPressed: controller.goBack,
+                )
+              : null,
         ),
-        itemBuilder: (_, i) {
-          return GestureDetector(
-            onTap: () => controller.onTileTap(controller.items[i]),
-            child: Card(
-              child: Center(
-                child: Text(
-                  controller.items[i],
-                  style: TextStyle(fontSize: 16),
+
+        body: controller.showQuestions.value
+            // 🔥 QUESTIONS VIEW
+            ? ListView.builder(
+                padding: EdgeInsets.all(12),
+                itemCount: controller.questions.length,
+                itemBuilder: (_, i) {
+                  final q = controller.questions[i];
+
+                  return Card(
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    elevation: 3,
+                    child: Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 🧾 QUESTION
+                          Text(
+                            q["question"],
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+
+                          SizedBox(height: 10),
+
+                          Divider(),
+
+                          // 🟢 ANSWER
+                          Text(
+                            "${q["answer"]}",
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              )
+            // 🔥 HIERARCHY TILES
+            : GridView.builder(
+                padding: EdgeInsets.all(16),
+                itemCount: controller.items.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3, // 🔥 MORE ITEMS PER ROW
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
                 ),
+                itemBuilder: (_, i) {
+                  final item = controller.items[i];
+
+                  return GestureDetector(
+                    onTap: () => controller.onTileTap(item),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: Colors.blue.shade100,
+                          child: Text(
+                            item[0].toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(height: 6),
+
+                        Text(
+                          item,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
-            ),
-          );
-        },
-      );
-    });
+      ),
+    );
   }
 }

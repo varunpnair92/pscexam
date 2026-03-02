@@ -4,9 +4,14 @@ import 'package:http/http.dart' as http;
 import 'app_config.dart';
 
 class StudyController extends GetxController {
-  var keys = <String>[].obs;
+
+  // 🔥 START ROOT
+  var keys = <String>["LDC"].obs;
+
   var items = [].obs;
   var questions = [].obs;
+
+  var isLeaf = false.obs;
   var showQuestions = false.obs;
 
   @override
@@ -15,7 +20,8 @@ class StudyController extends GetxController {
     super.onInit();
   }
 
-  // 🔥 FETCH HIERARCHY
+  // ================= FETCH HIERARCHY =================
+
   Future<void> fetchHierarchy() async {
     final res = await http.post(
       Uri.parse(AppConfig.hierarchy),
@@ -25,20 +31,27 @@ class StudyController extends GetxController {
 
     final data = jsonDecode(res.body);
 
-    if (data["result"] == "empty") {
+    items.value = data["result"];
+    isLeaf.value = data["type"] == "leaf";
+    showQuestions.value = false;
+  }
+
+  // ================= TILE CLICK =================
+
+  void onTileTap(String value) {
+
+    if (isLeaf.value) {
+      // 🔥 REPLACE LAST KEY (NOT ADD)
+      keys[keys.length - 1] = value;
       fetchQuestions();
     } else {
-      items.value = data["result"];
+      keys.add(value);
+      fetchHierarchy();
     }
   }
 
-  // 🔥 TILE TAP
-  void onTileTap(String value) {
-    keys.add(value);
-    fetchHierarchy();
-  }
+  // ================= FETCH QUESTIONS =================
 
-  // 🔥 FETCH QUESTIONS
   Future<void> fetchQuestions() async {
     final res = await http.post(
       Uri.parse(AppConfig.keywordQuestions),
@@ -50,11 +63,11 @@ class StudyController extends GetxController {
     showQuestions.value = true;
   }
 
-  // 🔥 BACK ONE LEVEL
+  // ================= GO BACK =================
+
   void goBack() {
-    if (keys.isNotEmpty) {
+    if (keys.length > 1) {
       keys.removeLast();
-      showQuestions.value = false;
       fetchHierarchy();
     }
   }
