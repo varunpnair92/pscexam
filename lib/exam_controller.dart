@@ -24,4 +24,17 @@ class ExamController extends GetxController {
       exams.value = data.map((e) => Exam.fromJson(e)).toList();
     }
   }
+
+  Future<void> loadFromEndpoint(String endpoint) async {
+  exams.clear();
+
+  final res = await http.get(
+    Uri.parse(AppConfig.baseUrl + endpoint),
+  );
+
+  if (res.statusCode == 200) {
+    List data = jsonDecode(res.body);
+    exams.value = data.map((e) => Exam.fromJson(e)).toList();
+  }
+}
 }

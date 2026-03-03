@@ -77,6 +77,9 @@ class StudyPage extends StatelessWidget {
                 itemBuilder: (_, i) {
                   final item = controller.items[i];
 
+                  final String name = item["name"] ?? "";
+                  final String type = item["type"] ?? "";
+
                   return GestureDetector(
                     onTap: () => controller.onTileTap(item),
                     child: Column(
@@ -86,7 +89,7 @@ class StudyPage extends StatelessWidget {
                           radius: 28,
                           backgroundColor: Colors.blue.shade100,
                           child: Text(
-                            item[0].toUpperCase(),
+                            name.isNotEmpty ? name[0].toUpperCase() : "",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -98,7 +101,7 @@ class StudyPage extends StatelessWidget {
                         SizedBox(height: 6),
 
                         Text(
-                          item,
+                          name,
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 12),
                         ),

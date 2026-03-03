@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:psc_exam/exam_list_page_dynamic.dart';
 import 'package:psc_exam/exam_review_page.dart';
 import 'package:psc_exam/home_page.dart';
 import 'package:psc_exam/test_controller.dart';
@@ -19,9 +20,7 @@ import 'result_analysis_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   Get.put(AuthController());
   Get.put(TestController(), permanent: true);
@@ -38,7 +37,6 @@ class MyApp extends StatelessWidget {
       initialRoute: '/home',
 
       getPages: [
-
         GetPage(name: '/home', page: () => HomePage()),
 
         // 🔐 LOGIN
@@ -61,6 +59,8 @@ class MyApp extends StatelessWidget {
 
         // 🔍 REVIEW PAGE
         GetPage(name: '/review', page: () => ReviewPage()),
+
+        GetPage(name: "/dynamicExamList", page: () => DynamicExamListPage()),
       ],
     );
   }

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:psc_exam/exam_list_page.dart';
+import 'package:psc_exam/exam_menu_page.dart';
 import 'package:psc_exam/study_page.dart';
 
 class HomePage extends StatelessWidget {
   final index = 0.obs;
 
   final pages = [
-    ExamListPage(),
+    //ExamListPage(),
+    ExamMenuPage(),
     StudyPage(), // 🔥 new study tab
   ];
 

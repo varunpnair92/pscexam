@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'app_config.dart';
 
 class StudyController extends GetxController {
-
   // 🔥 START ROOT
   var keys = <String>["LDC"].obs;
 
@@ -38,15 +37,18 @@ class StudyController extends GetxController {
 
   // ================= TILE CLICK =================
 
-  void onTileTap(String value) {
+  void onTileTap(dynamic item) {
+    final String name = item["name"];
+    final String type = item["type"];
 
-    if (isLeaf.value) {
-      // 🔥 REPLACE LAST KEY (NOT ADD)
-      keys[keys.length - 1] = value;
-      fetchQuestions();
-    } else {
-      keys.add(value);
+    if (type == "node") {
+      keys.add(name); // ✅ add String only
       fetchHierarchy();
+    }
+
+    if (type == "leaf") {
+      keys.add(name); // ✅ add String only
+      fetchQuestions();
     }
   }
 
