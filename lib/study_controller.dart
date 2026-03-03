@@ -38,21 +38,37 @@ class StudyController extends GetxController {
   // ================= TILE CLICK =================
 
   void onTileTap(dynamic item) {
-    final String name = item["name"];
-    final String type = item["type"];
+    final type = item["type"];
+    final name = item["name"];
 
     if (type == "node") {
-      keys.add(name); // ✅ add String only
+      keys.add(name);
       fetchHierarchy();
     }
 
     if (type == "leaf") {
-      keys.add(name); // ✅ add String only
-      fetchQuestions();
+      keys.add(name); // 👈 ADD THIS LINE
+      fetchQuestionsByKeyword(name); // 👈 KEEP THIS
     }
   }
 
   // ================= FETCH QUESTIONS =================
+
+  Future<void> fetchQuestionsByKeyword(String keyword) async {
+    showQuestions.value = true;
+
+    final res = await http.post(
+      Uri.parse(AppConfig.keywordQuestions),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "keywords": [keyword], // 🔥 ONLY LAST VALUE
+      }),
+    );
+
+    if (res.statusCode == 200) {
+      questions.value = jsonDecode(res.body);
+    }
+  }
 
   Future<void> fetchQuestions() async {
     final res = await http.post(
@@ -68,6 +84,15 @@ class StudyController extends GetxController {
   // ================= GO BACK =================
 
   void goBack() {
+    if (showQuestions.value) {
+      // If currently showing questions
+      showQuestions.value = false;
+      questions.clear();
+
+      keys.removeLast(); // 👈 remove only leaf
+      return;
+    }
+
     if (keys.length > 1) {
       keys.removeLast();
       fetchHierarchy();
