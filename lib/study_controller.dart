@@ -17,6 +17,7 @@ class StudyController extends GetxController {
 
   var examIndex = 0.obs;
 var examAnswers = <int, String>{}.obs;
+var navigationType = "".obs;
 
   @override
   void onInit() {
@@ -62,29 +63,36 @@ var examAnswers = <int, String>{}.obs;
 
   // ================= TILE CLICK =================
 
-  void onTileTap(dynamic item) {
-    final type = item["type"];
-    final name = item["name"];
+ void onTileTap(dynamic item) {
+  final type = item["type"];
+  final name = item["name"];
+  final navigation = item["navigation"];
 
-    if (type == "node") {
-      keys.add(name);
-      fetchHierarchy();
-    }
-
-    if (type == "leaf") {
-  keys.add(name);
-
-  fetchQuestionsByKeyword(name);
-  fetchKeywordDescription(name);
-
-  showQuestions.value = true;
-}
+  if (type == "node") {
+    keys.add(name);
+    fetchHierarchy();
   }
 
+  if (type == "leaf") {
+
+    if (navigation == "studyQuestion") {
+      fetchQuestionsByKeyword(name);
+      fetchKeywordDescription(name);
+      Get.toNamed("/studyQuestion");
+      return;
+    }
+
+    // studyFull behaviour (original)
+    keys.add(name);
+    fetchQuestionsByKeyword(name);
+    fetchKeywordDescription(name);
+    showQuestions.value = true;
+  }
+}
   // ================= FETCH QUESTIONS =================
 
   Future<void> fetchQuestionsByKeyword(String keyword) async {
-    showQuestions.value = true;
+   //R showQuestions.value = true;
 
     final res = await http.post(
       Uri.parse(AppConfig.keywordQuestions),

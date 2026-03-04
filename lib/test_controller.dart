@@ -28,6 +28,8 @@ class TestController extends GetxController {
 
   bool isLocalExam = false;
 
+  var marked = <int>[].obs;
+
   // ================= LOAD QUESTIONS (NEW EXAM) =================
 
   Future<void> loadQuestions(int id) async {
@@ -155,17 +157,25 @@ class TestController extends GetxController {
   // ================= PALETTE COLORS =================
 
   Color getColor(int index) {
-    if (!status.containsKey(index)) return Colors.grey.shade300;
 
-    switch (status[index]) {
-      case QuestionStatus.answered:
-        return Colors.blue;
-      case QuestionStatus.review:
-        return Colors.orange;
-      default:
-        return Colors.grey.shade300;
-    }
+  // current question
+  if (current.value == index) {
+    return Colors.blue;
   }
+
+  // marked for review
+  if (marked.contains(index)) {
+    return Colors.orange;
+  }
+
+  // answered
+  if (answers.containsKey(index)) {
+    return Colors.green;
+  }
+
+  // unanswered
+  return Colors.grey;
+}
 
   // ================= REVIEW COLOR =================
 
@@ -352,5 +362,17 @@ void loadLocalQuestions(List qlist) {
   remainingSeconds.value = questions.length * 45;
 
   startTimer();
+}
+
+void toggleMarkReview() {
+  int qIndex = current.value;
+
+  if (marked.contains(qIndex)) {
+    marked.remove(qIndex);
+  } else {
+    marked.add(qIndex);
+  }
+
+  marked.refresh();
 }
 }

@@ -5,44 +5,33 @@ import 'package:psc_exam/paletee_bottom_sheet.dart';
 import 'package:psc_exam/test_controller.dart';
 
 class ExamPage extends StatelessWidget {
-
   // 🔥 USE EXISTING CONTROLLER
   final TestController controller = Get.find();
 
   @override
   Widget build(BuildContext context) {
-
     final args = Get.arguments;
 
     // 🔹 STUDY EXAM MODE (questions passed directly)
     if (args is List) {
-
       if (controller.questions.isEmpty) {
         controller.loadLocalQuestions(args);
       }
-
     }
-
     // 🔹 REAL EXAM MODE (exam id)
     else if (args is Map && args.containsKey('id')) {
-
       final int examId = args['id'];
 
       if (controller.examId != examId) {
         controller.loadQuestions(examId);
       }
-
     }
-
     // 🔹 INVALID DATA
     else if (controller.questions.isEmpty) {
-      return Scaffold(
-        body: Center(child: Text("Invalid Exam Data")),
-      );
+      return Scaffold(body: Center(child: Text("Invalid Exam Data")));
     }
 
     return Scaffold(
-
       // 🧠 TOP BAR
       appBar: AppBar(
         title: Obx(
@@ -51,13 +40,11 @@ class ExamPage extends StatelessWidget {
           ),
         ),
         actions: [
-
           Icon(Icons.timer),
 
           Padding(
             padding: EdgeInsets.all(12),
             child: Obx(() {
-
               int sec = controller.remainingSeconds.value;
               int min = sec ~/ 60;
               int s = sec % 60;
@@ -72,7 +59,6 @@ class ExamPage extends StatelessWidget {
       ),
 
       body: Obx(() {
-
         if (controller.questions.isEmpty) {
           return Center(child: CircularProgressIndicator());
         }
@@ -81,17 +67,13 @@ class ExamPage extends StatelessWidget {
 
         return Column(
           children: [
-
             // 🧾 MCQ HEADER
             Container(
               padding: EdgeInsets.all(12),
               color: Colors.grey.shade200,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text("MCQ"),
-                  Text("Marks: +1  -0.33"),
-                ],
+                children: [Text("MCQ"), Text("Marks: +1  -0.33")],
               ),
             ),
 
@@ -101,18 +83,13 @@ class ExamPage extends StatelessWidget {
                 padding: EdgeInsets.all(16),
                 child: ListView(
                   children: [
-
                     MathText(text: q.question),
 
                     SizedBox(height: 20),
 
-                    ...q.options
-                        .where((o) => o.toString().isNotEmpty)
-                        .map((o) {
-
+                    ...q.options.where((o) => o.toString().isNotEmpty).map((o) {
                       final selected =
-                          controller.answers[
-                              controller.current.value] == o;
+                          controller.answers[controller.current.value] == o;
 
                       return Container(
                         margin: EdgeInsets.symmetric(vertical: 6),
@@ -137,10 +114,8 @@ class ExamPage extends StatelessWidget {
                     SizedBox(height: 10),
 
                     Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-
                         ElevatedButton(
                           onPressed: () {
                             controller.previous();
@@ -173,16 +148,25 @@ class ExamPage extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-
             Icon(Icons.bookmark, color: Colors.white),
 
-            ElevatedButton(
-              onPressed: () {
-                controller.markReview();
-                controller.saveProgress();
-              },
-              child: Text("Mark for Review"),
-            ),
+            Obx(() {
+              bool isMarked = controller.marked.contains(
+                controller.current.value,
+              );
+
+              return ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isMarked ? Colors.orange : Colors.blue,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () {
+                  controller.toggleMarkReview();
+                  controller.saveProgress();
+                },
+                child: Text(isMarked ? "Remove Mark" : "Mark for Review"),
+              );
+            }),
 
             IconButton(
               icon: Icon(Icons.grid_view, color: Colors.white),
