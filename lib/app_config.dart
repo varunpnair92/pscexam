@@ -8,4 +8,6 @@ class AppConfig {
   static const String hierarchy = "${baseUrl}hirarchykey";
   static const String keywordQuestions =
       "${baseUrl}qbkeywordmultiplecombinedsimilar";
+   static const String keywordDesc =
+      "${baseUrl}kbkeyword/";  
 }

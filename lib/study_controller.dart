@@ -13,6 +13,11 @@ class StudyController extends GetxController {
   var isLeaf = false.obs;
   var showQuestions = false.obs;
 
+  var description = "".obs;
+
+  var examIndex = 0.obs;
+var examAnswers = <int, String>{}.obs;
+
   @override
   void onInit() {
     fetchHierarchy();
@@ -35,6 +40,26 @@ class StudyController extends GetxController {
     showQuestions.value = false;
   }
 
+
+  //===============fetch description ================
+  Future<void> fetchKeywordDescription(String keyword) async {
+  try {
+    final res = await http.get(
+      Uri.parse("${AppConfig.keywordDesc}$keyword/"),
+    );
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+
+      description.value = data["description"] ?? "";
+    } else {
+      description.value = "No description available";
+    }
+  } catch (e) {
+    description.value = "Failed to load description";
+  }
+}
+
   // ================= TILE CLICK =================
 
   void onTileTap(dynamic item) {
@@ -47,9 +72,13 @@ class StudyController extends GetxController {
     }
 
     if (type == "leaf") {
-      keys.add(name); // 👈 ADD THIS LINE
-      fetchQuestionsByKeyword(name); // 👈 KEEP THIS
-    }
+  keys.add(name);
+
+  fetchQuestionsByKeyword(name);
+  fetchKeywordDescription(name);
+
+  showQuestions.value = true;
+}
   }
 
   // ================= FETCH QUESTIONS =================
@@ -98,4 +127,20 @@ class StudyController extends GetxController {
       fetchHierarchy();
     }
   }
+
+  void selectExamAnswer(String ans) {
+  examAnswers[examIndex.value] = ans;
+}
+
+void nextExam() {
+  if (examIndex.value < questions.length - 1) {
+    examIndex.value++;
+  }
+}
+
+void previousExam() {
+  if (examIndex.value > 0) {
+    examIndex.value--;
+  }
+}
 }

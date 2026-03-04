@@ -12,7 +12,6 @@ class StudyPage extends StatelessWidget {
         // 🧠 BREADCRUMB TITLE
         appBar: AppBar(
           title: Text(controller.keys.join(" > ")),
-
           leading: controller.keys.length > 1
               ? IconButton(
                   icon: Icon(Icons.arrow_back),
@@ -22,55 +21,112 @@ class StudyPage extends StatelessWidget {
         ),
 
         body: controller.showQuestions.value
-            // 🔥 QUESTIONS VIEW
-            ? ListView.builder(
-                padding: EdgeInsets.all(12),
-                itemCount: controller.questions.length,
-                itemBuilder: (_, i) {
-                  final q = controller.questions[i];
+            /// 🔥 WHEN KEYWORD SELECTED
+            ? DefaultTabController(
+                length: 3,
+                child: Column(
+                  children: [
+                    /// 🔹 TAB BAR
+                    TabBar(
+                      labelColor: Colors.blue,
+                      tabs: [
+                        Tab(text: "Description"),
+                        Tab(text: "Questions"),
+                        Tab(text: "Exam"),
+                      ],
+                    ),
 
-                  return Card(
-                    margin: EdgeInsets.symmetric(vertical: 8),
-                    elevation: 3,
-                    child: Padding(
-                      padding: EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    Expanded(
+                      child: TabBarView(
                         children: [
-                          // 🧾 QUESTION
-                          Text(
-                            q["question"],
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
+                          /// 📘 DESCRIPTION TAB
+                          Obx(
+                            () => SingleChildScrollView(
+                              padding: EdgeInsets.all(16),
+                              child: Text(
+                                controller.description.value,
+                                style: TextStyle(fontSize: 16),
+                              ),
                             ),
                           ),
 
-                          SizedBox(height: 10),
+                          /// 📚 QUESTIONS TAB
+                          ListView.builder(
+                            padding: EdgeInsets.all(12),
+                            itemCount: controller.questions.length,
+                            itemBuilder: (_, i) {
+                              final q = controller.questions[i];
 
-                          Divider(),
+                              return Card(
+                                margin: EdgeInsets.symmetric(vertical: 8),
+                                elevation: 3,
+                                child: Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      /// QUESTION
+                                      Text(
+                                        q["question"] ?? "",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
 
-                          // 🟢 ANSWER
-                          Text(
-                            "${q["answer"]}",
-                            style: TextStyle(
-                              color: Colors.green,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
+                                      SizedBox(height: 10),
+
+                                      Divider(),
+
+                                      /// ANSWER
+                                      Text(
+                                        "${q["answer"] ?? ""}",
+                                        style: TextStyle(
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+
+                          /// 📝 EXAM TAB
+                          Center(
+                            child: ElevatedButton.icon(
+                              icon: Icon(Icons.play_arrow),
+                              label: Text("Start Practice Exam"),
+                              style: ElevatedButton.styleFrom(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 30,
+                                  vertical: 15,
+                                ),
+                              ),
+                              onPressed: () {
+                                /// PASS QUESTIONS TO EXAM PAGE
+                                Get.toNamed(
+                                  "/studyExam",
+                                  arguments: controller.questions.toList(),
+                                );
+                              },
                             ),
                           ),
                         ],
                       ),
                     ),
-                  );
-                },
+                  ],
+                ),
               )
-            // 🔥 HIERARCHY TILES
+            /// 🔥 HIERARCHY TILES (UNCHANGED)
             : GridView.builder(
                 padding: EdgeInsets.all(16),
                 itemCount: controller.items.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3, // 🔥 MORE ITEMS PER ROW
+                  crossAxisCount: 3,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                 ),
@@ -78,13 +134,13 @@ class StudyPage extends StatelessWidget {
                   final item = controller.items[i];
 
                   final String name = item["name"] ?? "";
-                  final String type = item["type"] ?? "";
 
                   return GestureDetector(
                     onTap: () => controller.onTileTap(item),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        /// CIRCLE ICON
                         CircleAvatar(
                           radius: 28,
                           backgroundColor: Colors.blue.shade100,
@@ -100,6 +156,7 @@ class StudyPage extends StatelessWidget {
 
                         SizedBox(height: 6),
 
+                        /// NAME
                         Text(
                           name,
                           textAlign: TextAlign.center,

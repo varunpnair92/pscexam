@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:psc_exam/exam_list_page_dynamic.dart';
 import 'package:psc_exam/exam_review_page.dart';
 import 'package:psc_exam/home_page.dart';
+import 'package:psc_exam/study_exam_page.dart';
 import 'package:psc_exam/test_controller.dart';
 import 'firebase_options.dart';
 
@@ -61,6 +62,11 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/review', page: () => ReviewPage()),
 
         GetPage(name: "/dynamicExamList", page: () => DynamicExamListPage()),
+
+          GetPage(
+      name: '/studyExam',
+      page: () => StudyExamPage(),
+    ),
       ],
     );
   }

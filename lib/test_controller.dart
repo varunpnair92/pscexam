@@ -26,6 +26,8 @@ class TestController extends GetxController {
   var remainingSeconds = 0.obs;
   var totalSeconds = 0;
 
+  bool isLocalExam = false;
+
   // ================= LOAD QUESTIONS (NEW EXAM) =================
 
   Future<void> loadQuestions(int id) async {
@@ -197,7 +199,13 @@ class TestController extends GetxController {
   // ================= SUBMIT RESULT =================
 
   Future<void> submitResult() async {
-    final snap = buildSnapshot();
+
+  final snap = buildSnapshot();
+
+  snapshot.value = snap;
+
+  // 🔥 Send to server only for real exam
+  if (!isLocalExam) {
 
     final response = await http.post(
       Uri.parse("${AppConfig.baseUrl}jsoninsertapi"),
@@ -210,10 +218,11 @@ class TestController extends GetxController {
       }),
     );
 
-    //print(response.body);
-
-    await clearProgress(examId); // 🔥 FIXED
+    await clearProgress(examId);
   }
+
+  Get.offAllNamed('/review');
+}
 
   // ================= FETCH RESULT =================
 
@@ -301,4 +310,47 @@ class TestController extends GetxController {
     await prefs.remove("exam_${id}_status");
     await prefs.remove("exam_${id}_remainingSeconds");
   }
+
+//=================local exam=================
+void loadLocalQuestions(List qlist) {
+
+  isLocalExam = true;
+
+  answers.clear();
+  status.clear();
+  current.value = 0;
+
+  questions.value = qlist.map((q) {
+
+    List<String> opts = [];
+
+    if (q["options"] != null && q["options"].length >= 4) {
+      opts = List<String>.from(q["options"]);
+    } else {
+
+      String correct = q["answer"] ?? "";
+
+      opts = [
+        correct,
+        "Option 1",
+        "Option 2",
+        "Option 3"
+      ];
+
+      opts.shuffle();
+    }
+
+    return Question(
+      id: q["id"] ?? qlist.indexOf(q),
+      question: q["question"],
+      options: opts,
+      answer: q["answer"],
+    );
+
+  }).toList();
+
+  remainingSeconds.value = questions.length * 45;
+
+  startTimer();
+}
 }

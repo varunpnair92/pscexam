@@ -6,22 +6,39 @@ import 'package:psc_exam/test_controller.dart';
 
 class ExamPage extends StatelessWidget {
 
-  // 🔥 USE EXISTING CONTROLLER (do NOT create new)
+  // 🔥 USE EXISTING CONTROLLER
   final TestController controller = Get.find();
 
   @override
   Widget build(BuildContext context) {
 
-    final args = Get.arguments as Map?;
-    final int? examId = args?['id'];
+    final args = Get.arguments;
 
-    if (examId == null) {
-      return Scaffold(body: Center(child: Text("Invalid Exam ID")));
+    // 🔹 STUDY EXAM MODE (questions passed directly)
+    if (args is List) {
+
+      if (controller.questions.isEmpty) {
+        controller.loadLocalQuestions(args);
+      }
+
     }
 
-    // 🔥 LOAD ONLY IF NOT SAME EXAM
-    if (controller.examId != examId) {
-      controller.loadQuestions(examId);
+    // 🔹 REAL EXAM MODE (exam id)
+    else if (args is Map && args.containsKey('id')) {
+
+      final int examId = args['id'];
+
+      if (controller.examId != examId) {
+        controller.loadQuestions(examId);
+      }
+
+    }
+
+    // 🔹 INVALID DATA
+    else if (controller.questions.isEmpty) {
+      return Scaffold(
+        body: Center(child: Text("Invalid Exam Data")),
+      );
     }
 
     return Scaffold(
@@ -40,6 +57,7 @@ class ExamPage extends StatelessWidget {
           Padding(
             padding: EdgeInsets.all(12),
             child: Obx(() {
+
               int sec = controller.remainingSeconds.value;
               int min = sec ~/ 60;
               int s = sec % 60;
@@ -84,7 +102,7 @@ class ExamPage extends StatelessWidget {
                 child: ListView(
                   children: [
 
-                     MathText(text: q.question),
+                    MathText(text: q.question),
 
                     SizedBox(height: 20),
 
@@ -178,7 +196,6 @@ class ExamPage extends StatelessWidget {
             ),
 
             // 🔥 FINISH BUTTON
-            
           ],
         ),
       ),
