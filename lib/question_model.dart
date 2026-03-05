@@ -3,12 +3,14 @@ class Question {
   final String question;
   final List options;
   final String answer;
+  final String description;
 
   Question({
     required this.id,
     required this.question,
     required this.options,
     required this.answer,
+    required this.description,
   });
 
   factory Question.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class Question {
       question: json['question'],
       options: json['options'],
       answer: json['answer'],
+       description: json["description"] ?? "",
     );
   }
 }

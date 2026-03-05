@@ -43,7 +43,8 @@ class TestController extends GetxController {
 
     if (res.statusCode == 200) {
       List data = json.decode(res.body);
-      questions.value = data.map((e) => Question.fromJson(e)).toList();
+      questions.value =
+    List<Question>.from(data.map((e) => Question.fromJson(e)));
     }
 
     remainingSeconds.value = 0;
@@ -200,6 +201,7 @@ class TestController extends GetxController {
         "options": questions[i].options,
         "selected": answers[i],
         "correct": questions[i].answer,
+        "description": questions[i].description
       };
     }
 
@@ -355,6 +357,7 @@ void loadLocalQuestions(List qlist) {
       question: q["question"],
       options: opts,
       answer: q["answer"],
+      description: q["description"] ?? "",
     );
 
   }).toList();
