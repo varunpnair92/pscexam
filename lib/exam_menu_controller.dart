@@ -4,52 +4,85 @@ import 'package:http/http.dart' as http;
 import 'app_config.dart';
 
 class ExamMenuController extends GetxController {
-  var keys = <String>["EXAM"].obs;
+
+  var fullTree = [].obs;
   var items = [].obs;
-  var currentType = "".obs;
+
+  /// BACK STACK
+  var stack = <dynamic>[].obs;
+
+  /// BREADCRUMB
+  var keys = <String>[].obs;
 
   @override
   void onInit() {
-    fetchHierarchy();
+    fetchTree();
     super.onInit();
   }
 
-  Future<void> fetchHierarchy() async {
-    final res = await http.post(
-      Uri.parse(AppConfig.hierarchy),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"keys": keys}),
-    );
+  /// LOAD TREE
+  Future<void> fetchTree() async {
+
+    final res = await http.get(Uri.parse(AppConfig.nodeall));
 
     final data = jsonDecode(res.body);
 
-    currentType.value = data["type"];
-    items.value = data["result"];
+    fullTree.value = data;
+
+    /// FIND EXAM NODE
+    final examNode = data.firstWhere(
+      (e) => e["name"] == "EXAM",
+      orElse: () => null,
+    );
+
+    if (examNode != null) {
+      items.value = examNode["children"] ?? [];
+    }
+
+    keys.clear();
+    keys.add("EXAM");
   }
 
+  /// TILE CLICK
   void onTileTap(dynamic item) {
-    final type = item["type"];
 
-    // 🔥 ACTION → Navigate to dynamic exam list
-    if (type == "action") {
+    final name = item["name"];
+
+    /// ACTION → OPEN EXAM LIST
+    if (item["url"] != null && item["url"] != "") {
+
       Get.toNamed(
         "/dynamicExamList",
         arguments: {"endpoint": item["url"]},
       );
+
       return;
     }
 
-    // 🔥 NODE → Drill down
-    if (type == "node") {
-      keys.add(item["name"]);
-      fetchHierarchy();
+    /// NODE → GO DEEPER
+    if (item["children"] != null && item["children"].length > 0) {
+
+      stack.add(items);
+
+      items.value = item["children"];
+
+      keys.add(name);
+
       return;
     }
 
-    // 🔥 LEAF → (if needed for questions)
-    if (type == "leaf") {
-      // You can handle leaf logic here if required
-      print("Leaf clicked: ${item["name"]}");
+    /// LEAF
+    print("Leaf clicked: $name");
+  }
+
+  /// BACK
+  void goBack() {
+
+    if (stack.isNotEmpty) {
+
+      items.value = stack.removeLast();
+
+      keys.removeLast();
     }
   }
 }

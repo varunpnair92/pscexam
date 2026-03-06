@@ -3,15 +3,18 @@ import 'package:get/get.dart';
 import 'study_controller.dart';
 
 class StudyPage extends StatelessWidget {
+
   final StudyController controller = Get.put(StudyController());
 
   @override
   Widget build(BuildContext context) {
+
     return Obx(
       () => Scaffold(
-        // 🧠 BREADCRUMB TITLE
+
         appBar: AppBar(
           title: Text(controller.keys.join(" > ")),
+
           leading: controller.keys.length > 1
               ? IconButton(
                   icon: Icon(Icons.arrow_back),
@@ -21,12 +24,13 @@ class StudyPage extends StatelessWidget {
         ),
 
         body: controller.showQuestions.value
-            /// 🔥 WHEN KEYWORD SELECTED
+
+            /// QUESTION VIEW
             ? DefaultTabController(
                 length: 3,
                 child: Column(
                   children: [
-                    /// 🔹 TAB BAR
+
                     TabBar(
                       labelColor: Colors.blue,
                       tabs: [
@@ -39,7 +43,8 @@ class StudyPage extends StatelessWidget {
                     Expanded(
                       child: TabBarView(
                         children: [
-                          /// 📘 DESCRIPTION TAB
+
+                          /// DESCRIPTION
                           Obx(
                             () => SingleChildScrollView(
                               padding: EdgeInsets.all(16),
@@ -50,11 +55,12 @@ class StudyPage extends StatelessWidget {
                             ),
                           ),
 
-                          /// 📚 QUESTIONS TAB
+                          /// QUESTIONS
                           ListView.builder(
                             padding: EdgeInsets.all(12),
                             itemCount: controller.questions.length,
                             itemBuilder: (_, i) {
+
                               final q = controller.questions[i];
 
                               return Card(
@@ -66,7 +72,7 @@ class StudyPage extends StatelessWidget {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      /// QUESTION
+
                                       Text(
                                         q["question"] ?? "",
                                         style: TextStyle(
@@ -79,13 +85,11 @@ class StudyPage extends StatelessWidget {
 
                                       Divider(),
 
-                                      /// ANSWER
                                       Text(
-                                        "${q["answer"] ?? ""}",
+                                        q["answer"] ?? "",
                                         style: TextStyle(
                                           color: Colors.green,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 15,
                                         ),
                                       ),
                                     ],
@@ -95,19 +99,13 @@ class StudyPage extends StatelessWidget {
                             },
                           ),
 
-                          /// 📝 EXAM TAB
+                          /// EXAM
                           Center(
                             child: ElevatedButton.icon(
                               icon: Icon(Icons.play_arrow),
                               label: Text("Start Practice Exam"),
-                              style: ElevatedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 30,
-                                  vertical: 15,
-                                ),
-                              ),
                               onPressed: () {
-                                /// PASS QUESTIONS TO EXAM PAGE
+
                                 Get.toNamed(
                                   "/studyExam",
                                   arguments: controller.questions.toList(),
@@ -121,31 +119,38 @@ class StudyPage extends StatelessWidget {
                   ],
                 ),
               )
-            /// 🔥 HIERARCHY TILES (UNCHANGED)
+
+            /// HIERARCHY GRID
             : GridView.builder(
                 padding: EdgeInsets.all(16),
                 itemCount: controller.items.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate:
+                    SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                 ),
                 itemBuilder: (_, i) {
+
                   final item = controller.items[i];
 
-                  final String name = item["name"] ?? "";
+                  final name = item["name"] ?? "";
 
                   return GestureDetector(
+
                     onTap: () => controller.onTileTap(item),
+
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        /// CIRCLE ICON
+
                         CircleAvatar(
                           radius: 28,
                           backgroundColor: Colors.blue.shade100,
                           child: Text(
-                            name.isNotEmpty ? name[0].toUpperCase() : "",
+                            name.isNotEmpty
+                                ? name[0].toUpperCase()
+                                : "",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -156,7 +161,6 @@ class StudyPage extends StatelessWidget {
 
                         SizedBox(height: 6),
 
-                        /// NAME
                         Text(
                           name,
                           textAlign: TextAlign.center,

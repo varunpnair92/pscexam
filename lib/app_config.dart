@@ -1,13 +1,24 @@
 class AppConfig {
+
   // 🔥 Base API URL
   static const String baseUrl = "http://13.61.184.75:5544/api/";
 
-  // Endpoints
+  // ================= EXAMS =================
   static const String listExams = "${baseUrl}listexams/";
   static const String testExam = "${baseUrl}testexam/";
+
+  // ================= HIERARCHY =================
+  // NEW DATABASE TREE API
+  static const String nodeall = "${baseUrl}nodeall/";
+
+  // (OLD METHOD – can remove if unused)
   static const String hierarchy = "${baseUrl}hirarchykey";
+
+  // ================= QUESTIONS =================
   static const String keywordQuestions =
       "${baseUrl}qbkeywordmultiplecombinedsimilar";
-   static const String keywordDesc =
-      "${baseUrl}kbkeyword/";  
+
+  // ================= KEYWORD DESCRIPTION =================
+  static const String keywordDesc =
+      "${baseUrl}kbkeyword/";
 }

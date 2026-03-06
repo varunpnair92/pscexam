@@ -4,101 +4,123 @@ import 'package:http/http.dart' as http;
 import 'app_config.dart';
 
 class StudyController extends GetxController {
-  // 🔥 START ROOT
-  var keys = <String>["LDC"].obs;
 
+  /// FULL TREE
+  var fullTree = [].obs;
+
+  /// CURRENT LEVEL
   var items = [].obs;
+
+  /// BREADCRUMB
+  var keys = <String>[].obs;
+
+  /// BACK STACK
+  var stack = <dynamic>[].obs;
+
   var questions = [].obs;
-
-  var isLeaf = false.obs;
-  var showQuestions = false.obs;
-
   var description = "".obs;
 
+  var showQuestions = false.obs;
+
   var examIndex = 0.obs;
-var examAnswers = <int, String>{}.obs;
-var navigationType = "".obs;
+  var examAnswers = <int, String>{}.obs;
 
   @override
   void onInit() {
-    fetchHierarchy();
+    fetchTree();
     super.onInit();
   }
 
-  // ================= FETCH HIERARCHY =================
+  /// LOAD TREE
+  Future<void> fetchTree() async {
 
-  Future<void> fetchHierarchy() async {
-    final res = await http.post(
-      Uri.parse(AppConfig.hierarchy),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"keys": keys}),
-    );
+    final res = await http.get(Uri.parse(AppConfig.nodeall));
 
     final data = jsonDecode(res.body);
 
-    items.value = data["result"];
-    isLeaf.value = data["type"] == "leaf";
-    showQuestions.value = false;
+    fullTree.value = data;
+    items.value = data;
+
+    keys.clear();
+    keys.add("Home");
   }
 
-
-  //===============fetch description ================
-  Future<void> fetchKeywordDescription(String keyword) async {
-  try {
-    final res = await http.get(
-      Uri.parse("${AppConfig.keywordDesc}$keyword/"),
-    );
-
-    if (res.statusCode == 200) {
-      final data = jsonDecode(res.body);
-
-      description.value = data["description"] ?? "";
-    } else {
-      description.value = "No description available";
-    }
-  } catch (e) {
-    description.value = "Failed to load description";
-  }
-}
-
-  // ================= TILE CLICK =================
-
+  /// TILE CLICK
  void onTileTap(dynamic item) {
-  final type = item["type"];
+
   final name = item["name"];
+
+  /// ACTION API
+  if (item["url"] != null && item["url"] != "") {
+    print("Call API ${item["url"]}");
+    return;
+  }
+
+  /// HAS CHILDREN
+  if (item["children"] != null && item["children"].isNotEmpty) {
+
+    // 🔥 PUSH COPY (important)
+    stack.add(items.toList());
+
+    // 🔥 UPDATE ITEMS
+    items.assignAll(item["children"]);
+
+    keys.add(name);
+
+    return;
+  }
+
+  /// LEAF
   final navigation = item["navigation"];
 
-  if (type == "node") {
-    keys.add(name);
-    fetchHierarchy();
-  }
+  if (navigation == "studyQuestion") {
 
-  if (type == "leaf") {
-
-    if (navigation == "studyQuestion") {
-      fetchQuestionsByKeyword(name);
-      fetchKeywordDescription(name);
-      Get.toNamed("/studyQuestion");
-      return;
-    }
-
-    // studyFull behaviour (original)
-    keys.add(name);
     fetchQuestionsByKeyword(name);
     fetchKeywordDescription(name);
-    showQuestions.value = true;
+
+    Get.toNamed("/studyQuestion");
+
+    return;
+  }
+
+  /// studyFull
+  fetchQuestionsByKeyword(name);
+  fetchKeywordDescription(name);
+
+  showQuestions.value = true;
+
+  keys.add(name);
+}
+  /// BACK
+  void goBack() {
+
+  if (showQuestions.value) {
+
+    showQuestions.value = false;
+    questions.clear();
+
+    keys.removeLast();
+
+    return;
+  }
+
+  if (stack.isNotEmpty) {
+
+    // 🔥 RESTORE FROM STACK
+    items.assignAll(stack.removeLast());
+
+    keys.removeLast();
   }
 }
-  // ================= FETCH QUESTIONS =================
 
+  /// QUESTIONS
   Future<void> fetchQuestionsByKeyword(String keyword) async {
-   //R showQuestions.value = true;
 
     final res = await http.post(
       Uri.parse(AppConfig.keywordQuestions),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
-        "keywords": [keyword], // 🔥 ONLY LAST VALUE
+        "keywords": [keyword],
       }),
     );
 
@@ -107,48 +129,45 @@ var navigationType = "".obs;
     }
   }
 
-  Future<void> fetchQuestions() async {
-    final res = await http.post(
-      Uri.parse(AppConfig.keywordQuestions),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"keywords": keys}),
-    );
+  /// DESCRIPTION
+  Future<void> fetchKeywordDescription(String keyword) async {
 
-    questions.value = jsonDecode(res.body);
-    showQuestions.value = true;
-  }
+    try {
 
-  // ================= GO BACK =================
+      final res = await http.get(
+        Uri.parse("${AppConfig.keywordDesc}$keyword/"),
+      );
 
-  void goBack() {
-    if (showQuestions.value) {
-      // If currently showing questions
-      showQuestions.value = false;
-      questions.clear();
+      if (res.statusCode == 200) {
 
-      keys.removeLast(); // 👈 remove only leaf
-      return;
-    }
+        final data = jsonDecode(res.body);
 
-    if (keys.length > 1) {
-      keys.removeLast();
-      fetchHierarchy();
+        description.value = data["description"] ?? "";
+
+      } else {
+        description.value = "No description available";
+      }
+
+    } catch (e) {
+
+      description.value = "Failed to load description";
     }
   }
 
+  /// EXAM
   void selectExamAnswer(String ans) {
-  examAnswers[examIndex.value] = ans;
-}
-
-void nextExam() {
-  if (examIndex.value < questions.length - 1) {
-    examIndex.value++;
+    examAnswers[examIndex.value] = ans;
   }
-}
 
-void previousExam() {
-  if (examIndex.value > 0) {
-    examIndex.value--;
+  void nextExam() {
+    if (examIndex.value < questions.length - 1) {
+      examIndex.value++;
+    }
   }
-}
+
+  void previousExam() {
+    if (examIndex.value > 0) {
+      examIndex.value--;
+    }
+  }
 }
