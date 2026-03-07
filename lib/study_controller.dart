@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'app_config.dart';
 
 class StudyController extends GetxController {
-
   /// FULL TREE
   var fullTree = [].obs;
 
@@ -32,90 +31,96 @@ class StudyController extends GetxController {
   }
 
   /// LOAD TREE
+  /// LOAD TREE
   Future<void> fetchTree() async {
-
     final res = await http.get(Uri.parse(AppConfig.nodeall));
 
     final data = jsonDecode(res.body);
 
     fullTree.value = data;
-    items.value = data;
 
+    /// 🔎 Find LDC node
+    final ldcNode = data.firstWhere(
+      (e) => e["name"] == "LDC",
+      orElse: () => null,
+    );
+
+    if (ldcNode != null) {
+      items.value = ldcNode["children"] ?? [];
+    } else {
+      items.value = [];
+    }
+
+    /// Breadcrumb start
     keys.clear();
-    keys.add("Home");
+    keys.add("LDC");
   }
 
   /// TILE CLICK
- void onTileTap(dynamic item) {
+  void onTileTap(dynamic item) {
+    final name = item["name"];
 
-  final name = item["name"];
+    /// ACTION API
+    if (item["url"] != null && item["url"] != "") {
+      // print("Call API ${item["url"]}");
+      return;
+    }
 
-  /// ACTION API
-  if (item["url"] != null && item["url"] != "") {
-    print("Call API ${item["url"]}");
-    return;
-  }
+    /// HAS CHILDREN
+    if (item["children"] != null && item["children"].isNotEmpty) {
+      // 🔥 PUSH COPY (important)
+      stack.add(items.toList());
 
-  /// HAS CHILDREN
-  if (item["children"] != null && item["children"].isNotEmpty) {
+      // 🔥 UPDATE ITEMS
+      items.assignAll(item["children"]);
 
-    // 🔥 PUSH COPY (important)
-    stack.add(items.toList());
+      keys.add(name);
 
-    // 🔥 UPDATE ITEMS
-    items.assignAll(item["children"]);
+      return;
+    }
 
-    keys.add(name);
+    /// LEAF
+    final navigation = item["navigation"];
 
-    return;
-  }
+    if (navigation == "studyQuestion") {
+      fetchQuestionsByKeyword(name);
+      fetchKeywordDescription(name);
 
-  /// LEAF
-  final navigation = item["navigation"];
+      Get.toNamed("/studyQuestion");
 
-  if (navigation == "studyQuestion") {
+      return;
+    }
 
+    /// studyFull
     fetchQuestionsByKeyword(name);
     fetchKeywordDescription(name);
 
-    Get.toNamed("/studyQuestion");
+    showQuestions.value = true;
 
-    return;
+    keys.add(name);
   }
 
-  /// studyFull
-  fetchQuestionsByKeyword(name);
-  fetchKeywordDescription(name);
-
-  showQuestions.value = true;
-
-  keys.add(name);
-}
   /// BACK
   void goBack() {
+    if (showQuestions.value) {
+      showQuestions.value = false;
+      questions.clear();
 
-  if (showQuestions.value) {
+      keys.removeLast();
 
-    showQuestions.value = false;
-    questions.clear();
+      return;
+    }
 
-    keys.removeLast();
+    if (stack.isNotEmpty) {
+      // 🔥 RESTORE FROM STACK
+      items.assignAll(stack.removeLast());
 
-    return;
+      keys.removeLast();
+    }
   }
-
-  if (stack.isNotEmpty) {
-
-    // 🔥 RESTORE FROM STACK
-    items.assignAll(stack.removeLast());
-
-    keys.removeLast();
-  }
-}
 
   /// QUESTIONS
   Future<void> fetchQuestionsByKeyword(String keyword) async {
-
     final res = await http.post(
       Uri.parse(AppConfig.keywordQuestions),
       headers: {"Content-Type": "application/json"},
@@ -131,25 +136,19 @@ class StudyController extends GetxController {
 
   /// DESCRIPTION
   Future<void> fetchKeywordDescription(String keyword) async {
-
     try {
-
       final res = await http.get(
         Uri.parse("${AppConfig.keywordDesc}$keyword/"),
       );
 
       if (res.statusCode == 200) {
-
         final data = jsonDecode(res.body);
 
         description.value = data["description"] ?? "";
-
       } else {
         description.value = "No description available";
       }
-
     } catch (e) {
-
       description.value = "Failed to load description";
     }
   }
