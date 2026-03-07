@@ -14,6 +14,7 @@ class ReviewPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Review Exam")),
+      backgroundColor: Colors.grey.shade100,
 
       body: Obx(() {
         if (controller.snapshot.isEmpty) {
@@ -44,86 +45,129 @@ class ReviewPage extends StatelessWidget {
 
                   SizedBox(height: 15),
 
-                  /// ❓ QUESTION TEXT
-                  MathText(text: q['question'] ?? ""),
-
-                  SizedBox(height: 20),
-
-                  /// 🎨 OPTIONS
-                  ...List.from(
-                    q['options'] ?? [],
-                  ).where((o) => o.toString().trim().isNotEmpty).map((option) {
-                    String selected = (q['selected'] ?? "").toString().trim();
-
-                    String correct = (q['correct'] ?? "").toString().trim();
-
-                    String opt = option.toString().trim();
-
-                    Color color = opt == correct
-                        ? Colors.green
-                        : (opt == selected && selected != correct)
-                        ? Colors.red
-                        : Colors.grey.shade200;
-
-                    return Container(
-                      width: double.infinity,
-                      margin: EdgeInsets.symmetric(vertical: 6),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: color,
-                          foregroundColor: Colors.black,
-                          padding: EdgeInsets.all(14),
-                        ),
-                        onPressed: () {},
-
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: MathText(text: opt),
-                        ),
+                  /// 📄 QUESTION + OPTIONS BOX
+                  Expanded(
+                    flex: 3,
+                    child: Container(
+                      padding: EdgeInsets.all(12),
+                      margin: EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 6,
+                            offset: Offset(0, 3),
+                          )
+                        ],
                       ),
-                    );
-                  }),
+                      child: ListView(
+                        children: [
 
-                  SizedBox(height: 20),
+                          /// QUESTION
+                          MathText(text: q['question'] ?? ""),
 
-                  /// 🟢 SOLUTION
+                          SizedBox(height: 20),
+
+                          /// OPTIONS
+                          ...List.from(
+                            q['options'] ?? [],
+                          ).where((o) => o.toString().trim().isNotEmpty).map((option) {
+                            String selected =
+                                (q['selected'] ?? "").toString().trim();
+
+                            String correct =
+                                (q['correct'] ?? "").toString().trim();
+
+                            String opt = option.toString().trim();
+
+                            Color color = opt == correct
+                                ? Colors.green
+                                : (opt == selected && selected != correct)
+                                    ? Colors.red
+                                    : Colors.grey.shade200;
+
+                            return Container(
+                              width: double.infinity,
+                              margin: EdgeInsets.symmetric(vertical: 6),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: color,
+                                  foregroundColor: Colors.black,
+                                  padding: EdgeInsets.all(14),
+                                ),
+                                onPressed: () {},
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: MathText(text: opt),
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 10),
+
+                  /// 🟢 SOLUTION BOX
                   if (q['description'] != null &&
                       q['description'].toString().trim().isNotEmpty)
-                    ExpansionTile(
-                      tilePadding: EdgeInsets.zero,
-                      childrenPadding: EdgeInsets.all(12),
+                    Expanded(
+                      flex: 2,
+                      child: Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 6,
+                              offset: Offset(0, 3),
+                            )
+                          ],
+                        ),
+                        child: ListView(
+                          children: [
+                            ExpansionTile(
+                              tilePadding: EdgeInsets.zero,
+                              childrenPadding: EdgeInsets.all(12),
 
-                      /// First line as title
-                      title: Text(
-                        q['description'].toString(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
+                              title: Text(
+                                q['description'].toString(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
+
+                              children: [
+                                Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.green),
+                                  ),
+                                  child: MathText(text: q['description']),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          height: MediaQuery.of(context).size.height * 0.35,
-                          padding: EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.green),
-                          ),
-
-                          child: SingleChildScrollView(
-                            child: MathText(text: q['description']),
-                          ),
-                        ),
-                      ],
                     ),
 
-                  Spacer(),
+                  SizedBox(height: 10),
 
                   /// ⬅️➡️ NAVIGATION
                   Row(
