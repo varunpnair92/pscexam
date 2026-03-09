@@ -13,12 +13,12 @@ class ReviewPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Review Exam")),
+      appBar: AppBar(title: const Text("Review Exam")),
       backgroundColor: Colors.grey.shade100,
 
       body: Obx(() {
         if (controller.snapshot.isEmpty) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
 
         return PageView.builder(
@@ -30,101 +30,111 @@ class ReviewPage extends StatelessWidget {
           },
 
           itemBuilder: (context, i) {
+
             var q = controller.snapshot[i.toString()];
 
             return Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
+
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// 🔢 QUESTION NUMBER
+
+                  /// QUESTION NUMBER
                   Text(
                     "Question ${i + 1} / ${controller.snapshot.length}",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold),
                   ),
 
-                  SizedBox(height: 15),
+                  const SizedBox(height: 15),
 
-                  /// 📄 QUESTION + OPTIONS BOX
-                  Expanded(
-                    flex: 3,
-                    child: Container(
-                      padding: EdgeInsets.all(12),
-                      margin: EdgeInsets.only(bottom: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 6,
-                            offset: Offset(0, 3),
-                          )
-                        ],
-                      ),
-                      child: ListView(
-                        children: [
+                  /// QUESTION + OPTIONS (DYNAMIC HEIGHT)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 10),
 
-                          /// QUESTION
-                          MathText(text: q['question'] ?? ""),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
 
-                          SizedBox(height: 20),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 6,
+                          offset: Offset(0, 3),
+                        )
+                      ],
+                    ),
 
-                          /// OPTIONS
-                          ...List.from(
-                            q['options'] ?? [],
-                          ).where((o) => o.toString().trim().isNotEmpty).map((option) {
-                            String selected =
-                                (q['selected'] ?? "").toString().trim();
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
 
-                            String correct =
-                                (q['correct'] ?? "").toString().trim();
+                        /// QUESTION
+                        MathText(text: q['question'] ?? ""),
 
-                            String opt = option.toString().trim();
+                        const SizedBox(height: 15),
 
-                            Color color = opt == correct
-                                ? Colors.green
-                                : (opt == selected && selected != correct)
-                                    ? Colors.red
-                                    : Colors.grey.shade200;
+                        /// OPTIONS
+                        ...List.from(q['options'] ?? [])
+                            .where((o) => o.toString().trim().isNotEmpty)
+                            .map((option) {
 
-                            return Container(
-                              width: double.infinity,
-                              margin: EdgeInsets.symmetric(vertical: 6),
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: color,
-                                  foregroundColor: Colors.black,
-                                  padding: EdgeInsets.all(14),
-                                ),
-                                onPressed: () {},
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: MathText(text: opt),
-                                ),
+                          String selected =
+                              (q['selected'] ?? "").toString().trim();
+
+                          String correct =
+                              (q['correct'] ?? "").toString().trim();
+
+                          String opt = option.toString().trim();
+
+                          Color color = opt == correct
+                              ? Colors.green
+                              : (opt == selected && selected != correct)
+                                  ? Colors.red
+                                  : Colors.grey.shade200;
+
+                          return Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: color,
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.all(14),
                               ),
-                            );
-                          }),
-                        ],
-                      ),
+
+                              onPressed: () {},
+
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: MathText(text: opt),
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
                     ),
                   ),
 
-                  SizedBox(height: 10),
-
-                  /// 🟢 SOLUTION BOX
+                  /// SOLUTION (USES REMAINING SPACE)
                   if (q['description'] != null &&
                       q['description'].toString().trim().isNotEmpty)
+
                     Expanded(
-                      flex: 2,
                       child: Container(
-                        padding: EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(10),
+                        margin: const EdgeInsets.only(bottom: 10),
+
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.grey.shade300),
-                          boxShadow: [
+
+                          boxShadow: const [
                             BoxShadow(
                               color: Colors.black12,
                               blurRadius: 6,
@@ -132,16 +142,15 @@ class ReviewPage extends StatelessWidget {
                             )
                           ],
                         ),
+
                         child: ListView(
                           children: [
+
                             ExpansionTile(
                               tilePadding: EdgeInsets.zero,
-                              childrenPadding: EdgeInsets.all(12),
 
-                              title: Text(
-                                q['description'].toString(),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                              title: const Text(
+                                "View Solution",
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -150,15 +159,20 @@ class ReviewPage extends StatelessWidget {
                               ),
 
                               children: [
+
                                 Container(
                                   width: double.infinity,
-                                  padding: EdgeInsets.all(12),
+                                  padding: const EdgeInsets.all(12),
+
                                   decoration: BoxDecoration(
                                     color: Colors.grey.shade100,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(color: Colors.green),
                                   ),
-                                  child: MathText(text: q['description']),
+
+                                  child: MathText(
+                                    text: q['description'],
+                                  ),
                                 ),
                               ],
                             ),
@@ -167,34 +181,36 @@ class ReviewPage extends StatelessWidget {
                       ),
                     ),
 
-                  SizedBox(height: 10),
-
-                  /// ⬅️➡️ NAVIGATION
+                  /// NAVIGATION BUTTONS
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
                     children: [
+
                       ElevatedButton(
                         onPressed: i > 0
                             ? () {
                                 pageController.previousPage(
-                                  duration: Duration(milliseconds: 300),
+                                  duration: const Duration(milliseconds: 300),
                                   curve: Curves.ease,
                                 );
                               }
                             : null,
-                        child: Text("Previous"),
+
+                        child: const Text("Previous"),
                       ),
 
                       ElevatedButton(
                         onPressed: i < controller.snapshot.length - 1
                             ? () {
                                 pageController.nextPage(
-                                  duration: Duration(milliseconds: 300),
+                                  duration: const Duration(milliseconds: 300),
                                   curve: Curves.ease,
                                 );
                               }
                             : null,
-                        child: Text("Next"),
+
+                        child: const Text("Next"),
                       ),
                     ],
                   ),
