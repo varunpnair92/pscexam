@@ -15,7 +15,6 @@ class ReviewPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text("Review Exam")),
       backgroundColor: Colors.grey.shade100,
-
       body: Obx(() {
         if (controller.snapshot.isEmpty) {
           return const Center(child: CircularProgressIndicator());
@@ -24,116 +23,120 @@ class ReviewPage extends StatelessWidget {
         return PageView.builder(
           controller: pageController,
           itemCount: controller.snapshot.length,
-
           onPageChanged: (index) {
             controller.current.value = index;
           },
-
           itemBuilder: (context, i) {
 
             var q = controller.snapshot[i.toString()];
 
             return Padding(
               padding: const EdgeInsets.all(16),
-
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Stack(
                 children: [
 
-                  /// QUESTION NUMBER
-                  Text(
-                    "Question ${i + 1} / ${controller.snapshot.length}",
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
+                  /// MAIN CONTENT
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
 
-                  const SizedBox(height: 15),
+                      /// QUESTION CIRCLE NAVIGATOR
+                      Row(
+                        children: [
 
-                  /// QUESTION + OPTIONS (DYNAMIC HEIGHT)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 10),
+                          Expanded(
+                            child: SizedBox(
+                              height: 45,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: controller.snapshot.length,
+                                itemBuilder: (context, index) {
 
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
+                                  var item =
+                                      controller.snapshot[index.toString()];
 
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 3),
-                        )
-                      ],
-                    ),
+                                  String selected =
+                                      (item['selected'] ?? "")
+                                          .toString()
+                                          .trim();
 
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                                  String correct =
+                                      (item['correct'] ?? "")
+                                          .toString()
+                                          .trim();
 
-                        /// QUESTION
-                        MathText(text: q['question'] ?? ""),
+                                  Color color;
 
-                        const SizedBox(height: 15),
+                                  if (selected.isEmpty) {
+                                    color = Colors.grey;
+                                  } else if (selected == correct) {
+                                    color = Colors.green;
+                                  } else {
+                                    color = Colors.red;
+                                  }
 
-                        /// OPTIONS
-                        ...List.from(q['options'] ?? [])
-                            .where((o) => o.toString().trim().isNotEmpty)
-                            .map((option) {
+                                  return Obx(() {
 
-                          String selected =
-                              (q['selected'] ?? "").toString().trim();
+                                    bool isCurrent =
+                                        index == controller.current.value;
 
-                          String correct =
-                              (q['correct'] ?? "").toString().trim();
-
-                          String opt = option.toString().trim();
-
-                          Color color = opt == correct
-                              ? Colors.green
-                              : (opt == selected && selected != correct)
-                                  ? Colors.red
-                                  : Colors.grey.shade200;
-
-                          return Container(
-                            width: double.infinity,
-                            margin: const EdgeInsets.symmetric(vertical: 6),
-
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: color,
-                                foregroundColor: Colors.black,
-                                padding: const EdgeInsets.all(14),
-                              ),
-
-                              onPressed: () {},
-
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: MathText(text: opt),
+                                    return GestureDetector(
+                                      onTap: () {
+                                        pageController.jumpToPage(index);
+                                        controller.current.value = index;
+                                      },
+                                      child: Container(
+                                        width: 38,
+                                        height: 38,
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 4),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: color,
+                                          border: isCurrent
+                                              ? Border.all(
+                                                  color: Colors.black,
+                                                  width: 3)
+                                              : null,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            "${index + 1}",
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  });
+                                },
                               ),
                             ),
-                          );
-                        }),
-                      ],
-                    ),
-                  ),
+                          ),
 
-                  /// SOLUTION (USES REMAINING SPACE)
-                  if (q['description'] != null &&
-                      q['description'].toString().trim().isNotEmpty)
+                          /// TOTAL QUESTIONS
+                          Text(
+                            "Total : ${controller.snapshot.length}",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
 
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
+                      const SizedBox(height: 15),
+
+                      /// QUESTION + OPTIONS
+                      Container(
+                        padding: const EdgeInsets.all(12),
                         margin: const EdgeInsets.only(bottom: 10),
-
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.grey.shade300),
-
                           boxShadow: const [
                             BoxShadow(
                               color: Colors.black12,
@@ -142,78 +145,174 @@ class ReviewPage extends StatelessWidget {
                             )
                           ],
                         ),
-
-                        child: ListView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
 
-                            ExpansionTile(
-                              tilePadding: EdgeInsets.zero,
+                            /// QUESTION
+                            MathText(text: q['question'] ?? ""),
 
-                              title: const Text(
-                                "View Solution",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green,
+                            const SizedBox(height: 15),
+
+                            /// OPTIONS
+                            ...List.from(q['options'] ?? [])
+                                .where((o) => o.toString().trim().isNotEmpty)
+                                .map((option) {
+
+                              String selected =
+                                  (q['selected'] ?? "").toString().trim();
+
+                              String correct =
+                                  (q['correct'] ?? "").toString().trim();
+
+                              String opt = option.toString().trim();
+
+                              Color color = opt == correct
+                                  ? Colors.green
+                                  : (opt == selected && selected != correct)
+                                      ? Colors.red
+                                      : Colors.grey.shade200;
+
+                              return Container(
+                                width: double.infinity,
+                                margin:
+                                    const EdgeInsets.symmetric(vertical: 6),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: color,
+                                    foregroundColor: Colors.black,
+                                    padding: const EdgeInsets.all(14),
+                                  ),
+                                  onPressed: () {},
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: MathText(text: opt),
+                                  ),
                                 ),
-                              ),
+                              );
+                            }),
+                          ],
+                        ),
+                      ),
 
+                      const Spacer(),
+
+                      /// NAVIGATION BUTTONS
+                      Row(
+                        mainAxisAlignment:
+                            MainAxisAlignment.spaceBetween,
+                        children: [
+
+                          ElevatedButton(
+                            onPressed: i > 0
+                                ? () {
+                                    pageController.previousPage(
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      curve: Curves.ease,
+                                    );
+                                  }
+                                : null,
+                            child: const Text("Previous"),
+                          ),
+
+                          ElevatedButton(
+                            onPressed: i <
+                                    controller.snapshot.length - 1
+                                ? () {
+                                    pageController.nextPage(
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      curve: Curves.ease,
+                                    );
+                                  }
+                                : null,
+                            child: const Text("Next"),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  /// DRAGGABLE SOLUTION PANEL
+                  if (q['description'] != null &&
+                      q['description'].toString().trim().isNotEmpty)
+
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: DraggableScrollableSheet(
+                        initialChildSize: 0.15,
+                        minChildSize: 0.1,
+                        maxChildSize: 0.9,
+                        builder: (context, scrollController) {
+
+                          return Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius:
+                                  const BorderRadius.vertical(
+                                      top: Radius.circular(16)),
+                              border: Border.all(
+                                  color: Colors.grey.shade300),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 8,
+                                )
+                              ],
+                            ),
+                            child: ListView(
+                              controller: scrollController,
                               children: [
+
+                                /// DRAG HANDLE
+                                Center(
+                                  child: Container(
+                                    width: 40,
+                                    height: 4,
+                                    margin:
+                                        const EdgeInsets.only(bottom: 10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey,
+                                      borderRadius:
+                                          BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+
+                                const Text(
+                                  "View Solution",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 10),
 
                                 Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.all(12),
-
+                                  padding:
+                                      const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
                                     color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.green),
+                                    borderRadius:
+                                        BorderRadius.circular(8),
+                                    border:
+                                        Border.all(color: Colors.green),
                                   ),
-
                                   child: MathText(
                                     text: q['description'],
                                   ),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
                     ),
-
-                  /// NAVIGATION BUTTONS
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                    children: [
-
-                      ElevatedButton(
-                        onPressed: i > 0
-                            ? () {
-                                pageController.previousPage(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.ease,
-                                );
-                              }
-                            : null,
-
-                        child: const Text("Previous"),
-                      ),
-
-                      ElevatedButton(
-                        onPressed: i < controller.snapshot.length - 1
-                            ? () {
-                                pageController.nextPage(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.ease,
-                                );
-                              }
-                            : null,
-
-                        child: const Text("Next"),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             );

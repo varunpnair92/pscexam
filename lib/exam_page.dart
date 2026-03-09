@@ -41,7 +41,6 @@ class ExamPage extends StatelessWidget {
         ),
         actions: [
           Icon(Icons.timer),
-
           Padding(
             padding: EdgeInsets.all(12),
             child: Obx(() {
@@ -67,6 +66,66 @@ class ExamPage extends StatelessWidget {
 
         return Column(
           children: [
+
+            /// 🔵 QUESTION CIRCLE NAVIGATOR
+            Container(
+              height: 50,
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: controller.questions.length,
+                itemBuilder: (context, index) {
+
+                  return Obx(() {
+
+                    bool isCurrent = index == controller.current.value;
+
+                    bool isMarked = controller.marked.contains(index);
+
+                    String? ans = controller.answers[index];
+
+                    Color color;
+
+                    if (isMarked) {
+                      color = Colors.orange;
+                    } else if (ans == null || ans.isEmpty) {
+                      color = Colors.grey;
+                    } else {
+                      color = Colors.green;
+                    }
+
+                    return GestureDetector(
+                      onTap: () {
+                        controller.current.value = index;
+                        controller.saveProgress();
+                      },
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        margin: EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: color,
+                          border: isCurrent
+                              ? Border.all(color: Colors.black, width: 3)
+                              : null,
+                        ),
+                        child: Center(
+                          child: Text(
+                            "${index + 1}",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  });
+                },
+              ),
+            ),
+
             // 🧾 MCQ HEADER
             Container(
               padding: EdgeInsets.all(12),
@@ -178,8 +237,6 @@ class ExamPage extends StatelessWidget {
                 );
               },
             ),
-
-            // 🔥 FINISH BUTTON
           ],
         ),
       ),
