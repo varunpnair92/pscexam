@@ -8,6 +8,9 @@ class ExamPage extends StatelessWidget {
   // 🔥 USE EXISTING CONTROLLER
   final TestController controller = Get.find();
 
+  /// 🔹 SCROLL CONTROLLER FOR QUESTION NAVIGATOR
+  final ScrollController circleController = ScrollController();
+
   @override
   Widget build(BuildContext context) {
     final args = Get.arguments;
@@ -41,6 +44,7 @@ class ExamPage extends StatelessWidget {
         ),
         actions: [
           Icon(Icons.timer),
+
           Padding(
             padding: EdgeInsets.all(12),
             child: Obx(() {
@@ -64,14 +68,26 @@ class ExamPage extends StatelessWidget {
 
         var q = controller.questions[controller.current.value];
 
+        /// 🔹 AUTO SCROLL NAVIGATOR WHEN QUESTION CHANGES
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (circleController.hasClients) {
+            circleController.animateTo(
+              (controller.current.value * 46).toDouble(),
+              duration: Duration(milliseconds: 300),
+              curve: Curves.ease,
+            );
+          }
+        });
+
         return Column(
           children: [
 
-            /// 🔵 QUESTION CIRCLE NAVIGATOR
+            /// 🔵 QUESTION NAVIGATOR (CIRCLES)
             Container(
               height: 50,
               padding: EdgeInsets.symmetric(horizontal: 8),
               child: ListView.builder(
+                controller: circleController,
                 scrollDirection: Axis.horizontal,
                 itemCount: controller.questions.length,
                 itemBuilder: (context, index) {
@@ -237,6 +253,8 @@ class ExamPage extends StatelessWidget {
                 );
               },
             ),
+
+            // 🔥 FINISH BUTTON
           ],
         ),
       ),

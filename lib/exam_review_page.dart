@@ -10,11 +10,15 @@ class ReviewPage extends StatelessWidget {
 
   final PageController pageController = PageController();
 
+  /// 🔥 SCROLL CONTROLLER FOR PALETTE
+  final ScrollController circleController = ScrollController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Review Exam")),
       backgroundColor: Colors.grey.shade100,
+
       body: Obx(() {
         if (controller.snapshot.isEmpty) {
           return const Center(child: CircularProgressIndicator());
@@ -23,47 +27,58 @@ class ReviewPage extends StatelessWidget {
         return PageView.builder(
           controller: pageController,
           itemCount: controller.snapshot.length,
+
           onPageChanged: (index) {
+
             controller.current.value = index;
+
+            /// 🔥 AUTO MOVE PALETTE
+            if (circleController.hasClients) {
+              circleController.animateTo(
+                (index * 46).toDouble(),
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.ease,
+              );
+            }
           },
+
           itemBuilder: (context, i) {
 
             var q = controller.snapshot[i.toString()];
 
             return Padding(
               padding: const EdgeInsets.all(16),
+
               child: Stack(
                 children: [
 
-                  /// MAIN CONTENT
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
 
-                      /// QUESTION CIRCLE NAVIGATOR
+                      /// 🔵 QUESTION PALETTE + COUNT
                       Row(
                         children: [
 
+                          /// QUESTION CIRCLES
                           Expanded(
                             child: SizedBox(
                               height: 45,
                               child: ListView.builder(
+                                controller: circleController,
                                 scrollDirection: Axis.horizontal,
                                 itemCount: controller.snapshot.length,
+
                                 itemBuilder: (context, index) {
 
                                   var item =
                                       controller.snapshot[index.toString()];
 
                                   String selected =
-                                      (item['selected'] ?? "")
-                                          .toString()
-                                          .trim();
+                                      (item['selected'] ?? "").toString().trim();
 
                                   String correct =
-                                      (item['correct'] ?? "")
-                                          .toString()
-                                          .trim();
+                                      (item['correct'] ?? "").toString().trim();
 
                                   Color color;
 
@@ -82,23 +97,37 @@ class ReviewPage extends StatelessWidget {
 
                                     return GestureDetector(
                                       onTap: () {
+
                                         pageController.jumpToPage(index);
+
                                         controller.current.value = index;
+
+                                        /// 🔥 AUTO SCROLL WHEN CLICK
+                                        if (circleController.hasClients) {
+                                          circleController.animateTo(
+                                            (index * 46).toDouble(),
+                                            duration:
+                                                const Duration(milliseconds: 300),
+                                            curve: Curves.ease,
+                                          );
+                                        }
                                       },
+
                                       child: Container(
                                         width: 38,
                                         height: 38,
                                         margin: const EdgeInsets.symmetric(
                                             horizontal: 4),
+
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
                                           color: color,
                                           border: isCurrent
                                               ? Border.all(
-                                                  color: Colors.black,
-                                                  width: 3)
+                                                  color: Colors.black, width: 3)
                                               : null,
                                         ),
+
                                         child: Center(
                                           child: Text(
                                             "${index + 1}",
@@ -116,14 +145,17 @@ class ReviewPage extends StatelessWidget {
                             ),
                           ),
 
-                          /// TOTAL QUESTIONS
-                          Text(
-                            "Total : ${controller.snapshot.length}",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          /// QUESTION COUNT
+                          Obx(() => Padding(
+                                padding: const EdgeInsets.only(left: 10),
+                                child: Text(
+                                  "${controller.current.value + 1}/${controller.snapshot.length}",
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              )),
                         ],
                       ),
 
@@ -133,10 +165,12 @@ class ReviewPage extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(12),
                         margin: const EdgeInsets.only(bottom: 10),
+
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.grey.shade300),
+
                           boxShadow: const [
                             BoxShadow(
                               color: Colors.black12,
@@ -145,6 +179,7 @@ class ReviewPage extends StatelessWidget {
                             )
                           ],
                         ),
+
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -175,15 +210,17 @@ class ReviewPage extends StatelessWidget {
 
                               return Container(
                                 width: double.infinity,
-                                margin:
-                                    const EdgeInsets.symmetric(vertical: 6),
+                                margin: const EdgeInsets.symmetric(vertical: 6),
+
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: color,
                                     foregroundColor: Colors.black,
                                     padding: const EdgeInsets.all(14),
                                   ),
+
                                   onPressed: () {},
+
                                   child: Align(
                                     alignment: Alignment.centerLeft,
                                     child: MathText(text: opt),
@@ -199,8 +236,8 @@ class ReviewPage extends StatelessWidget {
 
                       /// NAVIGATION BUTTONS
                       Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
                         children: [
 
                           ElevatedButton(
@@ -213,12 +250,12 @@ class ReviewPage extends StatelessWidget {
                                     );
                                   }
                                 : null,
+
                             child: const Text("Previous"),
                           ),
 
                           ElevatedButton(
-                            onPressed: i <
-                                    controller.snapshot.length - 1
+                            onPressed: i < controller.snapshot.length - 1
                                 ? () {
                                     pageController.nextPage(
                                       duration:
@@ -227,6 +264,7 @@ class ReviewPage extends StatelessWidget {
                                     );
                                   }
                                 : null,
+
                             child: const Text("Next"),
                           ),
                         ],
@@ -244,17 +282,18 @@ class ReviewPage extends StatelessWidget {
                         initialChildSize: 0.15,
                         minChildSize: 0.1,
                         maxChildSize: 0.9,
+
                         builder: (context, scrollController) {
 
                           return Container(
                             padding: const EdgeInsets.all(10),
+
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius:
-                                  const BorderRadius.vertical(
-                                      top: Radius.circular(16)),
-                              border: Border.all(
-                                  color: Colors.grey.shade300),
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(16)),
+                              border: Border.all(color: Colors.grey.shade300),
+
                               boxShadow: const [
                                 BoxShadow(
                                   color: Colors.black26,
@@ -262,21 +301,19 @@ class ReviewPage extends StatelessWidget {
                                 )
                               ],
                             ),
+
                             child: ListView(
                               controller: scrollController,
                               children: [
 
-                                /// DRAG HANDLE
                                 Center(
                                   child: Container(
                                     width: 40,
                                     height: 4,
-                                    margin:
-                                        const EdgeInsets.only(bottom: 10),
+                                    margin: const EdgeInsets.only(bottom: 10),
                                     decoration: BoxDecoration(
                                       color: Colors.grey,
-                                      borderRadius:
-                                          BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
                                 ),
@@ -294,15 +331,14 @@ class ReviewPage extends StatelessWidget {
 
                                 Container(
                                   width: double.infinity,
-                                  padding:
-                                      const EdgeInsets.all(12),
+                                  padding: const EdgeInsets.all(12),
+
                                   decoration: BoxDecoration(
                                     color: Colors.grey.shade100,
-                                    borderRadius:
-                                        BorderRadius.circular(8),
-                                    border:
-                                        Border.all(color: Colors.green),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.green),
                                   ),
+
                                   child: MathText(
                                     text: q['description'],
                                   ),
