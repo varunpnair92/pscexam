@@ -7,10 +7,12 @@ class PaletteBottomSheet extends StatelessWidget {
 
   PaletteBottomSheet({super.key});
 
+  /// ALL QUESTIONS
   List<int> getAll() {
     return List.generate(controller.questions.length, (i) => i);
   }
 
+  /// ANSWERED QUESTIONS
   List<int> getAnswered() {
     return controller.answers.entries
         .where((e) => e.value.isNotEmpty)
@@ -18,6 +20,7 @@ class PaletteBottomSheet extends StatelessWidget {
         .toList();
   }
 
+  /// NOT ANSWERED
   List<int> getNotAnswered() {
     return List.generate(controller.questions.length, (i) => i)
         .where((i) =>
@@ -27,10 +30,12 @@ class PaletteBottomSheet extends StatelessWidget {
         .toList();
   }
 
+  /// MARKED QUESTIONS
   List<int> getMarked() {
     return controller.marked.toList();
   }
 
+  /// GRID BUILDER
   Widget buildGrid(List<int> list) {
     return GridView.builder(
       padding: const EdgeInsets.all(12),
@@ -40,42 +45,64 @@ class PaletteBottomSheet extends StatelessWidget {
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
       ),
-      itemBuilder: (context, i) {
+      itemBuilder: (_, i) {
         int qIndex = list[i];
 
-        bool isMarked = controller.marked.contains(qIndex);
-        String? ans = controller.answers[qIndex];
-
-        Color color;
-
-        if (isMarked) {
-          color = Colors.orange;
-        } else if (ans == null || ans.isEmpty) {
-          color = Colors.grey;
-        } else {
-          color = Colors.green;
-        }
-
-        return GestureDetector(
-          onTap: () {
-            controller.current.value = qIndex;
-            Get.back();
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
+        return Obx(() {
+          return GestureDetector(
+            onTap: () {
+              controller.jumpTo(qIndex);
+              Get.back();
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                color: controller.getColor(qIndex),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: Text(
+                  "${qIndex + 1}",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ),
-            child: Center(
-              child: Text(
-                "${qIndex + 1}",
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold),
+          );
+        });
+      },
+    );
+  }
+
+  /// CIRCLE WIDGET FOR SUBMIT DIALOG
+  Widget buildCircle(String title, int count, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color,
+          ),
+          child: Center(
+            child: Text(
+              "$count",
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
             ),
           ),
-        );
-      },
+        ),
+        const SizedBox(width: 15),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 16),
+        )
+      ],
     );
   }
 
@@ -84,9 +111,16 @@ class PaletteBottomSheet extends StatelessWidget {
     return DefaultTabController(
       length: 4,
       child: Container(
-        height: Get.height * 0.6,
+        height: 450,
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            /// TITLE
+            const Text(
+              "Exam Overview",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+
             const SizedBox(height: 10),
 
             /// TABS
@@ -100,6 +134,9 @@ class PaletteBottomSheet extends StatelessWidget {
               ],
             ),
 
+            const SizedBox(height: 10),
+
+            /// TAB CONTENT
             Expanded(
               child: TabBarView(
                 children: [
@@ -132,6 +169,101 @@ class PaletteBottomSheet extends StatelessWidget {
                 ),
               );
             }),
+
+            const SizedBox(height: 10),
+
+            /// BUTTON ROW
+            Row(
+              children: [
+                /// EXIT & SAVE
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    onPressed: () {
+                      Get.defaultDialog(
+                        title: "Exit Exam",
+                        middleText:
+                            "Progress will be saved. You can resume later.",
+                        textCancel: "Cancel",
+                        textConfirm: "Exit",
+                        onConfirm: () async {
+                          Get.back();
+
+                          await controller.saveProgress();
+
+                          controller.timer?.cancel();
+
+                          Get.offAllNamed('/examlist');
+                        },
+                      );
+                    },
+                    child: const Text("EXIT & SAVE"),
+                  ),
+                ),
+
+                const SizedBox(width: 10),
+
+                /// FINISH & SUBMIT
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    onPressed: () {
+                      int total = controller.questions.length;
+                      int answered = controller.answers.length;
+                      int review = controller.marked.length;
+                      int notAnswered = total - answered;
+
+                      Get.dialog(
+                        AlertDialog(
+                          title: const Text("Submit Exam"),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              buildCircle("Answered", answered, Colors.green),
+                              const SizedBox(height: 10),
+                              buildCircle(
+                                  "Not Answered", notAnswered, Colors.grey),
+                              const SizedBox(height: 10),
+                              buildCircle("Review", review, Colors.orange),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Get.back();
+                              },
+                              child: const Text("Cancel"),
+                            ),
+                            ElevatedButton(
+                              onPressed: () async {
+                                Get.back();
+
+                                controller.timer?.cancel();
+
+                                await controller.submitResult();
+
+                                await controller
+                                    .clearProgress(controller.examId);
+
+                                Get.offAllNamed('/analysis');
+                              },
+                              child: const Text("Final Submit"),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    child: const Text("FINISH"),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
