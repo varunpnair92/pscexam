@@ -5,121 +5,135 @@ import 'test_controller.dart';
 class PaletteBottomSheet extends StatelessWidget {
   final TestController controller = Get.find();
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 450,
-      padding: EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Text(
-            "Exam Overview",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+  PaletteBottomSheet({super.key});
 
-          SizedBox(height: 20),
+  List<int> getAll() {
+    return List.generate(controller.questions.length, (i) => i);
+  }
 
-          Expanded(
-            child: Obx(
-              () => GridView.builder(
-                itemCount: controller.questions.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 6,
-                ),
-                itemBuilder: (_, i) {
-                  return GestureDetector(
-                    onTap: () {
-                      controller.jumpTo(i);
-                      Get.back();
-                    },
-                    child: Container(
-                      margin: EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: controller.getColor(i),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Center(
-                        child: Text(
-                          "${i + 1}",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  );
-                },
+  List<int> getAnswered() {
+    return controller.answers.entries
+        .where((e) => e.value.isNotEmpty)
+        .map((e) => e.key)
+        .toList();
+  }
+
+  List<int> getNotAnswered() {
+    return List.generate(controller.questions.length, (i) => i)
+        .where((i) =>
+            !controller.answers.containsKey(i) ||
+            controller.answers[i] == null ||
+            controller.answers[i]!.isEmpty)
+        .toList();
+  }
+
+  List<int> getMarked() {
+    return controller.marked.toList();
+  }
+
+  Widget buildGrid(List<int> list) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: list.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 6,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemBuilder: (context, i) {
+        int qIndex = list[i];
+
+        bool isMarked = controller.marked.contains(qIndex);
+        String? ans = controller.answers[qIndex];
+
+        Color color;
+
+        if (isMarked) {
+          color = Colors.orange;
+        } else if (ans == null || ans.isEmpty) {
+          color = Colors.grey;
+        } else {
+          color = Colors.green;
+        }
+
+        return GestureDetector(
+          onTap: () {
+            controller.current.value = qIndex;
+            Get.back();
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                "${qIndex + 1}",
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
           ),
+        );
+      },
+    );
+  }
 
-          Row(
-            children: [
-              // 🟡 EXIT & SAVE
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    minimumSize: Size(double.infinity, 50),
-                  ),
-                  onPressed: () {
-                    Get.defaultDialog(
-                      title: "Exit Exam",
-                      middleText:
-                          "Progress will be saved. You can resume later.",
-                      textCancel: "Cancel",
-                      textConfirm: "Exit",
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 4,
+      child: Container(
+        height: Get.height * 0.6,
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
 
-                      onConfirm: () async {
-                        Get.back();
+            /// TABS
+            const TabBar(
+              labelColor: Colors.black,
+              tabs: [
+                Tab(text: "*"),
+                Tab(text: "Answered"),
+                Tab(text: "Not Answered"),
+                Tab(text: "Review"),
+              ],
+            ),
 
-                        // ⭐ SAVE PROGRESS
-                        await controller.saveProgress();
-
-                        // ⭐ STOP TIMER
-                        controller.timer?.cancel();
-
-                        // ⭐ GO TO EXAM LIST
-                        Get.offAllNamed('/examlist');
-                      },
-                    );
-                  },
-                  child: Text("EXIT & SAVE"),
-                ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  buildGrid(getAll()),
+                  buildGrid(getAnswered()),
+                  buildGrid(getNotAnswered()),
+                  buildGrid(getMarked()),
+                ],
               ),
+            ),
 
-              SizedBox(width: 10),
+            /// SUMMARY COUNTS
+            Obx(() {
+              int total = controller.questions.length;
+              int answered = controller.answers.length;
+              int marked = controller.marked.length;
+              int notAnswered = total - answered;
 
-              // 🔴 FINISH & SUBMIT
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    minimumSize: Size(double.infinity, 50),
-                  ),
-                  onPressed: () {
-                    Get.defaultDialog(
-                      title: "Submit Exam",
-                      middleText: "Are you sure you want to finish?",
-                      textCancel: "No",
-                      textConfirm: "Yes",
-                      onConfirm: () async {
-                        Get.back();
-
-                        controller.timer?.cancel();
-
-                        await controller.submitResult();
-
-                        await controller.clearProgress(controller.examId);
-
-                        Get.offAllNamed('/analysis');
-                      },
-                    );
-                  },
-                  child: Text("FINISH"),
+              return Container(
+                padding: const EdgeInsets.all(12),
+                color: Colors.grey.shade200,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Text("Total: $total"),
+                    Text("Answered: $answered"),
+                    Text("Not Answered: $notAnswered"),
+                    Text("Review: $marked"),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        ],
+              );
+            }),
+          ],
+        ),
       ),
     );
   }

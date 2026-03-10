@@ -11,6 +11,8 @@ class ExamPage extends StatelessWidget {
   /// 🔹 SCROLL CONTROLLER FOR QUESTION NAVIGATOR
   final ScrollController circleController = ScrollController();
 
+  ExamPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     final args = Get.arguments;
@@ -81,7 +83,6 @@ class ExamPage extends StatelessWidget {
 
         return Column(
           children: [
-
             /// 🔵 QUESTION NAVIGATOR (CIRCLES)
             Container(
               height: 50,
@@ -91,9 +92,7 @@ class ExamPage extends StatelessWidget {
                 scrollDirection: Axis.horizontal,
                 itemCount: controller.questions.length,
                 itemBuilder: (context, index) {
-
                   return Obx(() {
-
                     bool isCurrent = index == controller.current.value;
 
                     bool isMarked = controller.marked.contains(index);
