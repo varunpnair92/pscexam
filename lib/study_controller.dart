@@ -82,9 +82,20 @@ class StudyController extends GetxController {
     /// LEAF
     final navigation = item["navigation"];
 
+    /// 🔥 KEYWORD LIST FROM JSON
+    List<String> keywords = List<String>.from(item["keywords"] ?? []);
+
+    /// 🔥 LAST KEYWORD FOR DESCRIPTION
+    String lastKeyword = keywords.isNotEmpty ? keywords.last : name;
+
+    /// IF NO KEYWORDS FOUND
+    if (keywords.isEmpty) {
+      keywords = [name];
+    }
+
     if (navigation == "studyQuestion") {
-      fetchQuestionsByKeyword(name);
-      fetchKeywordDescription(name);
+      fetchQuestionsByKeyword(keywords);
+      fetchKeywordDescription(lastKeyword);
 
       Get.toNamed("/studyQuestion");
 
@@ -92,8 +103,8 @@ class StudyController extends GetxController {
     }
 
     /// studyFull
-    fetchQuestionsByKeyword(name);
-    fetchKeywordDescription(name);
+    fetchQuestionsByKeyword(keywords);
+    fetchKeywordDescription(lastKeyword);
 
     showQuestions.value = true;
 
@@ -120,13 +131,11 @@ class StudyController extends GetxController {
   }
 
   /// QUESTIONS
-  Future<void> fetchQuestionsByKeyword(String keyword) async {
+  Future<void> fetchQuestionsByKeyword(List<String> keywords) async {
     final res = await http.post(
       Uri.parse(AppConfig.keywordQuestions),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "keywords": [keyword],
-      }),
+      body: jsonEncode({"keywords": keywords}),
     );
 
     if (res.statusCode == 200) {
