@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:psc_exam/home_page.dart';
 import 'package:psc_exam/math_formula.dart';
 import 'test_controller.dart';
 
@@ -29,7 +30,6 @@ class ReviewPage extends StatelessWidget {
           itemCount: controller.snapshot.length,
 
           onPageChanged: (index) {
-
             controller.current.value = index;
 
             /// 🔥 AUTO MOVE PALETTE
@@ -43,7 +43,6 @@ class ReviewPage extends StatelessWidget {
           },
 
           itemBuilder: (context, i) {
-
             var q = controller.snapshot[i.toString()];
 
             return Padding(
@@ -51,15 +50,12 @@ class ReviewPage extends StatelessWidget {
 
               child: Stack(
                 children: [
-
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
                       /// 🔵 QUESTION PALETTE + COUNT
                       Row(
                         children: [
-
                           /// QUESTION CIRCLES
                           Expanded(
                             child: SizedBox(
@@ -70,15 +66,16 @@ class ReviewPage extends StatelessWidget {
                                 itemCount: controller.snapshot.length,
 
                                 itemBuilder: (context, index) {
-
                                   var item =
                                       controller.snapshot[index.toString()];
 
-                                  String selected =
-                                      (item['selected'] ?? "").toString().trim();
+                                  String selected = (item['selected'] ?? "")
+                                      .toString()
+                                      .trim();
 
-                                  String correct =
-                                      (item['correct'] ?? "").toString().trim();
+                                  String correct = (item['correct'] ?? "")
+                                      .toString()
+                                      .trim();
 
                                   Color color;
 
@@ -91,13 +88,11 @@ class ReviewPage extends StatelessWidget {
                                   }
 
                                   return Obx(() {
-
                                     bool isCurrent =
                                         index == controller.current.value;
 
                                     return GestureDetector(
                                       onTap: () {
-
                                         pageController.jumpToPage(index);
 
                                         controller.current.value = index;
@@ -106,8 +101,9 @@ class ReviewPage extends StatelessWidget {
                                         if (circleController.hasClients) {
                                           circleController.animateTo(
                                             (index * 46).toDouble(),
-                                            duration:
-                                                const Duration(milliseconds: 300),
+                                            duration: const Duration(
+                                              milliseconds: 300,
+                                            ),
                                             curve: Curves.ease,
                                           );
                                         }
@@ -117,14 +113,17 @@ class ReviewPage extends StatelessWidget {
                                         width: 38,
                                         height: 38,
                                         margin: const EdgeInsets.symmetric(
-                                            horizontal: 4),
+                                          horizontal: 4,
+                                        ),
 
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
                                           color: color,
                                           border: isCurrent
                                               ? Border.all(
-                                                  color: Colors.black, width: 3)
+                                                  color: Colors.black,
+                                                  width: 3,
+                                                )
                                               : null,
                                         ),
 
@@ -146,16 +145,18 @@ class ReviewPage extends StatelessWidget {
                           ),
 
                           /// QUESTION COUNT
-                          Obx(() => Padding(
-                                padding: const EdgeInsets.only(left: 10),
-                                child: Text(
-                                  "${controller.current.value + 1}/${controller.snapshot.length}",
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          Obx(
+                            () => Padding(
+                              padding: const EdgeInsets.only(left: 10),
+                              child: Text(
+                                "${controller.current.value + 1}/${controller.snapshot.length}",
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              )),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
 
@@ -176,37 +177,39 @@ class ReviewPage extends StatelessWidget {
                               color: Colors.black12,
                               blurRadius: 6,
                               offset: Offset(0, 3),
-                            )
+                            ),
                           ],
                         ),
 
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-
                             /// QUESTION
                             MathText(text: q['question'] ?? ""),
 
                             const SizedBox(height: 15),
 
                             /// OPTIONS
-                            ...List.from(q['options'] ?? [])
-                                .where((o) => o.toString().trim().isNotEmpty)
-                                .map((option) {
+                            ...List.from(
+                              q['options'] ?? [],
+                            ).where((o) => o.toString().trim().isNotEmpty).map((
+                              option,
+                            ) {
+                              String selected = (q['selected'] ?? "")
+                                  .toString()
+                                  .trim();
 
-                              String selected =
-                                  (q['selected'] ?? "").toString().trim();
-
-                              String correct =
-                                  (q['correct'] ?? "").toString().trim();
+                              String correct = (q['correct'] ?? "")
+                                  .toString()
+                                  .trim();
 
                               String opt = option.toString().trim();
 
                               Color color = opt == correct
                                   ? Colors.green
                                   : (opt == selected && selected != correct)
-                                      ? Colors.red
-                                      : Colors.grey.shade200;
+                                  ? Colors.red
+                                  : Colors.grey.shade200;
 
                               return Container(
                                 width: double.infinity,
@@ -239,13 +242,13 @@ class ReviewPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
                         children: [
-
                           ElevatedButton(
                             onPressed: i > 0
                                 ? () {
                                     pageController.previousPage(
-                                      duration:
-                                          const Duration(milliseconds: 300),
+                                      duration: const Duration(
+                                        milliseconds: 300,
+                                      ),
                                       curve: Curves.ease,
                                     );
                                   }
@@ -258,8 +261,9 @@ class ReviewPage extends StatelessWidget {
                             onPressed: i < controller.snapshot.length - 1
                                 ? () {
                                     pageController.nextPage(
-                                      duration:
-                                          const Duration(milliseconds: 300),
+                                      duration: const Duration(
+                                        milliseconds: 300,
+                                      ),
                                       curve: Curves.ease,
                                     );
                                   }
@@ -275,7 +279,6 @@ class ReviewPage extends StatelessWidget {
                   /// DRAGGABLE SOLUTION PANEL
                   if (q['description'] != null &&
                       q['description'].toString().trim().isNotEmpty)
-
                     Align(
                       alignment: Alignment.bottomCenter,
                       child: DraggableScrollableSheet(
@@ -284,28 +287,24 @@ class ReviewPage extends StatelessWidget {
                         maxChildSize: 0.9,
 
                         builder: (context, scrollController) {
-
                           return Container(
                             padding: const EdgeInsets.all(10),
 
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(16)),
+                                top: Radius.circular(16),
+                              ),
                               border: Border.all(color: Colors.grey.shade300),
 
                               boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black26,
-                                  blurRadius: 8,
-                                )
+                                BoxShadow(color: Colors.black26, blurRadius: 8),
                               ],
                             ),
 
                             child: ListView(
                               controller: scrollController,
                               children: [
-
                                 Center(
                                   child: Container(
                                     width: 40,
@@ -339,9 +338,7 @@ class ReviewPage extends StatelessWidget {
                                     border: Border.all(color: Colors.green),
                                   ),
 
-                                  child: MathText(
-                                    text: q['description'],
-                                  ),
+                                  child: MathText(text: q['description']),
                                 ),
                               ],
                             ),
@@ -355,6 +352,20 @@ class ReviewPage extends StatelessWidget {
           },
         );
       }),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        onTap: (i) {
+          if (i == 0) {
+            Get.offAll(() => HomePage(), arguments: {"tab": 0});
+          } else if (i == 1) {
+            Get.offAll(() => HomePage(), arguments: {"tab": 1});
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.quiz), label: "Exam"),
+          BottomNavigationBarItem(icon: Icon(Icons.school), label: "Study"),
+        ],
+      ),
     );
   }
 }

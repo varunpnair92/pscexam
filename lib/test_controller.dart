@@ -43,8 +43,9 @@ class TestController extends GetxController {
 
     if (res.statusCode == 200) {
       List data = json.decode(res.body);
-      questions.value =
-    List<Question>.from(data.map((e) => Question.fromJson(e)));
+      questions.value = List<Question>.from(
+        data.map((e) => Question.fromJson(e)),
+      );
     }
 
     remainingSeconds.value = 0;
@@ -158,25 +159,24 @@ class TestController extends GetxController {
   // ================= PALETTE COLORS =================
 
   Color getColor(int index) {
+    // current question
+    if (current.value == index) {
+      return Colors.blue;
+    }
 
-  // current question
-  if (current.value == index) {
-    return Colors.blue;
+    // marked for review
+    if (marked.contains(index)) {
+      return Colors.orange;
+    }
+
+    // answered
+    if (answers.containsKey(index)) {
+      return Colors.green;
+    }
+
+    // unanswered
+    return Colors.grey;
   }
-
-  // marked for review
-  if (marked.contains(index)) {
-    return Colors.orange;
-  }
-
-  // answered
-  if (answers.containsKey(index)) {
-    return Colors.green;
-  }
-
-  // unanswered
-  return Colors.grey;
-}
 
   // ================= REVIEW COLOR =================
 
@@ -201,7 +201,7 @@ class TestController extends GetxController {
         "options": questions[i].options,
         "selected": answers[i],
         "correct": questions[i].answer,
-        "description": questions[i].description
+        "description": questions[i].description,
       };
     }
 
@@ -211,30 +211,28 @@ class TestController extends GetxController {
   // ================= SUBMIT RESULT =================
 
   Future<void> submitResult() async {
+    final snap = buildSnapshot();
 
-  final snap = buildSnapshot();
+    snapshot.value = snap;
 
-  snapshot.value = snap;
+    // 🔥 Send to server only for real exam
+    if (!isLocalExam) {
+      final response = await http.post(
+        Uri.parse("${AppConfig.baseUrl}jsoninsertapi"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "userid": userId,
+          "examids": examId,
+          "qresponse": snap,
+          "mark": correct,
+        }),
+      );
 
-  // 🔥 Send to server only for real exam
-  if (!isLocalExam) {
+      await clearProgress(examId);
+    }
 
-    final response = await http.post(
-      Uri.parse("${AppConfig.baseUrl}jsoninsertapi"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "userid": userId,
-        "examids": examId,
-        "qresponse": snap,
-        "mark": correct,
-      }),
-    );
-
-    await clearProgress(examId);
+    Get.offAllNamed('/review');
   }
-
-  Get.offAllNamed('/review');
-}
 
   // ================= FETCH RESULT =================
 
@@ -254,6 +252,7 @@ class TestController extends GetxController {
   // ================= SAVE PROGRESS (PER EXAM) =================
 
   Future<void> saveProgress() async {
+    if (isLocalExam) return;
     final prefs = await SharedPreferences.getInstance();
 
     prefs.setInt("exam_${examId}_current", current.value);
@@ -313,6 +312,7 @@ class TestController extends GetxController {
   // ================= CLEAR PROGRESS =================
 
   Future<void> clearProgress(int id) async {
+     if (isLocalExam) return;
     timer?.cancel();
 
     final prefs = await SharedPreferences.getInstance();
@@ -323,59 +323,93 @@ class TestController extends GetxController {
     await prefs.remove("exam_${id}_remainingSeconds");
   }
 
-//=================local exam=================
-void loadLocalQuestions(List qlist) {
+  //=================local exam=================
+  void loadLocalQuestions(List qlist) {
+    resetController();
+    
+    isLocalExam = true;
+    examId = -1;
+    answers.clear();
+    status.clear();
+    current.value = 0;
 
-  isLocalExam = true;
+    questions.value = qlist.map((q) {
+      List<String> opts = [];
 
-  answers.clear();
-  status.clear();
-  current.value = 0;
-
-  questions.value = qlist.map((q) {
-
-    List<String> opts = [];
-
-    if (q["options"] != null && q["options"].length >= 4) {
-      opts = List<String>.from(q["options"]);
-    } else {
-
-      String correct = q["answer"] ?? "";
-
-      opts = [
-        correct,
-        "Option 1",
-        "Option 2",
-        "Option 3"
+      /// CASE 1: API option1 option2 option3 option4
+      List apiOptions = [
+        q["option1"],
+        q["option2"],
+        q["option3"],
+        q["option4"],
       ];
 
+      opts = apiOptions
+          .where((o) {
+            return o != null && o.toString().trim().isNotEmpty;
+          })
+          .map((o) => o.toString())
+          .toList();
+
+      /// CASE 2: API has options array
+      if (opts.isEmpty && q["options"] != null && q["options"].length > 0) {
+        opts = List<String>.from(q["options"]);
+      }
+
+      /// CASE 3: if still empty → start with correct answer
+      if (opts.isEmpty) {
+        String correct = q["answer"] ?? "";
+        if (correct.isNotEmpty) {
+          opts.add(correct);
+        }
+      }
+
+      /// 🔥 Fill missing options
+      int dummyIndex = 1;
+      while (opts.length < 4) {
+        opts.add("Option $dummyIndex");
+        dummyIndex++;
+      }
+
       opts.shuffle();
-    }
 
-    return Question(
-      id: q["id"] ?? qlist.indexOf(q),
-      question: q["question"],
-      options: opts,
-      answer: q["answer"],
-      description: q["description"] ?? "",
-    );
+      return Question(
+        id: q["id"] ?? qlist.indexOf(q),
+        question: q["question"],
+        options: opts,
+        answer: q["answer"],
+        description: q["description"] ?? "",
+      );
+    }).toList();
 
-  }).toList();
+    remainingSeconds.value = questions.length * 45;
 
-  remainingSeconds.value = questions.length * 45;
-
-  startTimer();
-}
-
-void toggleMarkReview() {
-  int qIndex = current.value;
-
-  if (marked.contains(qIndex)) {
-    marked.remove(qIndex);
-  } else {
-    marked.add(qIndex);
+    startTimer();
   }
 
-  marked.refresh();
+  void toggleMarkReview() {
+    int qIndex = current.value;
+
+    if (marked.contains(qIndex)) {
+      marked.remove(qIndex);
+    } else {
+      marked.add(qIndex);
+    }
+
+    marked.refresh();
+  }
+
+
+//=====================rest controller===========================
+void resetController() {
+  timer?.cancel();
+
+  questions.clear();
+  answers.clear();
+  status.clear();
+  marked.clear();
+
+  current.value = 0;
 }
+
 }

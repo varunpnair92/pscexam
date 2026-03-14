@@ -16,12 +16,12 @@ class ExamPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final args = Get.arguments;
+    bool isLocalExam = args is List;
 
     // 🔹 STUDY EXAM MODE (questions passed directly)
     if (args is List) {
-      if (controller.questions.isEmpty) {
-        controller.loadLocalQuestions(args);
-      }
+      isLocalExam = true;
+      controller.loadLocalQuestions(args);
     }
     // 🔹 REAL EXAM MODE (exam id)
     else if (args is Map && args.containsKey('id')) {
@@ -39,6 +39,8 @@ class ExamPage extends StatelessWidget {
     return Scaffold(
       // 🧠 TOP BAR
       appBar: AppBar(
+         automaticallyImplyLeading: false,
+        
         title: Obx(
           () => Text(
             "${controller.current.value + 1}/${controller.questions.length}",
