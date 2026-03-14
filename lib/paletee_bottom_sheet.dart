@@ -23,10 +23,12 @@ class PaletteBottomSheet extends StatelessWidget {
   /// NOT ANSWERED
   List<int> getNotAnswered() {
     return List.generate(controller.questions.length, (i) => i)
-        .where((i) =>
-            !controller.answers.containsKey(i) ||
-            controller.answers[i] == null ||
-            controller.answers[i]!.isEmpty)
+        .where(
+          (i) =>
+              !controller.answers.containsKey(i) ||
+              controller.answers[i] == null ||
+              controller.answers[i]!.isEmpty,
+        )
         .toList();
   }
 
@@ -82,10 +84,7 @@ class PaletteBottomSheet extends StatelessWidget {
         Container(
           width: 50,
           height: 50,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color,
-          ),
+          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
           child: Center(
             child: Text(
               "$count",
@@ -98,10 +97,7 @@ class PaletteBottomSheet extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 15),
-        Text(
-          title,
-          style: const TextStyle(fontSize: 16),
-        )
+        Text(title, style: const TextStyle(fontSize: 16)),
       ],
     );
   }
@@ -196,7 +192,10 @@ class PaletteBottomSheet extends StatelessWidget {
 
                           controller.timer?.cancel();
 
-                          Get.offAllNamed('/examlist');
+                          Get.offAllNamed(
+                            '/dynamicExamList',
+                            arguments: {"endpoint": "/examlist"},
+                          );
                         },
                       );
                     },
@@ -228,7 +227,10 @@ class PaletteBottomSheet extends StatelessWidget {
                               buildCircle("Answered", answered, Colors.green),
                               const SizedBox(height: 10),
                               buildCircle(
-                                  "Not Answered", notAnswered, Colors.grey),
+                                "Not Answered",
+                                notAnswered,
+                                Colors.grey,
+                              ),
                               const SizedBox(height: 10),
                               buildCircle("Review", review, Colors.orange),
                             ],
@@ -248,8 +250,9 @@ class PaletteBottomSheet extends StatelessWidget {
 
                                 await controller.submitResult();
 
-                                await controller
-                                    .clearProgress(controller.examId);
+                                await controller.clearProgress(
+                                  controller.examId,
+                                );
 
                                 Get.offAllNamed('/analysis');
                               },

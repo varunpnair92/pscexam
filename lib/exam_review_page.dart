@@ -10,6 +10,7 @@ class ReviewPage extends StatelessWidget {
   ReviewPage({super.key});
 
   final PageController pageController = PageController();
+  final index = 0.obs;
 
   /// 🔥 SCROLL CONTROLLER FOR PALETTE
   final ScrollController circleController = ScrollController();
@@ -353,19 +354,28 @@ class ReviewPage extends StatelessWidget {
         );
       }),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
-        onTap: (i) {
-          if (i == 0) {
-            Get.offAll(() => HomePage(), arguments: {"tab": 0});
-          } else if (i == 1) {
-            Get.offAll(() => HomePage(), arguments: {"tab": 1});
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.quiz), label: "Exam"),
-          BottomNavigationBarItem(icon: Icon(Icons.school), label: "Study"),
-        ],
-      ),
+            currentIndex: index.value,
+            onTap: (i) {
+              index.value = i;
+
+              if (i == 0) {
+                Get.offAll(() => HomePage(), arguments: {"tab": 0});
+              } else {
+                Get.offAll(() => HomePage(), arguments: {"tab": 1});
+              }
+            },
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.quiz),
+                label: "Exam",
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.school),
+                label: "Study",
+              ),
+            ],
+          ),
+      
     );
   }
 }
