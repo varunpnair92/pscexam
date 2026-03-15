@@ -10,20 +10,20 @@ class ExamController extends GetxController {
 
   @override
   void onInit() {
-    fetchExams();
+    //fetchExams();
     super.onInit();
   }
 
-  void fetchExams() async {
-    final res = await http.get(
-      Uri.parse(AppConfig.listExams), // 🔥 USE SHARED URL
-    );
+  // void fetchExams() async {
+  //   final res = await http.get(
+  //     Uri.parse(AppConfig.listExams), // 🔥 USE SHARED URL
+  //   );
 
-    if (res.statusCode == 200) {
-      List data = json.decode(res.body);
-      exams.value = data.map((e) => Exam.fromJson(e)).toList();
-    }
-  }
+  //   if (res.statusCode == 200) {
+  //     List data = json.decode(res.body);
+  //     exams.value = data.map((e) => Exam.fromJson(e)).toList();
+  //   }
+  // }
 
   Future<void> loadFromEndpoint(String endpoint) async {
   exams.clear();

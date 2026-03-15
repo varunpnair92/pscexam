@@ -52,7 +52,7 @@ class ExamMenuController extends GetxController {
     if (item["url"] != null && item["url"] != "") {
 
       Get.toNamed(
-        "/dynamicExamList",
+        item["navigation"],
         arguments: {"endpoint": item["url"]},
       );
 
@@ -72,7 +72,7 @@ class ExamMenuController extends GetxController {
     }
 
     /// LEAF
-    print("Leaf clicked: $name");
+  //  print("Leaf clicked: $name");
   }
 
   /// BACK
