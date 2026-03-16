@@ -228,6 +228,11 @@ class TestController extends GetxController {
         }),
       );
 
+      final prefs = await SharedPreferences.getInstance();
+      int attempts = prefs.getInt("exam_${examId}_attempts") ?? 0;
+      attempts++;
+      prefs.setInt("exam_${examId}_attempts", attempts);
+
       await clearProgress(examId);
     }
 
@@ -312,7 +317,7 @@ class TestController extends GetxController {
   // ================= CLEAR PROGRESS =================
 
   Future<void> clearProgress(int id) async {
-     if (isLocalExam) return;
+    if (isLocalExam) return;
     timer?.cancel();
 
     final prefs = await SharedPreferences.getInstance();
@@ -326,7 +331,7 @@ class TestController extends GetxController {
   //=================local exam=================
   void loadLocalQuestions(List qlist) {
     resetController();
-    
+
     isLocalExam = true;
     examId = -1;
     answers.clear();
@@ -399,17 +404,58 @@ class TestController extends GetxController {
     marked.refresh();
   }
 
+  //=====================rest controller===========================
+  void resetController() {
+    timer?.cancel();
 
-//=====================rest controller===========================
-void resetController() {
-  timer?.cancel();
+    questions.clear();
+    answers.clear();
+    status.clear();
+    marked.clear();
 
-  questions.clear();
-  answers.clear();
-  status.clear();
-  marked.clear();
+    current.value = 0;
+  }
 
-  current.value = 0;
+  
+ 
+// ================= ATTEMPT COUNT =================
+
+Future<int> getAttemptCount(int examId) async {
+
+  final prefs = await SharedPreferences.getInstance();
+
+  return prefs.getInt("exam_${examId}_attempts") ?? 0;
+
+}
+
+// ================= GET PROGRESS SUMMARY USING EXAM ID =================
+
+Future<Map<String, dynamic>> getProgressSummary(int examId) async {
+
+  final prefs = await SharedPreferences.getInstance();
+
+  String? ansStr = prefs.getString("exam_${examId}_answers");
+
+  if (ansStr == null) {
+    return {
+      "answered": 0,
+      "finished": false
+    };
+  }
+
+  Map<String, dynamic> map = jsonDecode(ansStr);
+
+  int answered = map.length;
+
+  // if timer finished previously, mark finished
+  int remaining = prefs.getInt("exam_${examId}_remainingSeconds") ?? 0;
+
+  bool finished = remaining == 0 && answered > 0;
+
+  return {
+    "answered": answered,
+    "finished": finished
+  };
 }
 
 }

@@ -194,7 +194,7 @@ class PaletteBottomSheet extends StatelessWidget {
 
                           Get.offAllNamed(
                             '/dynamicExamList',
-                            arguments: {"endpoint": "/examlist"},
+                            arguments: {"endpoint": "activeexams/"},
                           );
                         },
                       );
