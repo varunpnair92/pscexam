@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:psc_exam/test_controller.dart';
-import 'result_controller.dart';
+import 'completed_exams_controller.dart';
+import 'test_controller.dart';
 
-class ResultPage extends StatelessWidget {
-  final ResultController ctrl = Get.put(ResultController());
+class CompletedExamsPage extends StatelessWidget {
+  final CompletedExamsController ctrl = Get.put(CompletedExamsController());
   final TestController testCtrl = Get.find<TestController>();
 
   // ── Palette (mirrors AppHomePage greens) ──────────────────────
@@ -18,7 +18,7 @@ class ResultPage extends StatelessWidget {
   static const _surface = Colors.white;
   static const _gold = Color(0xFFF5A623);
 
-  ResultPage({super.key});
+  CompletedExamsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +104,7 @@ class ResultPage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: const [
                     Text(
-                      '🏆 Results & Attempts',
+                      '🏆 Completed Exams',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 22,
@@ -113,8 +113,8 @@ class ResultPage extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Your latest attempts for each exam',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                      'Your latest attempt for each exam',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
                 ),
@@ -219,7 +219,7 @@ class ResultPage extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: _greenLight,
               shape: BoxShape.circle,
             ),
@@ -238,7 +238,7 @@ class ResultPage extends StatelessWidget {
               textAlign: TextAlign.center),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => Get.toNamed('/home'),
+            onPressed: () => Get.toNamed('/examlist'),
             style: ElevatedButton.styleFrom(
               backgroundColor: _green1,
               foregroundColor: Colors.white,
@@ -248,7 +248,7 @@ class ResultPage extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
             icon: const Icon(Icons.play_arrow_rounded),
-            label: const Text('Go Home'),
+            label: const Text('Start an Exam'),
           ),
         ],
       ),
@@ -297,6 +297,7 @@ class _ExamCard extends StatelessWidget {
 
   static const _green1 = Color(0xFF1B8A4E);
   static const _green2 = Color(0xFF27AE60);
+  static const _green3 = Color(0xFF52C97A);
   static const _greenLight = Color(0xFFDFF4E8);
   static const _textDark = Color(0xFF0D3320);
   static const _textMid = Color(0xFF4D7A5E);
@@ -361,8 +362,8 @@ class _ExamCard extends StatelessWidget {
                   Container(
                     width: 34,
                     height: 34,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
                         colors: [_green1, _green2],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
