@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:psc_exam/exam_menu_controller.dart';
 import 'test_controller.dart';
 
 class PaletteBottomSheet extends StatelessWidget {
   final TestController controller = Get.find();
+  final ExamMenuController menuController = Get.find();
 
   PaletteBottomSheet({super.key});
 
@@ -194,7 +196,7 @@ class PaletteBottomSheet extends StatelessWidget {
 
                           Get.offAllNamed(
                             '/dynamicExamList',
-                            arguments: {"endpoint": "activeexams/"},
+                            arguments: {"endpoint": menuController.lastEndpoint},
                           );
                         },
                       );
