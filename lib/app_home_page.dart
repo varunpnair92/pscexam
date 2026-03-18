@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'home_controller.dart';
+import 'test_controller.dart';
 
 class AppHomePage extends StatelessWidget {
   final HomeController ctrl = Get.put(HomeController());
+  final testCtrl = Get.find<TestController>();
 
   AppHomePage({super.key});
 
@@ -13,7 +15,6 @@ class AppHomePage extends StatelessWidget {
   static const _green1 = Color(0xFF1B8A4E);        // deep green
   static const _green2 = Color(0xFF27AE60);        // mid green
   static const _green3 = Color(0xFF52C97A);        // light green
-  static const _greenLight = Color(0xFFDFF4E8);    // very light green tint
   static const _textDark = Color(0xFF0D3320);      // dark green text
   static const _textMid = Color(0xFF4D7A5E);       // muted green text
   static const _gold = Color(0xFFF5A623);          // accent gold
@@ -50,10 +51,6 @@ class AppHomePage extends StatelessWidget {
                   _sectionTitle('📋 Exam Categories'),
                   const SizedBox(height: 12),
                   _examCategoriesGrid(),
-                  const SizedBox(height: 24),
-                  _sectionTitle('📚 Study Topics'),
-                  const SizedBox(height: 12),
-                  _studyTopicsList(),
                   const SizedBox(height: 24),
                   _quickActions(),
                   const SizedBox(height: 32),
@@ -200,55 +197,66 @@ class AppHomePage extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: _surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _gold.withOpacity(0.4)),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.green.withOpacity(0.06),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2)),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: _gold.withOpacity(0.12),
-                        shape: BoxShape.circle,
+              child: GestureDetector(
+                onTap: () async {
+                  if (ctrl.lastExamName.value.isNotEmpty) {
+                    int id = int.tryParse(ctrl.lastExamId.value) ?? 0;
+                    if (id > 0 && await testCtrl.hasProgressForExam(id)) {
+                      await testCtrl.loadProgress(id);
+                      Get.toNamed('/exam', arguments: {'id': id});
+                    }
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: _surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: _gold.withOpacity(0.4)),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.green.withOpacity(0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2)),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: _gold.withOpacity(0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.bolt_rounded,
+                            color: _gold, size: 20),
                       ),
-                      child: const Icon(Icons.bolt_rounded,
-                          color: _gold, size: 20),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Continue from where you stopped',
-                              style: TextStyle(
-                                  color: _textMid, fontSize: 10)),
-                          const SizedBox(height: 2),
-                          Text(
-                            ctrl.lastExamName.value.isEmpty
-                                ? 'Start an exam →'
-                                : ctrl.lastExamName.value,
-                            style: const TextStyle(
-                              color: _textDark,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Continue from where you stopped',
+                                style: TextStyle(
+                                    color: _textMid, fontSize: 10)),
+                            const SizedBox(height: 2),
+                            Text(
+                              ctrl.lastExamName.value.isEmpty
+                                  ? 'Start an exam →'
+                                  : ctrl.lastExamName.value,
+                              style: const TextStyle(
+                                color: _textDark,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -299,6 +307,78 @@ class AppHomePage extends StatelessWidget {
       title,
       style: const TextStyle(
           color: _textDark, fontSize: 17, fontWeight: FontWeight.bold),
+    );
+  }
+
+  // ─── Quick Actions ────────────────────────────────────────────
+  Widget _quickActions() {
+    final actions = [
+      {
+        'icon': Icons.bar_chart_rounded,
+        'label': 'Analysis',
+        'route': '/analysis',
+        'color': _green1,
+      },
+      {
+        'icon': Icons.rate_review_rounded,
+        'label': 'Review',
+        'route': '/review',
+        'color': _green2,
+      },
+      {
+        'icon': Icons.emoji_events_rounded,
+        'label': 'Results',
+        'route': '/result',
+        'color': _gold,
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle('⚡ Quick Actions'),
+        const SizedBox(height: 12),
+        Row(
+          children: actions.asMap().entries.map((entry) {
+            final a = entry.value;
+            final isLast = entry.key == actions.length - 1;
+            final color = a['color'] as Color;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => Get.toNamed(a['route'] as String),
+                child: Container(
+                  margin: EdgeInsets.only(right: isLast ? 0 : 10),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: _surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: color.withOpacity(0.3)),
+                    boxShadow: [
+                      BoxShadow(
+                          color: color.withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2)),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(a['icon'] as IconData, color: color, size: 24),
+                      const SizedBox(height: 6),
+                      Text(
+                        a['label'] as String,
+                        style: const TextStyle(
+                            color: _textDark,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
@@ -393,154 +473,6 @@ class AppHomePage extends StatelessWidget {
         );
       },
     );
-  }
 
-  // ─── Study Topics Carousel ────────────────────────────────────
-  Widget _studyTopicsList() {
-    final topics = ctrl.studyTopics;
-    if (topics.isEmpty) {
-      return const Center(
-          child:
-              Text('No study topics', style: TextStyle(color: _textMid)));
-    }
-
-    final shades = [
-      _green1,
-      _green2,
-      _green3,
-      const Color(0xFF145A32),
-      const Color(0xFF0E6655),
-      const Color(0xFF1E8449),
-    ];
-
-    return SizedBox(
-      height: 100,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        itemCount: topics.length,
-        itemBuilder: (_, i) {
-          final topic = topics[i];
-          final name = topic['name'] ?? '';
-          final color = shades[i % shades.length];
-
-          return GestureDetector(
-            onTap: () => ctrl.navigateStudy(topic),
-            child: Container(
-              width: 130,
-              margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: _surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: color.withOpacity(0.3)),
-                boxShadow: [
-                  BoxShadow(
-                      color: color.withOpacity(0.07),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2)),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.book_outlined, color: color, size: 16),
-                  ),
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      color: _textDark,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  // ─── Quick Actions ────────────────────────────────────────────
-  Widget _quickActions() {
-    final actions = [
-      {
-        'icon': Icons.bar_chart_rounded,
-        'label': 'Analysis',
-        'route': '/analysis',
-        'color': _green1,
-      },
-      {
-        'icon': Icons.rate_review_rounded,
-        'label': 'Review',
-        'route': '/review',
-        'color': _green2,
-      },
-      {
-        'icon': Icons.emoji_events_rounded,
-        'label': 'Results',
-        'route': '/result',
-        'color': _gold,
-      },
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionTitle('⚡ Quick Actions'),
-        const SizedBox(height: 12),
-        Row(
-          children: actions.asMap().entries.map((entry) {
-            final a = entry.value;
-            final isLast = entry.key == actions.length - 1;
-            final color = a['color'] as Color;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => Get.toNamed(a['route'] as String),
-                child: Container(
-                  margin: EdgeInsets.only(right: isLast ? 0 : 10),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: _surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: color.withOpacity(0.3)),
-                    boxShadow: [
-                      BoxShadow(
-                          color: color.withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2)),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(a['icon'] as IconData, color: color, size: 24),
-                      const SizedBox(height: 6),
-                      Text(
-                        a['label'] as String,
-                        style: const TextStyle(
-                            color: _textDark,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
+}
 }

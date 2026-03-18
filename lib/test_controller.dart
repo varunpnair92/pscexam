@@ -12,6 +12,15 @@ enum QuestionStatus { unseen, answered, review }
 class TestController extends GetxController {
   final String userId = "varunpnair92@gmail.com";
 
+  //===============resume part=================
+  var hasResume = false.obs;
+var resumeExamId = 0.obs;
+var resumeAnswered = 0.obs;
+var resumeTotal = 0.obs;
+var resumeTimeLeft = 0.obs;
+
+  int attempt = 1;   // 🔥 NEW
+
   var questions = <Question>[].obs;
   var current = 0.obs;
 
@@ -241,18 +250,28 @@ class TestController extends GetxController {
 
   // ================= FETCH RESULT =================
 
-  Future<void> fetchResult() async {
-    final response = await http.post(
-      Uri.parse("${AppConfig.baseUrl}getresultapi"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"userid": userId, "examids": examId}),
-    );
+ Future<void> fetchResult() async {
+  final response = await http.post(
+    Uri.parse("${AppConfig.baseUrl}getresultapi"),
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({
+      "userid": userId,
+      "examids": examId,
+      "attempt": attempt   // 🔥 ADD THIS
+    }),
+  );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      snapshot.value = Map<String, dynamic>.from(data['qresponse']);
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    final qresponse = data['qresponse'];
+
+    if (qresponse != null && qresponse is Map && qresponse.isNotEmpty) {
+      snapshot.value = Map<String, dynamic>.from(qresponse);
+    } else {
+      snapshot.value = {};
     }
   }
+}
 
   // ================= SAVE PROGRESS (PER EXAM) =================
 
@@ -456,6 +475,38 @@ Future<Map<String, dynamic>> getProgressSummary(int examId) async {
     "answered": answered,
     "finished": finished
   };
+}
+
+
+//======================check resume availability for exam id========================
+Future<void> checkResume() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  hasResume.value = false;
+
+  for (int i = 1; i <= 100; i++) {
+    if (prefs.containsKey("exam_${i}_current")) {
+
+      resumeExamId.value = i;
+
+      /// answered
+      String? ansStr = prefs.getString("exam_${i}_answers");
+      if (ansStr != null) {
+        Map<String, dynamic> map = jsonDecode(ansStr);
+        resumeAnswered.value = map.length;
+      }
+
+      /// total (approx)
+      resumeTotal.value = 50; // 🔥 you can improve later
+
+      /// time left
+      resumeTimeLeft.value =
+          prefs.getInt("exam_${i}_remainingSeconds") ?? 0;
+
+      hasResume.value = true;
+      return;
+    }
+  }
 }
 
 }

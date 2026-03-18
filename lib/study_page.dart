@@ -144,18 +144,21 @@ class StudyPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
 
-                        CircleAvatar(
-                          radius: 28,
-                          backgroundColor: Colors.blue.shade100,
-                          child: Text(
-                            name.isNotEmpty
-                                ? name[0].toUpperCase()
-                                : "",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [const Color(0xFF1B8A4E), const Color(0xFF27AE60)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
+                          ),
+                          child: Icon(
+                            Icons.book_rounded,
+                            color: Colors.white,
+                            size: 28,
                           ),
                         ),
 

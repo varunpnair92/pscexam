@@ -182,22 +182,30 @@ class PaletteBottomSheet extends StatelessWidget {
                     ),
                     onPressed: () {
                       Get.defaultDialog(
-                        title: "Exit Exam",
+                        title: "Exit&Save",
                         middleText:
                             "Progress will be saved. You can resume later.",
                         textCancel: "Cancel",
                         textConfirm: "Exit",
                         onConfirm: () async {
-                          Get.back();
+                          Get.back(); // close dialog
 
+                          /// 🔥 1. SAVE PROGRESS FIRST
                           await controller.saveProgress();
 
+                          /// 🔥 2. SMALL DELAY (SAFETY)
+                          await Future.delayed(
+                            const Duration(milliseconds: 100),
+                          );
+
+                          /// 🔥 3. STOP TIMER
                           controller.timer?.cancel();
 
-                          Get.offAllNamed(
-                            '/dynamicExamList',
-                            arguments: {"endpoint": menuController.lastEndpoint},
-                          );
+                          /// 🔥 4. REFRESH RESUME STATE
+                          //await controller.checkResume();
+
+                          /// 🔥 5. GO TO HOME PAGE (NOT exam list)
+                          Get.offAllNamed('/home', arguments: {"tab": 0});
                         },
                       );
                     },

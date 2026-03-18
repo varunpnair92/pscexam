@@ -52,20 +52,21 @@ class ExamMenuPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
 
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor:
-                              Colors.primaries[i %
-                                      Colors.primaries.length]
-                                  .shade100,
-                          child: Text(
-                            name.isNotEmpty
-                                ? name[0].toUpperCase()
-                                : "",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [const Color(0xFF1B8A4E), const Color(0xFF27AE60)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
+                          ),
+                          child: Icon(
+                            Icons.quiz_rounded,
+                            color: Colors.white,
+                            size: 30,
                           ),
                         ),
 

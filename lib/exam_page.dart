@@ -26,8 +26,8 @@ class ExamPage extends StatelessWidget {
     // 🔹 REAL EXAM MODE (exam id)
     else if (args is Map && args.containsKey('id')) {
       final int examId = args['id'];
-
-      if (controller.examId != examId) {
+      controller.examId = examId;
+      if (controller.questions.isEmpty) {
         controller.loadQuestions(examId);
       }
     }

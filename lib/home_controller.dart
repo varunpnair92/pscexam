@@ -13,6 +13,7 @@ class HomeController extends GetxController {
   // ─── Stats (from shared_prefs) ────────────────────────────────
   var totalAttempts = 0.obs;
   var lastExamName = ''.obs;
+  var lastExamId = ''.obs;
 
   @override
   void onInit() {
@@ -61,6 +62,7 @@ class HomeController extends GetxController {
     }
     totalAttempts.value = count;
     lastExamName.value = prefs.getString('last_exam_name') ?? '';
+    lastExamId.value = prefs.getString('last_exam_id') ?? '';
   }
 
   void navigateExamCategory(dynamic item) {
