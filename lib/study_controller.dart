@@ -19,6 +19,10 @@ class StudyController extends GetxController {
   var questions = [].obs;
   var description = "".obs;
 
+  /// 🔥 NEW
+  var descriptionPages = <String>[].obs;
+  var currentPage = 0.obs;
+
   var showQuestions = false.obs;
 
   var examIndex = 0.obs;
@@ -30,16 +34,36 @@ class StudyController extends GetxController {
     super.onInit();
   }
 
-  /// LOAD TREE
+  /// 🔥 SPLIT DESCRIPTION INTO PAGES
+  List<String> splitDescription(String text) {
+    List<String> pages = [];
+
+    List<String> paragraphs = text.split("\n");
+
+    for (var para in paragraphs) {
+      para = para.trim();
+      if (para.isEmpty) continue;
+
+      const int maxChars = 150;
+
+      for (int i = 0; i < para.length; i += maxChars) {
+        int end =
+            (i + maxChars < para.length) ? i + maxChars : para.length;
+
+        pages.add(para.substring(i, end));
+      }
+    }
+
+    return pages;
+  }
+
   /// LOAD TREE
   Future<void> fetchTree() async {
     final res = await http.get(Uri.parse(AppConfig.nodeall));
-
     final data = jsonDecode(res.body);
 
     fullTree.value = data;
 
-    /// 🔎 Find LDC node
     final ldcNode = data.firstWhere(
       (e) => e["name"] == "LDC",
       orElse: () => null,
@@ -51,7 +75,6 @@ class StudyController extends GetxController {
       items.value = [];
     }
 
-    /// Breadcrumb start
     keys.clear();
     keys.add("LDC");
   }
@@ -60,54 +83,30 @@ class StudyController extends GetxController {
   void onTileTap(dynamic item) {
     final name = item["name"];
 
-    /// ACTION API
     if (item["url"] != null && item["url"] != "") {
-      // print("Call API ${item["url"]}");
       return;
     }
 
-    /// HAS CHILDREN
     if (item["children"] != null && item["children"].isNotEmpty) {
-      // 🔥 PUSH COPY (important)
       stack.add(items.toList());
-
-      // 🔥 UPDATE ITEMS
       items.assignAll(item["children"]);
-
       keys.add(name);
-
       return;
     }
 
-    /// LEAF
     final navigation = item["navigation"];
 
-    /// 🔥 KEYWORD LIST FROM JSON
     List<String> keywords = List<String>.from(item["keywords"] ?? []);
-
-    /// 🔥 LAST KEYWORD FOR DESCRIPTION
     String lastKeyword = keywords.isNotEmpty ? keywords.last : name;
 
-    /// IF NO KEYWORDS FOUND
     if (keywords.isEmpty) {
       keywords = [name];
     }
 
-    if (navigation == "studyQuestion") {
-      fetchQuestionsByKeyword(keywords);
-      fetchKeywordDescription(lastKeyword);
-
-      Get.toNamed("/studyQuestion");
-
-      return;
-    }
-
-    /// studyFull
     fetchQuestionsByKeyword(keywords);
     fetchKeywordDescription(lastKeyword);
 
     showQuestions.value = true;
-
     keys.add(name);
   }
 
@@ -116,16 +115,13 @@ class StudyController extends GetxController {
     if (showQuestions.value) {
       showQuestions.value = false;
       questions.clear();
-
+      descriptionPages.clear(); // 🔥 clear pages
       keys.removeLast();
-
       return;
     }
 
     if (stack.isNotEmpty) {
-      // 🔥 RESTORE FROM STACK
       items.assignAll(stack.removeLast());
-
       keys.removeLast();
     }
   }
@@ -154,6 +150,12 @@ class StudyController extends GetxController {
         final data = jsonDecode(res.body);
 
         description.value = data["description"] ?? "";
+
+        /// 🔥 SPLIT HERE
+        descriptionPages.value =
+            splitDescription(description.value);
+
+        currentPage.value = 0;
       } else {
         description.value = "No description available";
       }
