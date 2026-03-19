@@ -22,7 +22,6 @@ class StudyPage extends StatelessWidget {
         ),
 
         body: controller.showQuestions.value
-
             /// ================= QUESTION VIEW =================
             ? DefaultTabController(
                 length: 3,
@@ -40,7 +39,6 @@ class StudyPage extends StatelessWidget {
                     Expanded(
                       child: TabBarView(
                         children: [
-
                           /// ================= DESCRIPTION (SWIPE) =================
                           Obx(() {
                             final pages = controller.descriptionPages;
@@ -57,24 +55,54 @@ class StudyPage extends StatelessWidget {
                                     onPageChanged: (i) =>
                                         controller.currentPage.value = i,
                                     itemBuilder: (_, i) {
+                                      final pageContent = pages[i];
+                                      final isLast = i == pages.length - 1;
+
                                       return Padding(
                                         padding: EdgeInsets.all(20),
                                         child: Card(
                                           elevation: 4,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(16),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
                                           ),
-                                          child: Center(
-                                            child: Padding(
-                                              padding: EdgeInsets.all(16),
-                                              child: Text(
-                                                pages[i],
-                                                style:
-                                                    TextStyle(fontSize: 16),
-                                                textAlign:
-                                                    TextAlign.center,
-                                              ),
+                                          child: Container(
+                                            width: double.infinity,
+                                            height: double.infinity,
+                                            padding: EdgeInsets.all(16),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.stretch,
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    pageContent,
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                    ),
+                                                    textAlign: TextAlign.left,
+                                                    maxLines: 16,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+
+                                                SizedBox(height: 12),
+
+                                                Text(
+                                                  isLast
+                                                      ? "End of description"
+                                                      : "Continue to next page...",
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                    color: isLast
+                                                        ? Colors.green
+                                                        : Colors.blue,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ),
@@ -89,7 +117,7 @@ class StudyPage extends StatelessWidget {
                                   child: Obx(() {
                                     final isLast =
                                         controller.currentPage.value ==
-                                            pages.length - 1;
+                                        pages.length - 1;
 
                                     return isLast
                                         ? Column(
@@ -98,13 +126,11 @@ class StudyPage extends StatelessWidget {
                                                 "Finished ✅",
                                                 style: TextStyle(
                                                   color: Colors.green,
-                                                  fontWeight:
-                                                      FontWeight.bold,
+                                                  fontWeight: FontWeight.bold,
                                                 ),
                                               ),
                                               SizedBox(height: 4),
-                                              Text(
-                                                  "You reached the end 🎉"),
+                                              Text("You reached the end 🎉"),
                                             ],
                                           )
                                         : Text(
@@ -124,8 +150,7 @@ class StudyPage extends StatelessWidget {
                               final q = controller.questions[i];
 
                               return Card(
-                                margin:
-                                    EdgeInsets.symmetric(vertical: 8),
+                                margin: EdgeInsets.symmetric(vertical: 8),
                                 elevation: 3,
                                 child: Padding(
                                   padding: EdgeInsets.all(12),
@@ -146,8 +171,7 @@ class StudyPage extends StatelessWidget {
                                         q["answer"] ?? "",
                                         style: TextStyle(
                                           color: Colors.green,
-                                          fontWeight:
-                                              FontWeight.bold,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                     ],
@@ -161,13 +185,11 @@ class StudyPage extends StatelessWidget {
                           Center(
                             child: ElevatedButton.icon(
                               icon: Icon(Icons.play_arrow),
-                              label:
-                                  Text("Start Practice Exam"),
+                              label: Text("Start Practice Exam"),
                               onPressed: () {
                                 Get.toNamed(
                                   "/studyExam",
-                                  arguments:
-                                      controller.questions.toList(),
+                                  arguments: controller.questions.toList(),
                                 );
                               },
                             ),
@@ -178,13 +200,11 @@ class StudyPage extends StatelessWidget {
                   ],
                 ),
               )
-
             /// ================= HIERARCHY GRID =================
             : GridView.builder(
                 padding: EdgeInsets.all(16),
                 itemCount: controller.items.length,
-                gridDelegate:
-                    SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
@@ -196,8 +216,7 @@ class StudyPage extends StatelessWidget {
                   return GestureDetector(
                     onTap: () => controller.onTileTap(item),
                     child: Column(
-                      mainAxisAlignment:
-                          MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
                           width: 56,
@@ -205,14 +224,10 @@ class StudyPage extends StatelessWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: LinearGradient(
-                              colors: [
-                                Color(0xFF1B8A4E),
-                                Color(0xFF27AE60)
-                              ],
+                              colors: [Color(0xFF1B8A4E), Color(0xFF27AE60)],
                             ),
                           ),
-                          child: Icon(Icons.book_rounded,
-                              color: Colors.white),
+                          child: Icon(Icons.book_rounded, color: Colors.white),
                         ),
                         SizedBox(height: 6),
                         Text(

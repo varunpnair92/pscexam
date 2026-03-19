@@ -34,24 +34,22 @@ class StudyController extends GetxController {
     super.onInit();
   }
 
-  /// 🔥 SPLIT DESCRIPTION INTO PAGES
+  /// 🔥 SPLIT DESCRIPTION INTO PAGES USING NEWLINES
   List<String> splitDescription(String text) {
+    const int linesPerPage = 8;
+    final cleaned = text.trim();
+    if (cleaned.isEmpty) return [];
+
+    final lines = cleaned
+        .split('\n')
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .toList();
+
     List<String> pages = [];
-
-    List<String> paragraphs = text.split("\n");
-
-    for (var para in paragraphs) {
-      para = para.trim();
-      if (para.isEmpty) continue;
-
-      const int maxChars = 150;
-
-      for (int i = 0; i < para.length; i += maxChars) {
-        int end =
-            (i + maxChars < para.length) ? i + maxChars : para.length;
-
-        pages.add(para.substring(i, end));
-      }
+    for (int i = 0; i < lines.length; i += linesPerPage) {
+      final chunk = lines.sublist(i, (i + linesPerPage).clamp(0, lines.length));
+      pages.add(chunk.join('\n'));
     }
 
     return pages;
@@ -152,8 +150,7 @@ class StudyController extends GetxController {
         description.value = data["description"] ?? "";
 
         /// 🔥 SPLIT HERE
-        descriptionPages.value =
-            splitDescription(description.value);
+        descriptionPages.value = splitDescription(description.value);
 
         currentPage.value = 0;
       } else {
