@@ -10,6 +10,7 @@ import 'package:psc_exam/exam_review_page.dart';
 import 'package:psc_exam/google_sign.dart';
 import 'package:psc_exam/home_page.dart';
 import 'package:psc_exam/study_exam_page.dart';
+import 'package:psc_exam/study_page.dart';
 import 'package:psc_exam/study_question_page.dart';
 import 'package:psc_exam/test_controller.dart';
 import 'firebase_options.dart';
@@ -63,6 +64,8 @@ class MyApp extends StatelessWidget {
         GetPage(name: "/dynamicExamList", page: () => DynamicExamListPage()),
 
         GetPage(name: '/studyExam', page: () => StudyExamPage()),
+
+        GetPage(name: '/studyFull', page: ()=>StudyPage()),
         GetPage(name: "/studyQuestion", page: () => StudyQuestionPage()),
       ],
     );

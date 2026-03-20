@@ -92,7 +92,7 @@ class StudyController extends GetxController {
       return;
     }
 
-    final navigation = item["navigation"];
+    final navigation = (item["navigation"] ?? "").toString().trim();
 
     List<String> keywords = List<String>.from(item["keywords"] ?? []);
     String lastKeyword = keywords.isNotEmpty ? keywords.last : name;
@@ -104,6 +104,32 @@ class StudyController extends GetxController {
     fetchQuestionsByKeyword(keywords);
     fetchKeywordDescription(lastKeyword);
 
+    // Route based on navigation metadata from hierarchy
+    if (navigation.isNotEmpty) {
+      if (navigation == "studyFull") {
+        // internal in-page rendering for study mode
+        showQuestions.value = true;
+        keys.add(name);
+        return;
+      }
+
+      final routeName = navigation.startsWith("/")
+          ? navigation
+          : "/$navigation";
+
+      keys.add(name);
+
+      if (routeName == "/studyExam") {
+        // pass data for exam route
+        Get.toNamed(routeName, arguments: questions.toList());
+      } else {
+        // fully dynamic API-driven route
+        Get.toNamed(routeName);
+      }
+      return;
+    }
+
+    // default leaf behavior: fallback to full study view when no navigation is provided
     showQuestions.value = true;
     keys.add(name);
   }
