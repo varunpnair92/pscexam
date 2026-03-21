@@ -48,6 +48,10 @@ class AppHomePage extends StatelessWidget {
                   const SizedBox(height: 8),
                   _statsRow(),
                   const SizedBox(height: 24),
+                  _sectionTitle('🚀 Attempts'),
+                  const SizedBox(height: 12),
+                  _attemptCategoriesGrid(),
+                  const SizedBox(height: 24),
                   _sectionTitle('📋 Exam Categories'),
                   const SizedBox(height: 12),
                   _examCategoriesGrid(),
@@ -379,6 +383,72 @@ class AppHomePage extends StatelessWidget {
           }).toList(),
         ),
       ],
+    );
+  }
+
+  // ─── Attempt Categories Grid ──────────────────────────────────
+  Widget _attemptCategoriesGrid() {
+    final items = ctrl.attemptCategories;
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 2.5,
+      ),
+      itemCount: items.length,
+      itemBuilder: (_, i) {
+        final item = items[i];
+        final name = item['name'] ?? '';
+
+        return GestureDetector(
+          onTap: () => ctrl.navigateAttemptCategory(item),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _green1.withOpacity(0.3)),
+              boxShadow: [
+                BoxShadow(
+                  color: _green1.withOpacity(0.05),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: _green1.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.rocket_launch, color: _green1, size: 16),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    name,
+                    style: const TextStyle(
+                      color: _textDark,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

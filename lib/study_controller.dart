@@ -30,8 +30,32 @@ class StudyController extends GetxController {
 
   @override
   void onInit() {
-    fetchTree();
+    final args = Get.arguments;
+    if (args != null && (args["keywords"] != null || args["title"] != null)) {
+      loadArguments(args);
+    } else {
+      fetchTree();
+    }
     super.onInit();
+  }
+
+  void loadArguments(dynamic args) {
+    if (args == null) return;
+    
+    final String title = args["title"] ?? "Study";
+    List<String> kws = [];
+    
+    if (args["keywords"] != null) {
+      kws = List<String>.from(args["keywords"]);
+    } else {
+      kws = [title];
+    }
+    
+    keys.clear();
+    keys.add(title);
+    showQuestions.value = true;
+    fetchQuestionsByKeyword(kws);
+    fetchKeywordDescription(kws.isNotEmpty ? kws.last : title);
   }
 
   /// 🔥 SPLIT DESCRIPTION INTO PAGES USING NEWLINES

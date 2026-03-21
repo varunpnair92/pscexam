@@ -3,10 +3,12 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app_config.dart';
+import 'study_controller.dart';
 
 class HomeController extends GetxController {
   // ─── Node tree data ───────────────────────────────────────────
   var examCategories = [].obs;   // children of the EXAM node
+  var attemptCategories = [].obs; // children of the GUI1 node
   var studyTopics = [].obs;      // top-level children of the first study root
   var isLoading = true.obs;
 
@@ -37,6 +39,14 @@ class HomeController extends GetxController {
           examCategories.value = examNode['children'] ?? [];
         }
 
+        // Find GUI1 node → its children become attempt categories
+        final gui1Node = data.firstWhereOrNull(
+          (e) => e['name'] == 'GUI1',
+        );
+        if (gui1Node != null) {
+          attemptCategories.value = gui1Node['children'] ?? [];
+        }
+
         // Use the first root node's top-level children as study topics
         final studyRoot = data.firstWhereOrNull(
           (e) => e['name'] != 'EXAM',
@@ -63,6 +73,31 @@ class HomeController extends GetxController {
     totalAttempts.value = count;
     lastExamName.value = prefs.getString('last_exam_name') ?? '';
     lastExamId.value = prefs.getString('last_exam_id') ?? '';
+  }
+
+  void navigateAttemptCategory(dynamic item) {
+    final nav = item['navigation'] ?? '';
+    final url = item['url'] ?? '';
+    final children = item['children'];
+
+    if (url.isNotEmpty) {
+      Get.toNamed('/dynamicMenu', arguments: {
+        'endpoint': url,
+        'title': item['name'] ?? 'Attempt',
+      });
+    } else if (children != null && (children as List).isNotEmpty) {
+      Get.toNamed('/dynamicMenu', arguments: {
+        'items': children,
+        'title': item['name'] ?? 'Attempt',
+      });
+    } else if (nav.isNotEmpty) {
+      Get.toNamed(nav);
+    } else {
+      Get.delete<StudyController>();
+      Get.toNamed('/studyFull', arguments: {
+        "title": item['name'] ?? 'Study',
+      });
+    }
   }
 
   void navigateExamCategory(dynamic item) {
