@@ -80,15 +80,22 @@ class HomeController extends GetxController {
     final url = item['url'] ?? '';
     final children = item['children'];
 
+    if (nav == 'dynamicExamList' && url.isNotEmpty) {
+      Get.toNamed('/dynamicExamList', arguments: {'endpoint': url});
+      return;
+    }
+
     if (url.isNotEmpty) {
       Get.toNamed('/dynamicMenu', arguments: {
         'endpoint': url,
         'title': item['name'] ?? 'Attempt',
+        'parentNavigation': nav,
       });
     } else if (children != null && (children as List).isNotEmpty) {
       Get.toNamed('/dynamicMenu', arguments: {
         'items': children,
         'title': item['name'] ?? 'Attempt',
+        'parentNavigation': nav,
       });
     } else if (nav.isNotEmpty) {
       Get.toNamed(nav);
