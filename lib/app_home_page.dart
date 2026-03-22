@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'home_controller.dart';
 import 'test_controller.dart';
+import 'image_slider_controller.dart';
 
 class AppHomePage extends StatelessWidget {
   final HomeController ctrl = Get.put(HomeController());
   final testCtrl = Get.find<TestController>();
+  final ImageSliderController sliderCtrl = Get.put(ImageSliderController());
 
   AppHomePage({super.key});
 
@@ -46,6 +48,8 @@ class AppHomePage extends StatelessWidget {
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   const SizedBox(height: 8),
+                  _imageSlider(),
+                  const SizedBox(height: 16),
                   _statsRow(),
                   const SizedBox(height: 24),
                   _sectionTitle('🚀 Attempts'),
@@ -187,6 +191,50 @@ class AppHomePage extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  // ─── Image Slider ─────────────────────────────────────────────
+  Widget _imageSlider() {
+    return Obx(() {
+      if (sliderCtrl.isLoading.value) {
+        return const SizedBox(
+          height: 170,
+          child: Center(child: CircularProgressIndicator(color: _green1)),
+        );
+      }
+      if (sliderCtrl.sliderImages.isEmpty) {
+        return const SizedBox.shrink();
+      }
+      return SizedBox(
+        height: 170, // Increased height to prevent shadow clipping
+        child: PageView.builder(
+          controller: PageController(viewportFraction: 0.92),
+          itemCount: sliderCtrl.sliderImages.length,
+          itemBuilder: (context, index) {
+            final image = sliderCtrl.sliderImages[index];
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8), // Added vertical margin so shadow shows
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20), // Increased border radius
+                border: Border.all(color: _green1.withOpacity(0.4), width: 1.5), // Added explicit border
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2), // Darker, larger shadow
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+                image: DecorationImage(
+                  image: NetworkImage(image.imageUrl),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    });
   }
 
   // ─── Stats Row ────────────────────────────────────────────────

@@ -21,4 +21,8 @@ class AppConfig {
   // ================= KEYWORD DESCRIPTION =================
   static const String keywordDesc =
       "${baseUrl}kbkeyword/";
+
+//==========image slid e============================
+static const String ImageSlide =
+      "${baseUrl}get-images-by-category/";
 }
