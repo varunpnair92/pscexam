@@ -18,6 +18,7 @@ import 'firebase_options.dart';
 
 // 🔥 ADD THESE IMPORTS
 import 'result_analysis_page.dart';
+import 'story_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,6 +70,9 @@ class MyApp extends StatelessWidget {
 
         GetPage(name: '/studyFull', page: ()=>StudyPage()),
         GetPage(name: "/studyQuestion", page: () => StudyQuestionPage()),
+
+        // 📖 STORY
+        GetPage(name: '/story', page: () => StoryPage()),
       ],
     );
   }

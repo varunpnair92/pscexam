@@ -118,7 +118,12 @@ class StudyController extends GetxController {
 
     final navigation = (item["navigation"] ?? "").toString().trim();
 
-    List<String> keywords = List<String>.from(item["keywords"] ?? []);
+    List<String> keywords = [];
+    if (item["keywords"] != null) {
+      keywords = List<String>.from(item["keywords"]);
+    } else if (item["keyword"] != null) {
+      keywords = [item["keyword"].toString()];
+    }
     String lastKeyword = keywords.isNotEmpty ? keywords.last : name;
 
     if (keywords.isEmpty) {
@@ -148,7 +153,10 @@ class StudyController extends GetxController {
         Get.toNamed(routeName, arguments: questions.toList());
       } else {
         // fully dynamic API-driven route
-        Get.toNamed(routeName);
+        Get.toNamed(routeName, arguments: {
+          "title": name,
+          "keywords": keywords,
+        });
       }
       return;
     }

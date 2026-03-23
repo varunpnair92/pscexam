@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'app_config.dart';
 import 'study_controller.dart';
 import 'test_controller.dart';
+import 'story_controller.dart';
 
 class DynamicMenuController extends GetxController {
   var items = [].obs;
@@ -107,8 +108,15 @@ class DynamicMenuController extends GetxController {
       String nav = item["navigation"].toString().trim();
       if (!nav.startsWith('/')) nav = '/$nav';
 
+      List<String> keywords = [];
+      if (item["keywords"] != null) {
+        keywords = List<String>.from(item["keywords"]);
+      } else if (item["keyword"] != null) {
+        keywords = [item["keyword"].toString()];
+      }
+
       Map<String, dynamic> routeArgs = {
-        "keywords": item["keywords"] ?? [],
+        "keywords": keywords,
         "title": title,
         "endpoint": item["url"] ?? "",
       };
@@ -118,6 +126,10 @@ class DynamicMenuController extends GetxController {
 
       if (nav == '/studyFull') {
         Get.delete<StudyController>();
+      }
+
+      if (nav == '/story') {
+        Get.delete<StoryController>();
       }
 
       Get.toNamed(nav, arguments: routeArgs);
