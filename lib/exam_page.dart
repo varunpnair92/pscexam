@@ -182,7 +182,10 @@ class ExamPage extends StatelessWidget {
                             controller.selectAnswer(o.toString());
                             controller.saveProgress();
                           },
-                          child: Text(o.toString()),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: MathText(text: o.toString()),
+                          ),
                         ),
                       );
                     }),

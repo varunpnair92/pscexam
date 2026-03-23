@@ -32,21 +32,39 @@ class AppHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
-      body: Obx(() {
-        if (ctrl.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: _green2),
-          );
-        }
-        return CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            _buildSliverAppBar(),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Container(
+          margin: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _bg,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: _green1.withOpacity(0.4), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: _green1.withOpacity(0.08),
+                blurRadius: 15,
+                spreadRadius: 2,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(26),
+            child: Obx(() {
+              if (ctrl.isLoading.value) {
+                return const Center(
+                  child: CircularProgressIndicator(color: _green2),
+                );
+              }
+              return CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  _buildSliverAppBar(),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
                   const SizedBox(height: 8),
                   _imageSlider(),
                   const SizedBox(height: 16),
@@ -69,7 +87,10 @@ class AppHomePage extends StatelessWidget {
             ),
           ],
         );
-      }),
+            }),
+          ),
+        ),
+      ),
     );
   }
 
@@ -132,48 +153,16 @@ class AppHomePage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: Colors.white.withOpacity(0.35)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.circle, size: 7, color: Colors.white),
-                          SizedBox(width: 5),
-                          Text('PSC Kerala',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
+
                     Obx(() => Text(
-                      ctrl.userName.value.isNotEmpty
-                          ? 'ഹലോ, ${ctrl.userName.value.split(' ').first}! 👋'
-                          : 'നമസ്കാരം 👋',
+                      'Hello ${ctrl.userName.value.isNotEmpty ? ctrl.userName.value : 'User'} 👋',
                       style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                          letterSpacing: 0.4),
-                    )),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'Ready to Crack PSC?',
-                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.2,
                       ),
-                    ),
+                    )),
                     const SizedBox(height: 14),
                     // ── Stats tiles inside header ──
                     Container(
@@ -204,7 +193,7 @@ class AppHomePage extends StatelessWidget {
         ),          // closes ClipRRect
       ),            // closes FlexibleSpaceBar
       title: const Text(
-        'PSC Kerala',
+        'PSC Online',
         style: TextStyle(
             color: Colors.white,
             fontSize: 18,
@@ -263,7 +252,7 @@ class AppHomePage extends StatelessWidget {
     return Obx(() {
       if (sliderCtrl.isLoading.value) {
         return const SizedBox(
-          height: 170,
+          height: 220,
           child: Center(child: CircularProgressIndicator(color: _green1)),
         );
       }
@@ -271,7 +260,7 @@ class AppHomePage extends StatelessWidget {
         return const SizedBox.shrink();
       }
       return SizedBox(
-        height: 170,
+        height: 220,
         child: PageView.builder(
           controller: PageController(viewportFraction: 0.92),
           itemCount: sliderCtrl.sliderImages.length,
@@ -707,12 +696,12 @@ class AppHomePage extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     color: _green1.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.rocket_launch, color: _green1, size: 16),
+                  child: const Icon(Icons.rocket_launch, color: _green1, size: 12),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
