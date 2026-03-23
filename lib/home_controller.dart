@@ -17,11 +17,20 @@ class HomeController extends GetxController {
   var lastExamName = ''.obs;
   var lastExamId = ''.obs;
 
+  // ─── User Exam Stats (from API) ───────────────────────────────
+  var userName = ''.obs;
+  var totalExams = 0.obs;
+  var attemptedExams = 0.obs;
+  var remainingExams = 0.obs;
+  var successRatio = 0.0.obs;
+  var statsLoading = true.obs;
+
   @override
   void onInit() {
     super.onInit();
     fetchHomeData();
     _loadLocalStats();
+    fetchUserStats();
   }
 
   Future<void> fetchHomeData() async {
@@ -65,7 +74,6 @@ class HomeController extends GetxController {
   Future<void> _loadLocalStats() async {
     final prefs = await SharedPreferences.getInstance();
     final keys = prefs.getKeys();
-    // Count keys that look like attempt-count entries
     int count = 0;
     for (final k in keys) {
       if (k.startsWith('attempts_')) count += (prefs.getInt(k) ?? 0);
@@ -73,6 +81,30 @@ class HomeController extends GetxController {
     totalAttempts.value = count;
     lastExamName.value = prefs.getString('last_exam_name') ?? '';
     lastExamId.value = prefs.getString('last_exam_id') ?? '';
+  }
+
+  // Same userId used across the app (matches TestController.userId)
+  static const String _userId = 'varunpnair92@gmail.com';
+
+  Future<void> fetchUserStats() async {
+    statsLoading.value = true;
+    try {
+      final res = await http.get(
+        Uri.parse('${AppConfig.userExamStats}$_userId/'),
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        userName.value = data['fullname'] ?? data['username'] ?? '';
+        totalExams.value = data['total_exams'] ?? 0;
+        attemptedExams.value = data['attempted_exams'] ?? 0;
+        remainingExams.value = data['remaining_exams'] ?? 0;
+        successRatio.value = (data['success_ratio'] ?? 0.0).toDouble();
+      }
+    } catch (_) {
+      // silently fail
+    } finally {
+      statsLoading.value = false;
+    }
   }
 
   void navigateAttemptCategory(dynamic item) {

@@ -25,4 +25,7 @@ class AppConfig {
 //==========image slid e============================
 static const String ImageSlide =
       "${baseUrl}get-images-by-category/";
+
+// ================= USER EXAM STATS =================
+static const String userExamStats = "${baseUrl}user-exam-stats/";
 }

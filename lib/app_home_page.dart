@@ -50,6 +50,8 @@ class AppHomePage extends StatelessWidget {
                   const SizedBox(height: 8),
                   _imageSlider(),
                   const SizedBox(height: 16),
+                  _examStatsSection(),
+                  const SizedBox(height: 16),
                   _statsRow(),
                   const SizedBox(height: 24),
                   _sectionTitle('🚀 Attempts'),
@@ -74,22 +76,32 @@ class AppHomePage extends StatelessWidget {
   // ─── SliverAppBar ─────────────────────────────────────────────
   Widget _buildSliverAppBar() {
     return SliverAppBar(
-      expandedHeight: 190,
+      expandedHeight: 300,
       pinned: true,
       backgroundColor: _green1,
       flexibleSpace: FlexibleSpaceBar(
         collapseMode: CollapseMode.pin,
-        background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
+        background: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(28),
+            bottomRight: Radius.circular(28),
+          ),
+          child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
               colors: [_green1, _green2, _green3],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(28),
+              bottomRight: Radius.circular(28),
+            ),
+            border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.5),
           ),
           child: Stack(
             children: [
-              // decorative circle
+              // decorative circles
               Positioned(
                 right: -30,
                 top: -30,
@@ -143,13 +155,15 @@ class AppHomePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      'നമസ്കാരം 👋',
-                      style: TextStyle(
+                    Obx(() => Text(
+                      ctrl.userName.value.isNotEmpty
+                          ? 'ഹലോ, ${ctrl.userName.value.split(' ').first}! 👋'
+                          : 'നമസ്കാരം 👋',
+                      style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 14,
                           letterSpacing: 0.4),
-                    ),
+                    )),
                     const SizedBox(height: 2),
                     const Text(
                       'Ready to Crack PSC?',
@@ -160,13 +174,35 @@ class AppHomePage extends StatelessWidget {
                         letterSpacing: 0.2,
                       ),
                     ),
+                    const SizedBox(height: 14),
+                    // ── Stats tiles inside header ──
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white.withOpacity(0.3)),
+                      ),
+                      child: Obx(() => Row(
+                        children: [
+                          _headerStat('Total', '${ctrl.totalExams.value}', Icons.list_alt_rounded),
+                          const SizedBox(width: 8),
+                          _headerStat('Attended', '${ctrl.attemptedExams.value}', Icons.check_circle_rounded),
+                          const SizedBox(width: 8),
+                          _headerStat('Remaining', '${ctrl.remainingExams.value}', Icons.hourglass_top_rounded),
+                          const SizedBox(width: 8),
+                          _headerStat('Success', '${ctrl.successRatio.value.toStringAsFixed(1)}%', Icons.emoji_events_rounded),
+                        ],
+                      )),
+                    ),
                   ],
                 ),
               ),
             ],
-          ),
-        ),
-      ),
+          ),        // closes Stack
+          ),        // closes Container (ClipRRect child)
+        ),          // closes ClipRRect
+      ),            // closes FlexibleSpaceBar
       title: const Text(
         'PSC Kerala',
         style: TextStyle(
@@ -193,6 +229,35 @@ class AppHomePage extends StatelessWidget {
     );
   }
 
+  Widget _headerStat(String label, String value, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white.withOpacity(0.25)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: Colors.white, size: 18),
+            const SizedBox(height: 4),
+            Text(value,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 2),
+            Text(label,
+                style: const TextStyle(color: Colors.white70, fontSize: 9),
+                textAlign: TextAlign.center),
+          ],
+        ),
+      ),
+    );
+  }
+
+
   // ─── Image Slider ─────────────────────────────────────────────
   Widget _imageSlider() {
     return Obx(() {
@@ -206,20 +271,20 @@ class AppHomePage extends StatelessWidget {
         return const SizedBox.shrink();
       }
       return SizedBox(
-        height: 170, // Increased height to prevent shadow clipping
+        height: 170,
         child: PageView.builder(
           controller: PageController(viewportFraction: 0.92),
           itemCount: sliderCtrl.sliderImages.length,
           itemBuilder: (context, index) {
             final image = sliderCtrl.sliderImages[index];
             return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8), // Added vertical margin so shadow shows
+              margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20), // Increased border radius
-                border: Border.all(color: _green1.withOpacity(0.4), width: 1.5), // Added explicit border
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _green1.withOpacity(0.4), width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2), // Darker, larger shadow
+                    color: Colors.black.withOpacity(0.2),
                     blurRadius: 10,
                     spreadRadius: 2,
                     offset: const Offset(0, 4),
@@ -235,6 +300,176 @@ class AppHomePage extends StatelessWidget {
         ),
       );
     });
+  }
+
+  // ─── Exam Stats Section ───────────────────────────────────────
+  Widget _examStatsSection() {
+    return Obx(() {
+      if (ctrl.statsLoading.value) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: _green1.withOpacity(0.15)),
+            boxShadow: [
+              BoxShadow(color: _green1.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, 3)),
+            ],
+          ),
+          child: const Center(
+            child: SizedBox(height: 48, child: CircularProgressIndicator(color: _green2, strokeWidth: 2.5)),
+          ),
+        );
+      }
+
+      final total = ctrl.totalExams.value;
+      final attempted = ctrl.attemptedExams.value;
+      final remaining = ctrl.remainingExams.value;
+      final ratio = ctrl.successRatio.value;
+      final progress = total > 0 ? attempted / total : 0.0;
+
+      // Smart suggestion
+      String suggestion;
+      if (ratio >= 80) {
+        suggestion = '🔥 Excellent! Keep pushing forward!';
+      } else if (ratio >= 60) {
+        suggestion = '📈 Good progress! Attempt $remaining more exams.';
+      } else if (attempted == 0) {
+        suggestion = '🚀 Start your first exam today!';
+      } else {
+        suggestion = '📚 Keep studying to boost your score!';
+      }
+
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _green1.withOpacity(0.15)),
+          boxShadow: [
+            BoxShadow(color: _green1.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, 3)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: _green1.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.bar_chart_rounded, color: _green1, size: 18),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Your Progress',
+                  style: TextStyle(color: _textDark, fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _green1.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Live Exams',
+                    style: TextStyle(color: _green1, fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 14),
+
+            // 4 Stat Cards Row
+            Row(
+              children: [
+                _miniStat('Total', '$total', Icons.list_alt_rounded, _green1),
+                const SizedBox(width: 8),
+                _miniStat('Attended', '$attempted', Icons.check_circle_rounded, _green2),
+                const SizedBox(width: 8),
+                _miniStat('Remaining', '$remaining', Icons.hourglass_top_rounded, _gold),
+                const SizedBox(width: 8),
+                _miniStat('Success', '${ratio.toStringAsFixed(1)}%', Icons.emoji_events_rounded, const Color(0xFFE74C3C)),
+              ],
+            ),
+
+            const SizedBox(height: 14),
+
+            // Progress Bar
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Completion', style: TextStyle(color: _textMid, fontSize: 12)),
+                    Text('${(progress * 100).toStringAsFixed(0)}%',
+                        style: const TextStyle(color: _textDark, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: progress.clamp(0.0, 1.0),
+                    minHeight: 8,
+                    backgroundColor: _green1.withOpacity(0.12),
+                    valueColor: const AlwaysStoppedAnimation<Color>(_green2),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Suggestion chip
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: _gold.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _gold.withOpacity(0.25)),
+              ),
+              child: Text(
+                suggestion,
+                style: const TextStyle(color: _textDark, fontSize: 12, fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _miniStat(String label, String value, IconData icon, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.07),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withOpacity(0.2)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(height: 4),
+            Text(value,
+                style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 2),
+            Text(label,
+                style: const TextStyle(color: _textMid, fontSize: 9),
+                textAlign: TextAlign.center),
+          ],
+        ),
+      ),
+    );
   }
 
   // ─── Stats Row ────────────────────────────────────────────────
