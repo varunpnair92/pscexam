@@ -10,7 +10,7 @@ import 'app_config.dart';
 enum QuestionStatus { unseen, answered, review }
 
 class TestController extends GetxController {
-  final String userId = "varunpnair92@gmail.com";
+  final int userId = 1;
 
   //===============resume part=================
   var hasResume = false.obs;

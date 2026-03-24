@@ -9,7 +9,7 @@ class ResultController extends GetxController {
   var isLoading = false.obs;
   var errorMsg = "".obs;
 
-  final String userId = "varunpnair92@gmail.com"; // 🔥 use dynamic later
+  final int userId = 1; // 🔥 use dynamic later
 
   Future<void> fetchLatestAttempts() async {
     try {

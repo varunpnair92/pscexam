@@ -84,7 +84,7 @@ class HomeController extends GetxController {
   }
 
   // Same userId used across the app (matches TestController.userId)
-  static const String _userId = 'varunpnair92@gmail.com';
+  static const int _userId = 1;
 
   Future<void> fetchUserStats() async {
     statsLoading.value = true;

@@ -11,7 +11,7 @@ class ResultController extends GetxController {
   var isLoading = true.obs;
   var errorMsg = ''.obs;
 
-  final String userId = "varunpnair92@gmail.com";
+  final int userId = 1;
 
   @override
   void onInit() {
@@ -24,7 +24,7 @@ class ResultController extends GetxController {
     errorMsg.value = '';
     try {
       final uri = Uri.parse(
-        '${AppConfig.baseUrl}user-latest-attempts/?userid=${Uri.encodeQueryComponent(userId)}',
+        '${AppConfig.baseUrl}user-latest-attempts/?userid=$userId',
       );
       final res = await http.get(uri);
       
