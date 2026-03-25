@@ -875,9 +875,12 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
       Future.delayed(const Duration(milliseconds: 50), () {
         // Force the controller to recreate so onInit runs with the fresh arguments!
         Get.delete<StudyController>();
+        
+        final kws = val.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+
         Get.toNamed('/studyFull', arguments: {
-          "title": val.trim(),
-          "keywords": [val.trim()],
+          "title": kws.length > 1 ? kws.join(", ") : val.trim(),
+          "keywords": kws,
         });
       });
     }

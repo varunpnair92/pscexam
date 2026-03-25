@@ -55,7 +55,15 @@ class StudyController extends GetxController {
     keys.add(title);
     showQuestions.value = true;
     fetchQuestionsByKeyword(kws);
-    fetchKeywordDescription(kws.isNotEmpty ? kws.last : title);
+    
+    if (kws.length > 1) {
+      // The description endpoint doesn't support multiple comma-separated keywords well.
+      description.value = "No data available for multiple keywords.";
+      descriptionPages.value = splitDescription(description.value);
+      currentPage.value = 0;
+    } else {
+      fetchKeywordDescription(kws.isNotEmpty ? kws.last : title);
+    }
   }
 
   /// 🔥 SPLIT DESCRIPTION INTO PAGES USING NEWLINES
