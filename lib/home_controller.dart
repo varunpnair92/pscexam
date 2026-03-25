@@ -29,7 +29,7 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     fetchHomeData();
-    _loadLocalStats();
+    loadLocalStats();
     fetchUserStats();
   }
 
@@ -71,16 +71,23 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<void> _loadLocalStats() async {
+  Future<void> loadLocalStats() async {
     final prefs = await SharedPreferences.getInstance();
     final keys = prefs.getKeys();
     int count = 0;
+    
+    String anyPausedId = '';
+    
     for (final k in keys) {
       if (k.startsWith('attempts_')) count += (prefs.getInt(k) ?? 0);
+      if (k.startsWith('exam_') && k.endsWith('_current')) {
+        anyPausedId = k.split('_')[1];
+      }
     }
     totalAttempts.value = count;
-    lastExamName.value = prefs.getString('last_exam_name') ?? '';
+    
     lastExamId.value = prefs.getString('last_exam_id') ?? '';
+    lastExamName.value = prefs.getString('last_exam_name') ?? '';
   }
 
   // Same userId used across the app (matches TestController.userId)

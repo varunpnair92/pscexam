@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'exam_controller.dart';
 import 'test_controller.dart';
 import 'home_page.dart';
@@ -130,6 +131,9 @@ return Obx(() => Scaffold(
                                     );
                                   }
                                 : () async {
+                                    final prefs = await SharedPreferences.getInstance();
+                                    prefs.setString('last_exam_name', exam.specialization);
+                                    prefs.setString('last_exam_id', exam.id.toString());
 
                                     bool resume =
                                         await testController

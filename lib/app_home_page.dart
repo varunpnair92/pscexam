@@ -463,7 +463,9 @@ class AppHomePage extends StatelessWidget {
 
   // ─── Stats Row ────────────────────────────────────────────────
   Widget _statsRow() {
-    return Obx(() => Row(
+    return Obx(() {
+      bool hasPaused = ctrl.lastExamId.value.isNotEmpty;
+      return Row(
           children: [
             _statCard(
               icon: Icons.quiz_rounded,
@@ -475,12 +477,16 @@ class AppHomePage extends StatelessWidget {
             Expanded(
               child: GestureDetector(
                 onTap: () async {
-                  if (ctrl.lastExamName.value.isNotEmpty) {
+                  if (hasPaused) {
                     int id = int.tryParse(ctrl.lastExamId.value) ?? 0;
                     if (id > 0 && await testCtrl.hasProgressForExam(id)) {
                       await testCtrl.loadProgress(id);
                       Get.toNamed('/exam', arguments: {'id': id});
+                    } else {
+                      Get.toNamed('/home', arguments: {'tab': 1});
                     }
+                  } else {
+                    Get.toNamed('/home', arguments: {'tab': 1}); // Next tab
                   }
                 },
                 child: Container(
@@ -488,10 +494,11 @@ class AppHomePage extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: _surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _gold.withOpacity(0.4)),
+                    border: Border.all(
+                        color: hasPaused ? _gold.withOpacity(0.4) : _green1.withOpacity(0.4)),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.green.withOpacity(0.06),
+                          color: (hasPaused ? _gold : _green1).withOpacity(0.06),
                           blurRadius: 8,
                           offset: const Offset(0, 2)),
                     ],
@@ -501,25 +508,29 @@ class AppHomePage extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: _gold.withOpacity(0.12),
+                          color: (hasPaused ? _gold : _green1).withOpacity(0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.bolt_rounded,
-                            color: _gold, size: 20),
+                        child: Icon(
+                            hasPaused ? Icons.bolt_rounded : Icons.search_rounded,
+                            color: hasPaused ? _gold : _green1,
+                            size: 20),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Continue from where you stopped',
-                                style: TextStyle(
-                                    color: _textMid, fontSize: 10)),
+                            Text(
+                              hasPaused ? 'Resume Exam' : 'Resume Exam',
+                              style: const TextStyle(
+                                color: _textMid, 
+                                fontSize: 10
+                              )
+                            ),
                             const SizedBox(height: 2),
                             Text(
-                              ctrl.lastExamName.value.isEmpty
-                                  ? 'Start an exam →'
-                                  : ctrl.lastExamName.value,
+                              hasPaused ? ctrl.lastExamName.value : 'Start an exam →',
                               style: const TextStyle(
                                 color: _textDark,
                                 fontWeight: FontWeight.bold,
@@ -537,7 +548,8 @@ class AppHomePage extends StatelessWidget {
               ),
             ),
           ],
-        ));
+        );
+    });
   }
 
   Widget _statCard({

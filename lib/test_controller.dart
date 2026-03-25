@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'question_model.dart';
 import 'app_config.dart';
+import 'home_controller.dart';
 
 enum QuestionStatus { unseen, answered, review }
 
@@ -292,6 +293,10 @@ var resumeTimeLeft = 0.obs;
     );
 
     prefs.setInt("exam_${examId}_remainingSeconds", remainingSeconds.value);
+
+    if (Get.isRegistered<HomeController>()) {
+      Get.find<HomeController>().loadLocalStats();
+    }
   }
 
   // ================= LOAD PROGRESS =================
@@ -345,6 +350,10 @@ var resumeTimeLeft = 0.obs;
     await prefs.remove("exam_${id}_answers");
     await prefs.remove("exam_${id}_status");
     await prefs.remove("exam_${id}_remainingSeconds");
+
+    if (Get.isRegistered<HomeController>()) {
+      Get.find<HomeController>().loadLocalStats();
+    }
   }
 
   //=================local exam=================
