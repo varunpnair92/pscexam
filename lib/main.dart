@@ -19,6 +19,7 @@ import 'firebase_options.dart';
 // 🔥 ADD THESE IMPORTS
 import 'result_analysis_page.dart';
 import 'story_page.dart';
+import 'global_analysis_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,6 +60,9 @@ class MyApp extends StatelessWidget {
 
         // ⭐ NEW RESULT ANALYSIS PAGE
         GetPage(name: '/analysis', page: () => AnalysisPage()),
+
+        // 📈 GLOBAL ANALYSIS PAGE
+        GetPage(name: '/globalAnalysis', page: () => GlobalAnalysisPage()),
 
         // 🔍 REVIEW PAGE
         GetPage(name: '/review', page: () => ReviewPage()),
