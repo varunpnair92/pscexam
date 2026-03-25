@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'study_controller.dart';
+import 'modern_study_card.dart';
 
 class StudyPage extends StatelessWidget {
   final StudyController controller = Get.put(StudyController());
@@ -144,39 +145,24 @@ class StudyPage extends StatelessWidget {
 
                           /// ================= QUESTIONS =================
                           ListView.builder(
-                            padding: EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(16),
                             itemCount: controller.questions.length,
                             itemBuilder: (_, i) {
                               final q = controller.questions[i];
-
-                              return Card(
-                                margin: EdgeInsets.symmetric(vertical: 8),
-                                elevation: 3,
-                                child: Padding(
-                                  padding: EdgeInsets.all(12),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        q["question"] ?? "",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      SizedBox(height: 10),
-                                      Divider(),
-                                      Text(
-                                        q["answer"] ?? "",
-                                        style: TextStyle(
-                                          color: Colors.green,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                              return TweenAnimationBuilder<double>(
+                                tween: Tween(begin: 0.0, end: 1.0),
+                                duration: Duration(milliseconds: 400 + (i * 100).clamp(0, 500)),
+                                curve: Curves.easeOutCubic,
+                                builder: (context, value, child) {
+                                  return Transform.translate(
+                                    offset: Offset(0, 50 * (1 - value)),
+                                    child: Opacity(
+                                      opacity: value,
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                                child: ModernStudyCard(q: q, index: i),
                               );
                             },
                           ),

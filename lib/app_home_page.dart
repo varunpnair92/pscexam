@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'home_controller.dart';
 import 'test_controller.dart';
 import 'image_slider_controller.dart';
+import 'study_controller.dart';
 
 class AppHomePage extends StatelessWidget {
   final HomeController ctrl = Get.put(HomeController());
@@ -72,15 +73,33 @@ class AppHomePage extends StatelessWidget {
                   const SizedBox(height: 16),
                   _statsRow(),
                   const SizedBox(height: 24),
-                  _sectionTitle('🚀 Attempts'),
-                  const SizedBox(height: 12),
-                  _attemptCategoriesGrid(),
-                  const SizedBox(height: 24),
-                  _sectionTitle('📋 Exam Categories'),
-                  const SizedBox(height: 12),
-                  _examCategoriesGrid(),
-                  const SizedBox(height: 24),
-                  _quickActions(),
+                  _boxedSection(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _sectionTitle('🚀 Attempts'),
+                        const SizedBox(height: 16),
+                        _attemptCategoriesGrid(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  _boxedSection(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _sectionTitle('📋 Exam Categories'),
+                        const SizedBox(height: 16),
+                        _examCategoriesGrid(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  _boxedSection(
+                    child: _quickActions(),
+                  ),
                   const SizedBox(height: 32),
                 ]),
               ),
@@ -97,7 +116,7 @@ class AppHomePage extends StatelessWidget {
   // ─── SliverAppBar ─────────────────────────────────────────────
   Widget _buildSliverAppBar() {
     return SliverAppBar(
-      expandedHeight: 300,
+      expandedHeight: 220,
       pinned: true,
       backgroundColor: _green1,
       flexibleSpace: FlexibleSpaceBar(
@@ -148,7 +167,7 @@ class AppHomePage extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 60, 20, 16),
+                padding: const EdgeInsets.fromLTRB(20, 40, 20, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -164,26 +183,8 @@ class AppHomePage extends StatelessWidget {
                       ),
                     )),
                     const SizedBox(height: 14),
-                    // ── Stats tiles inside header ──
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white.withOpacity(0.3)),
-                      ),
-                      child: Obx(() => Row(
-                        children: [
-                          _headerStat('Total', '${ctrl.totalExams.value}', Icons.list_alt_rounded),
-                          const SizedBox(width: 8),
-                          _headerStat('Attended', '${ctrl.attemptedExams.value}', Icons.check_circle_rounded),
-                          const SizedBox(width: 8),
-                          _headerStat('Remaining', '${ctrl.remainingExams.value}', Icons.hourglass_top_rounded),
-                          const SizedBox(width: 8),
-                          _headerStat('Success', '${ctrl.successRatio.value.toStringAsFixed(1)}%', Icons.emoji_events_rounded),
-                        ],
-                      )),
-                    ),
+                    // ── Search Bar inside header ──
+                    const HomeSearchBar(),
                   ],
                 ),
               ),
@@ -598,6 +599,27 @@ class AppHomePage extends StatelessWidget {
     );
   }
 
+  // ─── Boxed Section Helper ────────────────────────────────────
+  Widget _boxedSection({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: _green1.withOpacity(0.12), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: _green1.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
   // ─── Quick Actions ────────────────────────────────────────────
   Widget _quickActions() {
     final actions = [
@@ -828,5 +850,80 @@ class AppHomePage extends StatelessWidget {
       },
     );
 
+  }
 }
+
+// ─── Search Bar Widget ────────────────────────────────────────────
+class HomeSearchBar extends StatefulWidget {
+  const HomeSearchBar({super.key});
+
+  @override
+  State<HomeSearchBar> createState() => _HomeSearchBarState();
+}
+
+class _HomeSearchBarState extends State<HomeSearchBar> {
+  final TextEditingController _controller = TextEditingController();
+
+  static const _green1 = Color(0xFF1B8A4E);
+
+  void _submit(String val) {
+    if (val.trim().isNotEmpty) {
+      // Unfocus keyboard first
+      FocusManager.instance.primaryFocus?.unfocus();
+      // Delay navigation to let Flutter Web's gesture arena finish processing the tap
+      // to avoid 'Unexpected null value' during synchronous route unmount.
+      Future.delayed(const Duration(milliseconds: 50), () {
+        // Force the controller to recreate so onInit runs with the fresh arguments!
+        Get.delete<StudyController>();
+        Get.toNamed('/studyFull', arguments: {
+          "title": val.trim(),
+          "keywords": [val.trim()],
+        });
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: _controller,
+        textInputAction: TextInputAction.search,
+        onSubmitted: _submit,
+        style: const TextStyle(color: Color(0xFF0D3320), fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          hintText: "Search topics, keywords...",
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+          prefixIcon: const Icon(Icons.search_rounded, color: _green1),
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.arrow_forward_rounded, color: _green1),
+            onPressed: () {
+              // Ensure we read safely without UI exceptions
+              _submit(_controller.text);
+            },
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+        ),
+      ),
+    );
+  }
 }
