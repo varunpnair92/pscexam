@@ -81,9 +81,10 @@ var resumeTimeLeft = 0.obs;
     // 🔥 Cancel previous timer if exists
     timer?.cancel();
 
-    // If resumed exam → remainingSeconds already loaded
+    totalSeconds = questions.length * 45;
+
+    // If resumed exam → remainingSeconds already loaded, else initialize it
     if (remainingSeconds.value == 0) {
-      totalSeconds = questions.length * 45;
       remainingSeconds.value = totalSeconds;
     }
 

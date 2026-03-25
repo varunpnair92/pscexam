@@ -17,6 +17,17 @@ class AnalysisPage extends StatelessWidget {
         int wrong = controller.wrong;
         int unanswered = controller.notAttempted;
 
+        int timeTaken = controller.totalSeconds - controller.remainingSeconds.value;
+        if (timeTaken < 0) timeTaken = 0;
+        int perQuestionSec = controller.attempted > 0 ? timeTaken ~/ controller.attempted : 0;
+
+        String formatTime(int sec) {
+          int m = sec ~/ 60;
+          int s = sec % 60;
+          if (m > 0) return "${m}m ${s}s";
+          return "${s}s";
+        }
+
         return SingleChildScrollView(
           padding: EdgeInsets.all(16),
           child: Column(
@@ -146,9 +157,9 @@ class AnalysisPage extends StatelessWidget {
                             "Score",
                           ),
 
-                          analyticsItem(Icons.flash_on, "8s", "Per Question"),
+                          analyticsItem(Icons.flash_on, formatTime(perQuestionSec), "Per Question"),
 
-                          analyticsItem(Icons.timer, "01m 1s", "Total Time"),
+                          analyticsItem(Icons.timer, formatTime(timeTaken), "Total Time"),
                         ],
                       ),
                     ],
