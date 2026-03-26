@@ -23,6 +23,11 @@ class HomeController extends GetxController {
   var attemptedExams = 0.obs;
   var remainingExams = 0.obs;
   var successRatio = 0.0.obs;
+  
+  var totalQuestionsAttended = 0.obs;
+  var totalCorrectAnswers = 0.obs;
+  var questionSuccessRatio = 0.0.obs;
+
   var statsLoading = true.obs;
 
   @override
@@ -106,6 +111,9 @@ class HomeController extends GetxController {
         attemptedExams.value = data['attempted_exams'] ?? 0;
         remainingExams.value = data['remaining_exams'] ?? 0;
         successRatio.value = (data['success_ratio'] ?? 0.0).toDouble();
+        totalQuestionsAttended.value = data['total_questions_attended'] ?? 0;
+        totalCorrectAnswers.value = data['total_correct_answers'] ?? 0;
+        questionSuccessRatio.value = (data['question_success_ratio'] ?? 0.0).toDouble();
       }
     } catch (_) {
       // silently fail

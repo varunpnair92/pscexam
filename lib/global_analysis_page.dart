@@ -28,12 +28,20 @@ class GlobalAnalysisPage extends StatelessWidget {
         final remaining = ctrl.remainingExams.value;
         final ratio = ctrl.successRatio.value;
 
+        // 🔥 NEW QUESTION STATS
+        final questionsAttended = ctrl.totalQuestionsAttended.value;
+        final correctAnswers = ctrl.totalCorrectAnswers.value;
+        final wrongAnswers = (questionsAttended - correctAnswers).clamp(0, 999999);
+        final questionRatio = ctrl.questionSuccessRatio.value;
+
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildGrowthHeader(ratio),
+              const SizedBox(height: 24),
+              _buildQuestionStats(questionsAttended, correctAnswers, wrongAnswers, questionRatio),
               const SizedBox(height: 24),
               _buildStatsGrid(total, attempted, remaining, ratio),
               const SizedBox(height: 24),
@@ -83,6 +91,88 @@ class GlobalAnalysisPage extends StatelessWidget {
           )
         ],
       ),
+    );
+  }
+
+  // ─── Question Accuracy Donut Chart ───
+  Widget _buildQuestionStats(int attended, int correct, int wrong, double ratio) {
+    final hasData = attended > 0;
+    final cVal = hasData ? correct.toDouble() : 1.0;
+    final wVal = hasData ? wrong.toDouble() : 0.0;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Global Question Accuracy", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0D3320))),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              SizedBox(
+                height: 120,
+                width: 120,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    PieChart(
+                      PieChartData(
+                        sectionsSpace: 4,
+                        centerSpaceRadius: 40,
+                        sections: [
+                          PieChartSectionData(value: cVal, color: const Color(0xFF27AE60), showTitle: false, radius: 15),
+                          PieChartSectionData(value: wVal, color: const Color(0xFFE74C3C), showTitle: false, radius: 15),
+                          if (!hasData) PieChartSectionData(value: 1, color: Colors.grey.shade200, showTitle: false, radius: 15),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      "${ratio.toInt()}%",
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF0D3320)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 32),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _legendItem("Attended", attended.toString(), Colors.blueGrey),
+                    const SizedBox(height: 16),
+                    _legendItem("Correct", correct.toString(), const Color(0xFF27AE60)),
+                    const SizedBox(height: 16),
+                    _legendItem("Wrong", wrong.toString(), const Color(0xFFE74C3C)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _legendItem(String label, String value, Color color) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+            const SizedBox(width: 8),
+            Text(label, style: const TextStyle(color: Colors.black54, fontSize: 13, fontWeight: FontWeight.w500)),
+          ],
+        ),
+        Text(value, style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.bold)),
+      ],
     );
   }
 
