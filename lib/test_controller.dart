@@ -43,19 +43,26 @@ var resumeTimeLeft = 0.obs;
   // ================= LOAD QUESTIONS (NEW EXAM) =================
 
   Future<void> loadQuestions(int id) async {
+    resetController(); // 🔥 CLEAR OLD STATE IMMEDIATELY
     examId = id;
 
-    answers.clear();
-    status.clear();
-    current.value = 0;
+    try {
+      final res = await http.get(Uri.parse("${AppConfig.testExam}$examId/"));
 
-    final res = await http.get(Uri.parse("${AppConfig.testExam}$examId/"));
-
-    if (res.statusCode == 200) {
-      List data = json.decode(res.body);
-      questions.value = List<Question>.from(
-        data.map((e) => Question.fromJson(e)),
-      );
+      if (res.statusCode == 200) {
+        List data = json.decode(res.body);
+        questions.value = List<Question>.from(
+          data.map((e) => Question.fromJson(e)),
+        );
+        
+        // Save total count for the list view summary
+        final prefs = await SharedPreferences.getInstance();
+        prefs.setInt("exam_${id}_total", questions.length);
+      } else {
+        Get.snackbar("Error", "Failed to load exam data (Status: ${res.statusCode})");
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Check your internet connection");
     }
 
     remainingSeconds.value = 0;
@@ -67,12 +74,18 @@ var resumeTimeLeft = 0.obs;
   Future<void> loadQuestionsOnly(int id) async {
     examId = id;
 
-    final res = await http.get(Uri.parse("${AppConfig.testExam}$examId/"));
+    try {
+      final res = await http.get(Uri.parse("${AppConfig.testExam}$examId/"));
 
-    if (res.statusCode == 200) {
-      List data = json.decode(res.body);
-      questions.value = data.map((e) => Question.fromJson(e)).toList();
-    }
+      if (res.statusCode == 200) {
+        List data = json.decode(res.body);
+        questions.value = data.map((e) => Question.fromJson(e)).toList();
+        
+        // Update total count
+        final prefs = await SharedPreferences.getInstance();
+        prefs.setInt("exam_${id}_total", questions.length);
+      }
+    } catch (_) {}
   }
 
   // ================= TIMER =================
@@ -293,6 +306,7 @@ var resumeTimeLeft = 0.obs;
       jsonEncode(status.map((k, v) => MapEntry(k.toString(), v.index))),
     );
 
+    prefs.setInt("exam_${examId}_total", questions.length); // 🔥 SAVE TOTAL
     prefs.setInt("exam_${examId}_remainingSeconds", remainingSeconds.value);
 
     if (Get.isRegistered<HomeController>()) {
@@ -459,33 +473,32 @@ Future<int> getAttemptCount(int examId) async {
 
 // ================= GET PROGRESS SUMMARY USING EXAM ID =================
 
-Future<Map<String, dynamic>> getProgressSummary(int examId) async {
+  Future<Map<String, dynamic>> getProgressSummary(int examId) async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    int total = prefs.getInt("exam_${examId}_total") ?? 0;
+    String? ansStr = prefs.getString("exam_${examId}_answers");
 
-  final prefs = await SharedPreferences.getInstance();
+    if (ansStr == null) {
+      return {
+        "answered": 0,
+        "total": total,
+        "finished": false
+      };
+    }
 
-  String? ansStr = prefs.getString("exam_${examId}_answers");
+    Map<String, dynamic> map = jsonDecode(ansStr);
+    int answered = map.length;
 
-  if (ansStr == null) {
+    int remaining = prefs.getInt("exam_${examId}_remainingSeconds") ?? 0;
+    bool finished = remaining == 0 && answered > 0;
+
     return {
-      "answered": 0,
-      "finished": false
+      "answered": answered,
+      "total": total,
+      "finished": finished
     };
   }
-
-  Map<String, dynamic> map = jsonDecode(ansStr);
-
-  int answered = map.length;
-
-  // if timer finished previously, mark finished
-  int remaining = prefs.getInt("exam_${examId}_remainingSeconds") ?? 0;
-
-  bool finished = remaining == 0 && answered > 0;
-
-  return {
-    "answered": answered,
-    "finished": finished
-  };
-}
 
 
 //======================check resume availability for exam id========================

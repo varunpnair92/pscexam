@@ -170,4 +170,20 @@ class HomeController extends GetxController {
     // Navigate to the Study tab (index 2 after we add Home tab)
     Get.toNamed('/home', arguments: {'tab': 2});
   }
+
+  /// 🔥 RECURSIVE SEARCH FOR EXAM BY NAME
+  Map<String, dynamic>? findExamByName(String name, [List? list]) {
+    final searchList = list ?? examCategories;
+    for (var item in searchList) {
+      String itemName = (item['specialization'] ?? item['name'] ?? "").toString().toLowerCase();
+      if (itemName == name.toLowerCase()) {
+        return Map<String, dynamic>.from(item);
+      }
+      if (item['children'] != null && item['children'] is List) {
+        final found = findExamByName(name, item['children']);
+        if (found != null) return found;
+      }
+    }
+    return null;
+  }
 }

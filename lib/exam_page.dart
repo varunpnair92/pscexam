@@ -75,14 +75,15 @@ class _ExamPageState extends State<ExamPage> {
     // 🔹 REAL EXAM MODE (exam id)
     else if (args is Map && args.containsKey('id')) {
       final int examId = args['id'];
-      controller.examId = examId;
-      if (controller.questions.isEmpty) {
+      
+      // 🔥 ALWAYS RELOAD IF ID MISMATCH OR EMPTY
+      if (controller.examId != examId || controller.questions.isEmpty) {
         controller.loadQuestions(examId);
       }
     }
     // 🔹 INVALID DATA
     else if (controller.questions.isEmpty) {
-      return Scaffold(body: Center(child: Text("Invalid Exam Data")));
+      return const Scaffold(body: Center(child: Text("Loading Exam...")));
     }
 
     return Scaffold(

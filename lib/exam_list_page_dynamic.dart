@@ -92,8 +92,7 @@ return Obx(() => Scaffold(
                             answered =
                                 p["answered"] ?? 0;
 
-                            total =
-                                p["total"] ?? 0;
+                            total = exam.totalQuestions; // 🔥 USE MODEL TOTAL
 
                             if (finished) {
                               progressText = "Finished";

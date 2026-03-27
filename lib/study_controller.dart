@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'app_config.dart';
-
+import 'home_controller.dart';
+import 'test_controller.dart';
+import 'question_model.dart';
 class StudyController extends GetxController {
   /// FULL TREE
   var fullTree = [].obs;
@@ -192,6 +194,27 @@ class StudyController extends GetxController {
 
   /// QUESTIONS
   Future<void> fetchQuestionsByKeyword(List<String> keywords) async {
+    // 🔥 NEW: Check for Live Exam EXACT Match (prioritize full live exams over fuzzy keywords)
+    if (keywords.length == 1) {
+      final homeCtrl = Get.find<HomeController>();
+      final liveExam = homeCtrl.findExamByName(keywords.first);
+      
+      if (liveExam != null && liveExam['id'] != null) {
+        final testCtrl = Get.find<TestController>();
+        await testCtrl.loadQuestionsOnly(liveExam['id']);
+        
+        // Convert test_controller questions (ObsList<Question>) to study_controller expected format (ObsList<dynamic>)
+        questions.assignAll(testCtrl.questions.map((q) => {
+          "id": q.id,
+          "question": q.question,
+          "options": q.options,
+          "answer": q.answer,
+          "description": q.description,
+        }).toList());
+        return;
+      }
+    }
+
     final res = await http.post(
       Uri.parse(AppConfig.keywordQuestions),
       headers: {"Content-Type": "application/json"},
