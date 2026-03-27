@@ -18,6 +18,31 @@ class _ReviewPageState extends State<ReviewPage> {
   final ScrollController circleController = ScrollController();
   late Worker _worker;
 
+  // 0: All, 1: Attended, 2: Skipped, 3: Correct, 4: Wrong
+  final RxInt selectedFilter = 0.obs;
+
+  List<int> get filteredIndices {
+    List<int> list = [];
+    for (int i = 0; i < controller.snapshot.length; i++) {
+      var q = controller.snapshot[i.toString()];
+      String selected = (q?['selected'] ?? "").toString().trim();
+      String correct = (q?['correct'] ?? "").toString().trim();
+      
+      if (selectedFilter.value == 0) {
+        list.add(i);
+      } else if (selectedFilter.value == 1) { // Attended
+        if (selected.isNotEmpty) list.add(i);
+      } else if (selectedFilter.value == 2) { // Skipped
+        if (selected.isEmpty) list.add(i);
+      } else if (selectedFilter.value == 3) { // Correct
+        if (selected.isNotEmpty && selected == correct) list.add(i);
+      } else if (selectedFilter.value == 4) { // Wrong
+        if (selected.isNotEmpty && selected != correct) list.add(i);
+      }
+    }
+    return list;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -34,17 +59,36 @@ class _ReviewPageState extends State<ReviewPage> {
 
       // Auto-scroll the top horizontal Question Navigator
       if (circleController.hasClients) {
-        // Calculate offset to somewhat center the selected circle
-        double screenWidth = Get.width;
-        double itemWidth = 46.0;
-        double targetScroll = (index * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
-        
-        circleController.animateTo(
-          targetScroll.clamp(0.0, circleController.position.maxScrollExtent),
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+        int listIndex = filteredIndices.indexOf(index);
+        if (listIndex != -1) {
+          double screenWidth = Get.width;
+          double itemWidth = 46.0;
+          double targetScroll = (listIndex * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
+          
+          circleController.animateTo(
+            targetScroll.clamp(0.0, circleController.position.maxScrollExtent),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
       }
+    });
+
+    // Also listen to filter changes to auto-scroll to current item if it exists in the new filter
+    ever(selectedFilter, (_) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+         if (circleController.hasClients) {
+            int listIndex = filteredIndices.indexOf(controller.current.value);
+            if (listIndex != -1) {
+              double screenWidth = Get.width;
+              double itemWidth = 46.0;
+              double targetScroll = (listIndex * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
+              circleController.jumpTo(targetScroll.clamp(0.0, circleController.position.maxScrollExtent));
+            } else if (circleController.position.pixels != 0) {
+              circleController.jumpTo(0);
+            }
+         }
+      });
     });
   }
 
@@ -54,6 +98,27 @@ class _ReviewPageState extends State<ReviewPage> {
     pageController.dispose();
     circleController.dispose();
     super.dispose();
+  }
+
+  Widget _buildFilterChip(String label, int filterIndex, Color color) {
+    return Obx(() {
+      bool isSelected = selectedFilter.value == filterIndex;
+      return Padding(
+        padding: const EdgeInsets.only(right: 8.0),
+        child: ChoiceChip(
+          label: Text(label, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : color)),
+          selected: isSelected,
+          selectedColor: color,
+          backgroundColor: color.withOpacity(0.1),
+          side: BorderSide(color: isSelected ? color : color.withOpacity(0.3)),
+          onSelected: (bool selected) {
+            if (selected) {
+              selectedFilter.value = filterIndex;
+            }
+          },
+        ),
+      );
+    });
   }
 
   @override
@@ -85,12 +150,16 @@ class _ReviewPageState extends State<ReviewPage> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        /// 🔹 AUTO SCROLL NAVIGATOR INIT
+        List<int> currentFiltered = filteredIndices;
+
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (circleController.hasClients && circleController.position.pixels == 0) {
-            circleController.jumpTo(
-              ((controller.current.value * 46.0) - (Get.width / 2) + 23.0).clamp(0.0, circleController.position.maxScrollExtent),
-            );
+            int listIndex = currentFiltered.indexOf(controller.current.value);
+            if (listIndex != -1) {
+              circleController.jumpTo(
+                ((listIndex * 46.0) - (Get.width / 2) + 23.0).clamp(0.0, circleController.position.maxScrollExtent),
+              );
+            }
           }
         });
 
@@ -100,67 +169,89 @@ class _ReviewPageState extends State<ReviewPage> {
             Container(
               height: 55,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              color: Colors.white,
+              child: currentFiltered.isEmpty 
+                ? const Center(child: Text("No questions match this filter", style: TextStyle(color: Colors.grey)))
+                : ListView.builder(
+                    controller: circleController,
+                    scrollDirection: Axis.horizontal,
+                    itemCount: currentFiltered.length,
+                    itemBuilder: (context, index) {
+                      int realIndex = currentFiltered[index];
+                      var item = controller.snapshot[realIndex.toString()];
+
+                      String selected = (item?['selected'] ?? "").toString().trim();
+                      String correct = (item?['correct'] ?? "").toString().trim();
+
+                      Color color;
+                      if (selected.isEmpty) {
+                        color = Colors.grey.shade300;
+                      } else if (selected == correct) {
+                        color = Colors.green.shade500;
+                      } else {
+                        color = Colors.red.shade500;
+                      }
+
+                      return Obx(() {
+                        bool isCurrent = realIndex == controller.current.value;
+
+                        return GestureDetector(
+                          onTap: () {
+                            controller.current.value = realIndex;
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            width: 38,
+                            height: 38,
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: color,
+                              border: isCurrent
+                                  ? Border.all(color: Colors.blue.shade600, width: 2.5)
+                                  : null,
+                              boxShadow: isCurrent 
+                                  ? [BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 6)] 
+                                  : [],
+                            ),
+                            child: Center(
+                              child: Text(
+                                "${realIndex + 1}",
+                                style: TextStyle(
+                                  color: selected.isEmpty && !isCurrent ? Colors.black54 : Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      });
+                    },
+                  ),
+            ),
+            
+            /// 🔴 FILTER TABS (CHIPS)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2)),
                 ],
               ),
-              child: ListView.builder(
-                controller: circleController,
+              child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                itemCount: controller.snapshot.length,
-                itemBuilder: (context, index) {
-                  return Obx(() {
-                    bool isCurrent = index == controller.current.value;
-                    var item = controller.snapshot[index.toString()];
-
-                    String selected = (item?['selected'] ?? "").toString().trim();
-                    String correct = (item?['correct'] ?? "").toString().trim();
-
-                    Color color;
-                    if (selected.isEmpty) {
-                      color = Colors.grey.shade300;
-                    } else if (selected == correct) {
-                      color = Colors.green.shade500;
-                    } else {
-                      color = Colors.red.shade500;
-                    }
-
-                    return GestureDetector(
-                      onTap: () {
-                        controller.current.value = index;
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: 38,
-                        height: 38,
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: color,
-                          border: isCurrent
-                              ? Border.all(color: Colors.blue.shade600, width: 2.5)
-                              : null,
-                          boxShadow: isCurrent 
-                              ? [BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 6)] 
-                              : [],
-                        ),
-                        child: Center(
-                          child: Text(
-                            "${index + 1}",
-                            style: TextStyle(
-                              color: selected.isEmpty && !isCurrent ? Colors.black54 : Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  });
-                },
-              ),
+                child: Row(
+                  children: [
+                    _buildFilterChip("All", 0, Colors.blueGrey),
+                    _buildFilterChip("Attended", 1, Colors.blue),
+                    _buildFilterChip("Skipped", 2, Colors.grey),
+                    _buildFilterChip("Correct", 3, Colors.green),
+                    _buildFilterChip("Wrong", 4, Colors.red),
+                  ]
+                )
+              )
             ),
 
             // 🧾 HEADER SECTION
