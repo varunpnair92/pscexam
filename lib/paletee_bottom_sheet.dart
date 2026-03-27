@@ -155,14 +155,19 @@ class PaletteBottomSheet extends StatelessWidget {
 
               return Container(
                 padding: const EdgeInsets.all(12),
-                color: Colors.grey.shade200,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Wrap(
+                  spacing: 16,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
                   children: [
-                    Text("Total: $total"),
-                    Text("Answered: $answered"),
-                    Text("Not Answered: $notAnswered"),
-                    Text("Review: $marked"),
+                    Text("Total: $total", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                    Text("Answered: $answered", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                    Text("Unanswered: $notAnswered", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                    Text("Review: $marked", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
                   ],
                 ),
               );
