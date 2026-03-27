@@ -13,23 +13,8 @@ class ModernStudyCard extends StatefulWidget {
 class _ModernStudyCardState extends State<ModernStudyCard> {
   bool isRevealed = false;
 
-  List<String> _getOptions() {
-    final q = widget.q;
-    if (q["options"] != null && q["options"] is List && q["options"].isNotEmpty) {
-      return List<String>.from(q["options"]);
-    }
-    List<String> opts = [];
-    for (int i = 1; i <= 4; i++) {
-      if (q["option$i"] != null && q["option$i"].toString().trim().isNotEmpty) {
-        opts.add(q["option$i"].toString().trim());
-      }
-    }
-    return opts;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final opts = _getOptions();
     final answer = (widget.q["answer"] ?? "").toString().trim();
     final description = (widget.q["description"] ?? "").toString().trim();
 
@@ -111,40 +96,6 @@ class _ModernStudyCardState extends State<ModernStudyCard> {
               secondChild: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Show Options if present
-                  if (opts.isNotEmpty) ...opts.map((opt) {
-                    bool isCorrect = opt.trim().toLowerCase() == answer.toLowerCase();
-                    return Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: isCorrect ? Colors.green.shade50 : Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isCorrect ? Colors.green.shade400 : Colors.grey.shade200,
-                          width: isCorrect ? 1.5 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              opt,
-                              style: TextStyle(
-                                color: isCorrect ? Colors.green.shade900 : Colors.black87,
-                                fontWeight: isCorrect ? FontWeight.w600 : FontWeight.normal,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ),
-                          if (isCorrect)
-                            const Icon(Icons.check_circle_rounded, color: Colors.green),
-                        ],
-                      ),
-                    );
-                  }) else 
-                  // Just show the answer if no options
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
