@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:psc_exam/auth_controller.dart';
 import 'question_model.dart';
 import 'app_config.dart';
 import 'home_controller.dart';
@@ -11,7 +12,7 @@ import 'home_controller.dart';
 enum QuestionStatus { unseen, answered, review }
 
 class TestController extends GetxController {
-  final int userId = 1;
+  int get userId => Get.find<AuthController>().userId.value;
 
   //===============resume part=================
   var hasResume = false.obs;

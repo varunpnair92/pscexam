@@ -28,4 +28,10 @@ static const String ImageSlide =
 
 // ================= USER EXAM STATS =================
 static const String userExamStats = "${baseUrl}user-exam-stats/";
+
+// ================= USER DETAILS =================
+static const String getUserDetails = "${baseUrl}get_userdetails_by_username/";
+
+// ================= NOTIFICATIONS =================
+static const String activeNotifications = "${baseUrl}active-notifications/";
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:psc_exam/auth_controller.dart';
 import 'package:psc_exam/completed_exam_model.dart';
 import 'app_config.dart';
 
@@ -9,7 +10,7 @@ class ResultController extends GetxController {
   var isLoading = false.obs;
   var errorMsg = "".obs;
 
-  final int userId = 1; // 🔥 use dynamic later
+  int get userId => Get.find<AuthController>().userId.value;
 
   Future<void> fetchLatestAttempts() async {
     try {

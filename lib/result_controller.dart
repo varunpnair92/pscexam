@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:psc_exam/auth_controller.dart';
 import 'package:psc_exam/completed_exam_model.dart';
 import 'app_config.dart';
 
@@ -11,7 +12,7 @@ class ResultController extends GetxController {
   var isLoading = true.obs;
   var errorMsg = ''.obs;
 
-  final int userId = 1;
+  int get userId => Get.find<AuthController>().userId.value;
 
   @override
   void onInit() {

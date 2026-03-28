@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:psc_exam/auth_controller.dart';
 import 'app_config.dart';
 import 'study_controller.dart';
 
@@ -95,14 +96,12 @@ class HomeController extends GetxController {
     lastExamName.value = prefs.getString('last_exam_name') ?? '';
   }
 
-  // Same userId used across the app (matches TestController.userId)
-  static const int _userId = 1;
-
   Future<void> fetchUserStats() async {
+    final int userId = Get.find<AuthController>().userId.value;
     statsLoading.value = true;
     try {
       final res = await http.get(
-        Uri.parse('${AppConfig.userExamStats}$_userId/'),
+        Uri.parse('${AppConfig.userExamStats}$userId/'),
       );
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);

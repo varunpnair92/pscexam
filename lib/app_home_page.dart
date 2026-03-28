@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:psc_exam/auth_controller.dart';
 import 'home_controller.dart';
 import 'test_controller.dart';
 import 'image_slider_controller.dart';
 import 'study_controller.dart';
+import 'notification_controller.dart';
+import 'notification_overlay.dart';
 
 class AppHomePage extends StatelessWidget {
   final HomeController ctrl = Get.put(HomeController());
   final testCtrl = Get.find<TestController>();
   final ImageSliderController sliderCtrl = Get.put(ImageSliderController());
+  final NotificationController notifCtrl = Get.put(NotificationController());
 
   AppHomePage({super.key});
 
@@ -202,17 +206,43 @@ class AppHomePage extends StatelessWidget {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.notifications_outlined,
-              color: Colors.white),
-          onPressed: () {},
+          icon: const Icon(Icons.logout_rounded, color: Colors.white),
+          onPressed: () => Get.find<AuthController>().signOut(),
         ),
+        Obx(() => Stack(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+              onPressed: () => Get.to(
+                () => NotificationOverlay(),
+                opaque: false,
+                transition: Transition.fadeIn,
+              ),
+            ),
+            if (notifCtrl.notifications.isNotEmpty)
+              Positioned(
+                right: 12,
+                top: 12,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 8,
+                    minHeight: 8,
+                  ),
+                ),
+              ),
+          ],
+        )),
         Padding(
           padding: const EdgeInsets.only(right: 12),
           child: CircleAvatar(
             radius: 16,
             backgroundColor: Colors.white.withOpacity(0.25),
-            child: const Icon(Icons.person_outline,
-                color: Colors.white, size: 18),
+            child: const Icon(Icons.person_outline, color: Colors.white, size: 18),
           ),
         ),
       ],

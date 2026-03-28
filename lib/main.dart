@@ -27,6 +27,8 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   Get.put(AuthController());
+  await AuthController.instance.loadSession(); // Wait for session
+  
   Get.put(TestController(), permanent: true);
 
   runApp(MyApp());
@@ -35,10 +37,12 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final AuthController auth = Get.find();
+
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
 
-      initialRoute: '/home',
+      initialRoute: auth.isLoggedIn.value ? '/home' : '/login',
 
       getPages: [
         GetPage(name: '/home', page: () => HomePage()),
