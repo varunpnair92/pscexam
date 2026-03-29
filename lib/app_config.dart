@@ -34,4 +34,7 @@ static const String getUserDetails = "${baseUrl}get_userdetails_by_username/";
 
 // ================= NOTIFICATIONS =================
 static const String activeNotifications = "${baseUrl}active-notifications/";
+
+// ================= CHARACTERISTICS =================
+static const String characteristicByKeyword = "${baseUrl}qbkeywordcharacteristic/";
 }

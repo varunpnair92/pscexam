@@ -20,6 +20,7 @@ import 'firebase_options.dart';
 import 'result_analysis_page.dart';
 import 'story_page.dart';
 import 'global_analysis_page.dart';
+import 'characteristic_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,7 +43,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
 
-      initialRoute: auth.isLoggedIn.value ? '/home' : '/login',
+      initialRoute: auth.isLoggedIn.value ? '/home' : '/home',
 
       getPages: [
         GetPage(name: '/home', page: () => HomePage()),
@@ -81,6 +82,9 @@ class MyApp extends StatelessWidget {
 
         // 📖 STORY
         GetPage(name: '/story', page: () => StoryPage()),
+
+        // ✨ CHARACTERISTIC
+        GetPage(name: '/characteristic', page: () => CharacteristicPage()),
       ],
     );
   }
