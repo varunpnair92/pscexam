@@ -37,7 +37,7 @@ class LoginPage extends StatelessWidget {
                     ),
                     SizedBox(height: 20),
                     Text(
-                      "PSC Exam Helper",
+                      "PSC Exam Online",
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,

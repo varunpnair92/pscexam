@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:psc_exam/auth_controller.dart';
 import 'app_config.dart';
 import 'study_controller.dart';
+import 'news_controller.dart';
 
 class HomeController extends GetxController {
   // ─── Node tree data ───────────────────────────────────────────
@@ -34,6 +35,7 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    Get.put(NewsController()); 
     fetchHomeData();
     loadLocalStats();
     fetchUserStats();
@@ -46,32 +48,37 @@ class HomeController extends GetxController {
       if (res.statusCode == 200) {
         final List<dynamic> data = jsonDecode(res.body);
 
-        // Find EXAM node → its children become exam categories
-        final examNode = data.firstWhereOrNull(
-          (e) => e['name'] == 'EXAM',
-        );
-        if (examNode != null) {
-          examCategories.value = examNode['children'] ?? [];
-        }
+        // Find EXAM node
+        final examNode = data.firstWhereOrNull((e) => e['name'] == 'EXAM');
+        if (examNode != null) examCategories.value = examNode['children'] ?? [];
 
-        // Find GUI1 node → its children become attempt categories
-        final gui1Node = data.firstWhereOrNull(
-          (e) => e['name'] == 'GUI1',
-        );
-        if (gui1Node != null) {
-          attemptCategories.value = gui1Node['children'] ?? [];
+        // Find GUI1 node
+        final gui1Node = data.firstWhereOrNull((e) => e['name'] == 'GUI1');
+        if (gui1Node != null) attemptCategories.value = gui1Node['children'] ?? [];
+
+        // Find NEWS node ───── (Recursive check)
+        final newsNode = findNodeByName('NEWS', data);
+        if (newsNode != null && newsNode['url'] != null) {
+          String newsUrl = newsNode['url'].toString();
+          // Ensure it's a full URL
+          if (!newsUrl.startsWith('http')) {
+            newsUrl = "${AppConfig.baseUrl}$newsUrl";
+          }
+          // Ensure it has a trailing slash (common in your Django backend)
+          if (!newsUrl.endsWith('/')) {
+            newsUrl = "$newsUrl/";
+          }
+          
+          Get.find<NewsController>().fetchNews(newsUrl);
         }
 
         // Use the first root node's top-level children as study topics
-        final studyRoot = data.firstWhereOrNull(
-          (e) => e['name'] != 'EXAM',
-        );
+        final studyRoot = data.firstWhereOrNull((e) => e['name'] != 'EXAM');
         if (studyRoot != null) {
           studyTopics.value = studyRoot['children'] ?? [];
         }
       }
-    } catch (e) {
-      // silently fail – UI shows empty state
+    } catch (_) {
     } finally {
       isLoading.value = false;
     }
@@ -81,17 +88,10 @@ class HomeController extends GetxController {
     final prefs = await SharedPreferences.getInstance();
     final keys = prefs.getKeys();
     int count = 0;
-    
-    String anyPausedId = '';
-    
     for (final k in keys) {
       if (k.startsWith('attempts_')) count += (prefs.getInt(k) ?? 0);
-      if (k.startsWith('exam_') && k.endsWith('_current')) {
-        anyPausedId = k.split('_')[1];
-      }
     }
     totalAttempts.value = count;
-    
     lastExamId.value = prefs.getString('last_exam_id') ?? '';
     lastExamName.value = prefs.getString('last_exam_name') ?? '';
   }
@@ -100,9 +100,7 @@ class HomeController extends GetxController {
     final int userId = Get.find<AuthController>().userId.value;
     statsLoading.value = true;
     try {
-      final res = await http.get(
-        Uri.parse('${AppConfig.userExamStats}$userId/'),
-      );
+      final res = await http.get(Uri.parse('${AppConfig.userExamStats}$userId/'));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         userName.value = data['fullname'] ?? data['username'] ?? '';
@@ -114,11 +112,24 @@ class HomeController extends GetxController {
         totalCorrectAnswers.value = data['total_correct_answers'] ?? 0;
         questionSuccessRatio.value = (data['question_success_ratio'] ?? 0.0).toDouble();
       }
-    } catch (_) {
-      // silently fail
-    } finally {
+    } catch (_) {} finally {
       statsLoading.value = false;
     }
+  }
+
+  /// 🔍 RECURSIVE SEARCH FOR ANY NODE BY NAME
+  Map<String, dynamic>? findNodeByName(String name, List list) {
+    for (var item in list) {
+      String itemName = (item['name'] ?? "").toString().toUpperCase();
+      if (itemName == name.toUpperCase()) {
+        return Map<String, dynamic>.from(item);
+      }
+      if (item['children'] != null && item['children'] is List) {
+        final found = findNodeByName(name, item['children']);
+        if (found != null) return found;
+      }
+    }
+    return null;
   }
 
   void navigateAttemptCategory(dynamic item) {
@@ -147,37 +158,29 @@ class HomeController extends GetxController {
       Get.toNamed(nav);
     } else {
       Get.delete<StudyController>();
-      Get.toNamed('/studyFull', arguments: {
-        "title": item['name'] ?? 'Study',
-      });
+      Get.toNamed('/studyFull', arguments: {"title": item['name'] ?? 'Study'});
     }
   }
 
   void navigateExamCategory(dynamic item) {
     final nav = item['navigation'] ?? '';
     final url = item['url'] ?? '';
-
     if (nav == 'dynamicExamList' && url.isNotEmpty) {
       Get.toNamed('/dynamicExamList', arguments: {'endpoint': url});
-    } else if (item['children'] != null &&
-        (item['children'] as List).isNotEmpty) {
+    } else if (item['children'] != null && (item['children'] as List).isNotEmpty) {
       Get.toNamed('/home', arguments: {'tab': 1});
     }
   }
 
   void navigateStudy(dynamic item) {
-    // Navigate to the Study tab (index 2 after we add Home tab)
     Get.toNamed('/home', arguments: {'tab': 2});
   }
 
-  /// 🔥 RECURSIVE SEARCH FOR EXAM BY NAME
   Map<String, dynamic>? findExamByName(String name, [List? list]) {
     final searchList = list ?? examCategories;
     for (var item in searchList) {
       String itemName = (item['specialization'] ?? item['name'] ?? "").toString().toLowerCase();
-      if (itemName == name.toLowerCase()) {
-        return Map<String, dynamic>.from(item);
-      }
+      if (itemName == name.toLowerCase()) return Map<String, dynamic>.from(item);
       if (item['children'] != null && item['children'] is List) {
         final found = findExamByName(name, item['children']);
         if (found != null) return found;

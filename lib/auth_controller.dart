@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'app_config.dart';
 
 class AuthController extends GetxController {
-  static AuthController instance = Get.find();
+  static AuthController get instance => Get.find();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 

@@ -15,12 +15,14 @@ import 'package:psc_exam/study_page.dart';
 import 'package:psc_exam/study_question_page.dart';
 import 'package:psc_exam/test_controller.dart';
 import 'firebase_options.dart';
+import 'news_controller.dart';
 
 // 🔥 ADD THESE IMPORTS
 import 'result_analysis_page.dart';
 import 'story_page.dart';
 import 'global_analysis_page.dart';
 import 'characteristic_page.dart';
+import 'news_feeder_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +33,7 @@ void main() async {
   await AuthController.instance.loadSession(); // Wait for session
   
   Get.put(TestController(), permanent: true);
+  Get.put(NewsController(), permanent: true);
 
   runApp(MyApp());
 }
@@ -50,9 +53,6 @@ class MyApp extends StatelessWidget {
 
         // 🔐 LOGIN
         GetPage(name: '/login', page: () => LoginPage()),
-
-        // 🏠 HOME
-        //GetPage(name: '/home', page: () => HomePage()),
 
         // 📚 EXAM LIST
         GetPage(name: '/examlist', page: () => ExamListPage()),
@@ -85,6 +85,9 @@ class MyApp extends StatelessWidget {
 
         // ✨ CHARACTERISTIC
         GetPage(name: '/characteristic', page: () => CharacteristicPage()),
+
+        // 📰 NEWS FEEDER
+        GetPage(name: '/newsfeeder', page: () => NewsFeederPage()),
       ],
     );
   }

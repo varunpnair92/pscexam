@@ -7,6 +7,8 @@ import 'image_slider_controller.dart';
 import 'study_controller.dart';
 import 'notification_controller.dart';
 import 'notification_overlay.dart';
+import 'knowledge_capsule_overlay.dart';
+import 'news_ticker_widget.dart';
 
 class AppHomePage extends StatelessWidget {
   final HomeController ctrl = Get.put(HomeController());
@@ -39,79 +41,88 @@ class AppHomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Container(
-          margin: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: _bg,
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: _green1.withOpacity(0.4), width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: _green1.withOpacity(0.08),
-                blurRadius: 15,
-                spreadRadius: 2,
-                offset: const Offset(0, 5),
+        child: Stack(
+          children: [
+            Container(
+              margin: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _bg,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: _green1.withOpacity(0.4), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: _green1.withOpacity(0.08),
+                    blurRadius: 15,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(26),
-            child: Obx(() {
-              if (ctrl.isLoading.value) {
-                return const Center(
-                  child: CircularProgressIndicator(color: _green2),
-                );
-              }
-              return CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  _buildSliverAppBar(),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                  const SizedBox(height: 8),
-                  _imageSlider(),
-                  const SizedBox(height: 16),
-                  _examStatsSection(),
-                  const SizedBox(height: 16),
-                  _statsRow(),
-                  const SizedBox(height: 24),
-                  _boxedSection(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _sectionTitle('🚀 Attempts'),
-                        const SizedBox(height: 16),
-                        _attemptCategoriesGrid(),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  _boxedSection(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _sectionTitle('📋 Exam Categories'),
-                        const SizedBox(height: 16),
-                        _examCategoriesGrid(),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  _boxedSection(
-                    child: _quickActions(),
-                  ),
-                  const SizedBox(height: 32),
-                ]),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(26),
+                child: Obx(() {
+                  if (ctrl.isLoading.value) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: _green2),
+                    );
+                  }
+                  return CustomScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
+                      _buildSliverAppBar(),
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate([
+                            const SizedBox(height: 8),
+                            const NewsTickerWidget(), // 📰 Flash News
+                            const SizedBox(height: 4),
+                            _imageSlider(),
+                            const SizedBox(height: 16),
+                            _examStatsSection(),
+                            const SizedBox(height: 16),
+                            _statsRow(),
+                            const SizedBox(height: 24),
+                            _boxedSection(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _sectionTitle('🚀 Attempts'),
+                                  const SizedBox(height: 16),
+                                  _attemptCategoriesGrid(),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            
+                            _boxedSection(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _sectionTitle('📋 Exam Categories'),
+                                  const SizedBox(height: 16),
+                                  _examCategoriesGrid(),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            
+                            _boxedSection(
+                              child: _quickActions(),
+                            ),
+                            const SizedBox(height: 32),
+                          ]),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
               ),
             ),
+            
+            // ─── Daily Knowledge Capsule Overlay ───
+            KnowledgeCapsuleOverlay(),
           ],
-        );
-            }),
-          ),
         ),
       ),
     );
@@ -193,10 +204,10 @@ class AppHomePage extends StatelessWidget {
                 ),
               ),
             ],
-          ),        // closes Stack
-          ),        // closes Container (ClipRRect child)
-        ),          // closes ClipRRect
-      ),            // closes FlexibleSpaceBar
+          ),
+          ),
+        ),
+      ),
       title: const Text(
         'PSC Online',
         style: TextStyle(
@@ -248,35 +259,6 @@ class AppHomePage extends StatelessWidget {
       ],
     );
   }
-
-  Widget _headerStat(String label, String value, IconData icon) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withOpacity(0.25)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: Colors.white, size: 18),
-            const SizedBox(height: 4),
-            Text(value,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold)),
-            const SizedBox(height: 2),
-            Text(label,
-                style: const TextStyle(color: Colors.white70, fontSize: 9),
-                textAlign: TextAlign.center),
-          ],
-        ),
-      ),
-    );
-  }
-
 
   // ─── Image Slider ─────────────────────────────────────────────
   Widget _imageSlider() {
@@ -894,14 +876,9 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
     if (val.trim().isNotEmpty) {
       // Unfocus keyboard first
       FocusManager.instance.primaryFocus?.unfocus();
-      // Delay navigation to let Flutter Web's gesture arena finish processing the tap
-      // to avoid 'Unexpected null value' during synchronous route unmount.
       Future.delayed(const Duration(milliseconds: 50), () {
-        // Force the controller to recreate so onInit runs with the fresh arguments!
         Get.delete<StudyController>();
-        
         final kws = val.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-
         Get.toNamed('/studyFull', arguments: {
           "title": kws.length > 1 ? kws.join(", ") : val.trim(),
           "keywords": kws,
@@ -943,7 +920,6 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
           suffixIcon: IconButton(
             icon: const Icon(Icons.arrow_forward_rounded, color: _green1),
             onPressed: () {
-              // Ensure we read safely without UI exceptions
               _submit(_controller.text);
             },
           ),
