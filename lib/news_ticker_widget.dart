@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'news_controller.dart';
+import 'news_model.dart';
 
 class NewsTickerWidget extends StatefulWidget {
   const NewsTickerWidget({super.key});
@@ -59,7 +60,6 @@ class _NewsTickerWidgetState extends State<NewsTickerWidget> {
         onTap: () => Get.toNamed('/newsfeeder'),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          height: 44,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
@@ -72,83 +72,104 @@ class _NewsTickerWidgetState extends State<NewsTickerWidget> {
             ],
             border: Border.all(color: const Color(0xFF1B8A4E).withOpacity(0.1)),
           ),
-          child: Row(
-            children: [
-              // ─── FLASH NEWS Label ───
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                height: double.infinity,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF1B8A4E), Color(0xFF27AE60)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ─── FLASH NEWS Label ───
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF1B8A4E), Color(0xFF27AE60)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(11),
+                      bottomLeft: Radius.circular(11),
+                    ),
                   ),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(11),
-                    bottomLeft: Radius.circular(11),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    "FLASH",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
-                alignment: Alignment.center,
-                child: const Text(
-                  "FLASH",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ),
-              
-              const SizedBox(width: 12),
-              
-              // ─── Scrolling Content ───
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  scrollDirection: Axis.vertical, // Scroll up/down for "Flash" feel
-                  itemCount: newsCtrl.newsList.length,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    final item = newsCtrl.newsList[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        children: [
-                          Text(
-                            "${item.title}: ",
-                            style: TextStyle(
-                              color: Colors.grey.shade500,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w400,
-                            ),
+                
+                const SizedBox(width: 12),
+                
+                // ─── Scrolling Content ───
+                Expanded(
+                  child: Stack(
+                    children: [
+                      // 1. Invisible items to determine max height (dynamically adjust to longest)
+                      Opacity(
+                        opacity: 0,
+                        child: IgnorePointer(
+                          child: Stack(
+                            children: newsCtrl.newsList.map((item) => _buildNewsContent(item)).toList(),
                           ),
-                          Expanded(
-                            child: Text(
-                              item.content,
-                              style: const TextStyle(
-                                color: Color(0xFF0D3320),
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    );
-                  },
+                      // 2. The actual PageView
+                      Positioned.fill(
+                        child: PageView.builder(
+                          controller: _pageController,
+                          scrollDirection: Axis.vertical,
+                          itemCount: newsCtrl.newsList.length,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            return _buildNewsContent(newsCtrl.newsList[index]);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              
-              const Icon(Icons.chevron_right_rounded, color: Color(0xFF1B8A4E), size: 20),
-              const SizedBox(width: 8),
-            ],
+                
+                const Icon(Icons.chevron_right_rounded, color: Color(0xFF1B8A4E), size: 20),
+                const SizedBox(width: 8),
+              ],
+            ),
           ),
         ),
       );
     });
+  }
+
+  Widget _buildNewsContent(NewsItem item) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12), // More room for full content
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            "${item.title}: ",
+            style: TextStyle(
+              color: Colors.grey.shade500,
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              item.content,
+              style: const TextStyle(
+                color: Color(0xFF0D3320),
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+              // No maxLines/overflow to show full content
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
