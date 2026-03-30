@@ -76,35 +76,40 @@ class _NewsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ─── Top Row: Small Faded Title ───
+            // ─── Top Row: Only Date now ───
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(
-                  item.title.toUpperCase(),
-                  style: TextStyle(
-                    color: Colors.grey.withOpacity(0.6),
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.8,
-                  ),
-                ),
                 Text(
                   "${item.date.day} ${_getMonth(item.date.month)} ${item.date.year}",
                   style: TextStyle(color: Colors.grey.shade400, fontSize: 10),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 8),
             
-            // ─── Main Content ───
-            Text(
-              item.content,
-              style: const TextStyle(
-                color: Color(0xFF0D3320),
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                height: 1.6,
+            // ─── Main Content + #Title ───
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: item.content,
+                    style: const TextStyle(
+                      color: Color(0xFF0D3320),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      height: 1.6,
+                    ),
+                  ),
+                  TextSpan(
+                    text: " #${item.title.toUpperCase()}",
+                    style: const TextStyle(
+                      color: Color(0xFF3498DB), // Light Blue
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

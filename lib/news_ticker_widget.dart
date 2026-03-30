@@ -151,43 +151,32 @@ class _NewsTickerWidgetState extends State<NewsTickerWidget> {
 
   Widget _buildNewsContent(NewsItem item) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8), // Adjusted for column
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Center(
+        child: Text.rich(
+          TextSpan(
             children: [
-              Text(
-                item.title.toUpperCase(),
-                style: TextStyle(
-                  color: Colors.grey.withOpacity(0.6),
-                  fontSize: 10,
+              TextSpan(
+                text: item.content,
+                style: const TextStyle(
+                  color: Color(0xFF0D3320),
+                  fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
+                  height: 1.2,
                 ),
               ),
-              const Spacer(),
-              Text(
-                "${item.date.day}/${item.date.month}",
-                style: TextStyle(
-                  color: Colors.grey.withOpacity(0.4),
-                  fontSize: 9,
+              TextSpan(
+                text: " #${item.title.toUpperCase()}",
+                style: const TextStyle(
+                  color: Color(0xFF3498DB), // Light Blue
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            item.content,
-            style: const TextStyle(
-              color: Color(0xFF0D3320),
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              height: 1.2,
-            ),
-          ),
-        ],
+          textAlign: TextAlign.start,
+        ),
       ),
     );
   }
