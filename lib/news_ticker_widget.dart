@@ -59,18 +59,18 @@ class _NewsTickerWidgetState extends State<NewsTickerWidget> {
       return GestureDetector(
         onTap: () => Get.toNamed('/newsfeeder'),
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          margin: const EdgeInsets.symmetric(vertical: 4), // 🔥 Up to border (no horizontal margin)
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
-            border: Border.all(color: const Color(0xFF1B8A4E).withOpacity(0.1)),
+            border: Border.all(color: const Color(0xFF1B8A4E).withOpacity(0.08)),
           ),
           child: IntrinsicHeight(
             child: Row(
@@ -78,7 +78,7 @@ class _NewsTickerWidgetState extends State<NewsTickerWidget> {
               children: [
                 // ─── FLASH NEWS Label ───
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Color(0xFF1B8A4E), Color(0xFF27AE60)],
@@ -95,25 +95,29 @@ class _NewsTickerWidgetState extends State<NewsTickerWidget> {
                     "FLASH",
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 10,
+                      fontSize: 9,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 1.2,
+                      letterSpacing: 1.0,
                     ),
                   ),
                 ),
                 
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 
                 // ─── Scrolling Content ───
                 Expanded(
                   child: Stack(
+                    alignment: Alignment.centerLeft,
                     children: [
-                      // 1. Invisible items to determine max height (dynamically adjust to longest)
+                      // 1. Invisible items to determine max height + buffer
                       Opacity(
                         opacity: 0,
                         child: IgnorePointer(
                           child: Stack(
-                            children: newsCtrl.newsList.map((item) => _buildNewsContent(item)).toList(),
+                            children: newsCtrl.newsList.map((item) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12), // Buffer to avoid overflow
+                              child: _buildNewsContent(item),
+                            )).toList(),
                           ),
                         ),
                       ),
@@ -125,7 +129,9 @@ class _NewsTickerWidgetState extends State<NewsTickerWidget> {
                           itemCount: newsCtrl.newsList.length,
                           physics: const NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index) {
-                            return _buildNewsContent(newsCtrl.newsList[index]);
+                            return Center(
+                              child: _buildNewsContent(newsCtrl.newsList[index]),
+                            );
                           },
                         ),
                       ),
@@ -133,7 +139,7 @@ class _NewsTickerWidgetState extends State<NewsTickerWidget> {
                   ),
                 ),
                 
-                const Icon(Icons.chevron_right_rounded, color: Color(0xFF1B8A4E), size: 20),
+                const Icon(Icons.chevron_right_rounded, color: Color(0xFF1B8A4E), size: 18),
                 const SizedBox(width: 8),
               ],
             ),
@@ -145,27 +151,40 @@ class _NewsTickerWidgetState extends State<NewsTickerWidget> {
 
   Widget _buildNewsContent(NewsItem item) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12), // More room for full content
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      padding: const EdgeInsets.symmetric(vertical: 8), // Adjusted for column
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            "${item.title}: ",
-            style: TextStyle(
-              color: Colors.grey.shade500,
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              item.content,
-              style: const TextStyle(
-                color: Color(0xFF0D3320),
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
+          Row(
+            children: [
+              Text(
+                item.title.toUpperCase(),
+                style: TextStyle(
+                  color: Colors.grey.withOpacity(0.6),
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
               ),
-              // No maxLines/overflow to show full content
+              const Spacer(),
+              Text(
+                "${item.date.day}/${item.date.month}",
+                style: TextStyle(
+                  color: Colors.grey.withOpacity(0.4),
+                  fontSize: 9,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            item.content,
+            style: const TextStyle(
+              color: Color(0xFF0D3320),
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              height: 1.2,
             ),
           ),
         ],

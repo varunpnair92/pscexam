@@ -61,58 +61,60 @@ class _NewsCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
         ],
         border: Border.all(color: Colors.grey.shade100),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ─── Top Row: Small Faded Title ───
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1B8A4E).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    item.title,
-                    style: const TextStyle(
-                      color: Color(0xFF1B8A4E),
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
+                Text(
+                  item.title.toUpperCase(),
+                  style: TextStyle(
+                    color: Colors.grey.withOpacity(0.6),
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
                   ),
                 ),
                 Text(
-                  "${item.date.day}/${item.date.month}/${item.date.year} ${item.date.hour}:${item.date.minute.toString().padLeft(2, '0')}",
-                  style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+                  "${item.date.day} ${_getMonth(item.date.month)} ${item.date.year}",
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 10),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
+            
+            // ─── Main Content ───
             Text(
               item.content,
               style: const TextStyle(
                 color: Color(0xFF0D3320),
-                fontSize: 15,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
-                height: 1.5,
+                height: 1.6,
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _getMonth(int month) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[month - 1];
   }
 }
