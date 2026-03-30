@@ -22,7 +22,9 @@ import 'result_analysis_page.dart';
 import 'story_page.dart';
 import 'global_analysis_page.dart';
 import 'characteristic_page.dart';
+import 'characteristic_page.dart';
 import 'news_feeder_page.dart';
+import 'splash_page.dart'; // 🔥 Import SplashPage
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,9 +48,10 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
 
-      initialRoute: auth.isLoggedIn.value ? '/home' : '/home',
+      initialRoute: '/splash',
 
       getPages: [
+        GetPage(name: '/splash', page: () => const SplashPage()),
         GetPage(name: '/home', page: () => HomePage()),
 
         // 🔐 LOGIN

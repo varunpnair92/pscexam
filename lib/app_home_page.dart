@@ -7,8 +7,10 @@ import 'image_slider_controller.dart';
 import 'study_controller.dart';
 import 'notification_controller.dart';
 import 'notification_overlay.dart';
+import 'notification_overlay.dart';
 import 'knowledge_capsule_overlay.dart';
 import 'news_ticker_widget.dart';
+import 'psc_loading_logo.dart'; // 🔥 Import Logo
 
 class AppHomePage extends StatelessWidget {
   final HomeController ctrl = Get.put(HomeController());
@@ -63,7 +65,7 @@ class AppHomePage extends StatelessWidget {
                 child: Obx(() {
                   if (ctrl.isLoading.value) {
                     return const Center(
-                      child: CircularProgressIndicator(color: _green2),
+                      child: PSCLoadingLogo(size: 80),
                     );
                   }
                   return CustomScrollView(
@@ -266,7 +268,7 @@ class AppHomePage extends StatelessWidget {
       if (sliderCtrl.isLoading.value) {
         return const SizedBox(
           height: 220,
-          child: Center(child: CircularProgressIndicator(color: _green1)),
+          child: Center(child: PSCLoadingLogo(size: 60)),
         );
       }
       if (sliderCtrl.sliderImages.isEmpty) {
@@ -319,7 +321,7 @@ class AppHomePage extends StatelessWidget {
             ],
           ),
           child: const Center(
-            child: SizedBox(height: 48, child: CircularProgressIndicator(color: _green2, strokeWidth: 2.5)),
+            child: SizedBox(height: 100, child: PSCLoadingLogo(size: 50)),
           ),
         );
       }

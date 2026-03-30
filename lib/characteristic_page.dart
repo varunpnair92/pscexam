@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'characteristic_controller.dart';
 import 'characteristic_model.dart';
 import 'modern_study_card.dart';
+import 'psc_loading_logo.dart';
 
 class CharacteristicPage extends StatelessWidget {
   CharacteristicPage({super.key});
@@ -70,7 +71,7 @@ class CharacteristicPage extends StatelessWidget {
   Widget _buildBody() {
     if (controller.isLoading.value) {
       return const Center(
-        child: CircularProgressIndicator(color: _green2),
+        child: PSCLoadingLogo(size: 80),
       );
     }
 
