@@ -30,13 +30,25 @@ class AppHomePage extends StatelessWidget {
   static const _textMid = Color(0xFF4D7A5E);       // muted green text
   static const _gold = Color(0xFFF5A623);          // accent gold
 
-  static const _categoryIcons = [
-    Icons.rocket_launch_rounded,
-    Icons.live_tv_rounded,
-    Icons.workspace_premium_rounded,
-    Icons.school_rounded,
-    Icons.trending_up_rounded,
-  ];
+  IconData _getIconForName(String name) {
+    name = name.toLowerCase();
+    if (name.contains('cricket') || name.contains('ക്രിക്കറ്റ്')) return Icons.sports_cricket_rounded;
+    if (name.contains('football')) return Icons.sports_soccer_rounded;
+    if (name.contains('exam') || name.contains('test')) return Icons.assignment_rounded;
+    if (name.contains('ldc') || name.contains('clerk')) return Icons.badge_rounded;
+    if (name.contains('level') || name.contains('degree')) return Icons.workspace_premium_rounded;
+    if (name.contains('math') || name.contains('അങ്കഗണിതം')) return Icons.calculate_rounded;
+    if (name.contains('science') || name.contains('ശാസ്ത്രം')) return Icons.science_rounded;
+    if (name.contains('history') || name.contains('ചരിത്രം')) return Icons.history_edu_rounded;
+    if (name.contains('english')) return Icons.language_rounded;
+    if (name.contains('malayalam')) return Icons.menu_book_rounded;
+    if (name.contains('gk') || name.contains('general')) return Icons.public_rounded;
+    if (name.contains('it') || name.contains('cyber')) return Icons.computer_rounded;
+    if (name.contains('special') || name.contains('topic')) return Icons.stars_rounded;
+    if (name.contains('rocket') || name.contains('launch')) return Icons.rocket_launch_rounded;
+    
+    return Icons.folder_rounded; // Default
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +145,7 @@ class AppHomePage extends StatelessWidget {
   // ─── SliverAppBar ─────────────────────────────────────────────
   Widget _buildSliverAppBar() {
     return SliverAppBar(
-      expandedHeight: 220,
+      expandedHeight: 200, // 🔥 Reduced for better small screen fit
       pinned: true,
       backgroundColor: _green1,
       flexibleSpace: FlexibleSpaceBar(
@@ -390,18 +402,42 @@ class AppHomePage extends StatelessWidget {
 
             const SizedBox(height: 14),
 
-            // 4 Stat Cards Row
-            Row(
-              children: [
-                _miniStat('Total', '$total', Icons.list_alt_rounded, _green1),
-                const SizedBox(width: 8),
-                _miniStat('Attended', '$attempted', Icons.check_circle_rounded, _green2),
-                const SizedBox(width: 8),
-                _miniStat('Remaining', '$remaining', Icons.hourglass_top_rounded, _gold),
-                const SizedBox(width: 8),
-                _miniStat('Success', '${ratio.toStringAsFixed(1)}%', Icons.emoji_events_rounded, const Color(0xFFE74C3C)),
-              ],
-            ),
+            // 4 Stat Cards Grid (Responsive)
+            LayoutBuilder(builder: (context, constraints) {
+              final isSmall = constraints.maxWidth < 340;
+              if (isSmall) {
+                return Column(
+                  children: [
+                    Row(
+                      children: [
+                        _miniStat('Total', '$total', Icons.list_alt_rounded, _green1),
+                        const SizedBox(width: 8),
+                        _miniStat('Attended', '$attempted', Icons.check_circle_rounded, _green2),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _miniStat('Remaining', '$remaining', Icons.hourglass_top_rounded, _gold),
+                        const SizedBox(width: 8),
+                        _miniStat('Success', '${ratio.toStringAsFixed(1)}%', Icons.emoji_events_rounded, const Color(0xFFE74C3C)),
+                      ],
+                    ),
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  _miniStat('Total', '$total', Icons.list_alt_rounded, _green1),
+                  const SizedBox(width: 8),
+                  _miniStat('Attended', '$attempted', Icons.check_circle_rounded, _green2),
+                  const SizedBox(width: 8),
+                  _miniStat('Remaining', '$remaining', Icons.hourglass_top_rounded, _gold),
+                  const SizedBox(width: 8),
+                  _miniStat('Success', '${ratio.toStringAsFixed(1)}%', Icons.emoji_events_rounded, const Color(0xFFE74C3C)),
+                ],
+              );
+            }),
 
             const SizedBox(height: 14),
 
@@ -454,22 +490,40 @@ class AppHomePage extends StatelessWidget {
   Widget _miniStat(String label, String value, IconData icon, Color color) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
         decoration: BoxDecoration(
           color: color.withOpacity(0.07),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: color.withOpacity(0.2)),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 18),
+            Icon(icon, color: color, size: 16),
             const SizedBox(height: 4),
-            Text(value,
-                style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold)),
+            // 🔥 Value auto-scales within its space
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value,
+                  style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(label,
-                style: const TextStyle(color: _textMid, fontSize: 9),
-                textAlign: TextAlign.center),
+            // 🔥 Label auto-scales within its space
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  style: const TextStyle(color: _textMid, fontSize: 9),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -591,14 +645,20 @@ class AppHomePage extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 22),
           const SizedBox(height: 6),
-          Text(value,
-              style: TextStyle(
-                  color: color,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(value,
+                style: TextStyle(
+                    color: color,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold)),
+          ),
           const SizedBox(height: 2),
-          Text(label,
-              style: const TextStyle(color: _textMid, fontSize: 11)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(label,
+                style: const TextStyle(color: _textMid, fontSize: 11)),
+          ),
         ],
       ),
     );
@@ -711,6 +771,13 @@ class AppHomePage extends StatelessWidget {
     final items = ctrl.attemptCategories;
     if (items.isEmpty) return const SizedBox.shrink();
 
+    final cardGradients = [
+      [const Color(0xFF6A11CB), const Color(0xFF2575FC)], // Blue-Purple
+      [const Color(0xFFFF5F6D), const Color(0xFFFFC371)], // Red-Orange
+      [const Color(0xFF11998E), const Color(0xFF38EF7D)], // Green-Cyan
+      [const Color(0xFFF2994A), const Color(0xFFF2C94C)], // Orange-Gold
+    ];
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -718,50 +785,62 @@ class AppHomePage extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 2.5,
+        childAspectRatio: 1.3, // 🔥 More height for content
       ),
       itemCount: items.length,
       itemBuilder: (_, i) {
         final item = items[i];
         final name = item['name'] ?? '';
+        final grad = cardGradients[i % cardGradients.length];
+        final icon = _getIconForName(name);
 
         return GestureDetector(
           onTap: () => ctrl.navigateAttemptCategory(item),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _green1.withOpacity(0.3)),
+              gradient: LinearGradient(
+                colors: grad,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: _green1.withOpacity(0.05),
-                  blurRadius: 5,
-                  offset: const Offset(0, 2),
+                  color: grad.first.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: _green1.withOpacity(0.1),
+                    color: Colors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.rocket_launch, color: _green1, size: 12),
+                  child: Icon(icon, color: Colors.white, size: 16),
                 ),
-                const SizedBox(width: 8),
+                const Spacer(),
                 Expanded(
-                  child: Text(
-                    name,
-                    style: const TextStyle(
-                      color: _textDark,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
+                  child: Container(
+                    alignment: Alignment.bottomLeft,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -800,9 +879,9 @@ class AppHomePage extends StatelessWidget {
       itemCount: items.length,
       itemBuilder: (_, i) {
         final item = items[i];
-        final grad = gradients[i % gradients.length];
-        final icon = _categoryIcons[i % _categoryIcons.length];
         final name = item['name'] ?? '';
+        final grad = gradients[i % gradients.length];
+        final icon = _getIconForName(name);
 
         return GestureDetector(
           onTap: () => ctrl.navigateExamCategory(item),
@@ -839,15 +918,19 @@ class AppHomePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Expanded(
-                    child: Text(
-                      name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.topLeft,
+                      child: Text(
+                        name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

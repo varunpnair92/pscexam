@@ -232,32 +232,51 @@ class DynamicExamListPage extends StatelessWidget {
           ),
 
           /// BOTTOM NAVIGATION
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: index.value,
-            onTap: (i) {
-              index.value = i;
-              if (i == 0) {
-                Get.offAll(
-                  () => HomePage(),
-                  arguments: {"tab": 0},
-                );
-              } else {
-                Get.offAll(
-                  () => HomePage(),
-                  arguments: {"tab": 1},
-                );
-              }
-            },
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.quiz),
-                label: "Exam",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.school),
-                label: "Study",
-              ),
-            ],
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 20,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: BottomNavigationBar(
+              currentIndex: index.value,
+              onTap: (i) {
+                index.value = i;
+                if (i == 0) {
+                  Get.offAll(() => HomePage(), arguments: {"tab": 0});
+                } else {
+                  Get.offAll(() => HomePage(), arguments: {"tab": 1});
+                }
+              },
+              backgroundColor: Colors.white,
+              elevation: 0,
+              selectedItemColor: const Color(0xFF1B8A4E),
+              unselectedItemColor: Colors.grey.shade400,
+              type: BottomNavigationBarType.fixed,
+              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(bottom: 4),
+                    child: Icon(Icons.quiz_rounded, size: 26),
+                  ),
+                  label: "Exam",
+                ),
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(bottom: 4),
+                    child: Icon(Icons.school_rounded, size: 26),
+                  ),
+                  label: "Study",
+                ),
+              ],
+            ),
           ),
         ));
   }
