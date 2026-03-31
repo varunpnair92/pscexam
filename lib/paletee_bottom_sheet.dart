@@ -207,7 +207,9 @@ class PaletteBottomSheet extends StatelessWidget {
                           controller.timer?.cancel();
 
                           /// 🔥 4. REFRESH RESUME STATE
-                          //await controller.checkResume();
+                          if (Get.isRegistered<TestController>()) {
+                            await Get.find<TestController>().checkResume();
+                          }
 
                           /// 🔥 5. GO TO HOME PAGE (NOT exam list)
                           Get.offAllNamed('/home', arguments: {"tab": 0});

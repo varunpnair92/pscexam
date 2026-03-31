@@ -6,6 +6,7 @@ import 'package:psc_exam/auth_controller.dart';
 import 'app_config.dart';
 import 'study_controller.dart';
 import 'news_controller.dart';
+import 'test_controller.dart';
 
 class HomeController extends GetxController {
   // ─── Node tree data ───────────────────────────────────────────
@@ -94,6 +95,11 @@ class HomeController extends GetxController {
     totalAttempts.value = count;
     lastExamId.value = prefs.getString('last_exam_id') ?? '';
     lastExamName.value = prefs.getString('last_exam_name') ?? '';
+
+    // 🔥 Sync with TestController's detailed resume state
+    if (Get.isRegistered<TestController>()) {
+      Get.find<TestController>().checkResume();
+    }
   }
 
   Future<void> fetchUserStats() async {

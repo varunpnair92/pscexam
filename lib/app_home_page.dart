@@ -72,11 +72,11 @@ class AppHomePage extends StatelessWidget {
                             const SizedBox(height: 8),
                             const NewsTickerWidget(), // 📰 Flash News
                             const SizedBox(height: 4),
+                            _resumeCard(), // 🔥 Premium Green Resume Card
+                            const SizedBox(height: 4),
                             _imageSlider(),
                             const SizedBox(height: 16),
                             _examStatsSection(),
-                            const SizedBox(height: 16),
-                            _statsRow(),
                             const SizedBox(height: 24),
                             _boxedSection(
                               child: Column(
@@ -253,6 +253,132 @@ class AppHomePage extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  // ─── Resume Card ──────────────────────────────────────────────
+  Widget _resumeCard() {
+    return Obx(() {
+      if (!testCtrl.hasResume.value) return const SizedBox.shrink();
+
+      final int id = testCtrl.resumeExamId.value;
+      final int answered = testCtrl.resumeAnswered.value;
+      final int total = testCtrl.resumeTotal.value;
+      final int seconds = testCtrl.resumeTimeLeft.value;
+      final int min = seconds ~/ 60;
+      final String title = testCtrl.examTitle.value;
+
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1B8A4E), Color(0xFF27AE60)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1B8A4E).withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -20,
+                bottom: -20,
+                child: Icon(
+                  Icons.play_circle_filled_rounded,
+                  size: 100,
+                  color: Colors.white.withOpacity(0.1),
+                ),
+              ),
+              InkWell(
+                onTap: () async {
+                  await testCtrl.loadProgress(id, title: title);
+                  Get.toNamed('/exam', arguments: {"id": id, "title": title});
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 30),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Continue Your Exam",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              title,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    "$answered/$total Answered",
+                                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    "$min min left",
+                                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   // ─── Image Slider ─────────────────────────────────────────────
@@ -511,96 +637,6 @@ class AppHomePage extends StatelessWidget {
     );
   }
 
-  // ─── Stats Row ────────────────────────────────────────────────
-  Widget _statsRow() {
-    return Obx(() {
-      bool hasPaused = ctrl.lastExamId.value.isNotEmpty;
-      return Row(
-          children: [
-            _statCard(
-              icon: Icons.quiz_rounded,
-              label: 'Attempts',
-              value: '${ctrl.totalAttempts.value}',
-              color: _green1,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: GestureDetector(
-                onTap: () async {
-                  if (hasPaused) {
-                    int id = int.tryParse(ctrl.lastExamId.value) ?? 0;
-                    if (id > 0 && await testCtrl.hasProgressForExam(id)) {
-                      await testCtrl.loadProgress(id, title: ctrl.lastExamName.value);
-                      Get.toNamed('/exam', arguments: {'id': id, 'title': ctrl.lastExamName.value});
-                    } else {
-                      Get.toNamed('/home', arguments: {'tab': 1});
-                    }
-                  } else {
-                    Get.toNamed('/home', arguments: {'tab': 1}); // Next tab
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: _surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                        color: hasPaused ? _gold.withOpacity(0.4) : _green1.withOpacity(0.4)),
-                    boxShadow: [
-                      BoxShadow(
-                          color: (hasPaused ? _gold : _green1).withOpacity(0.06),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2)),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: (hasPaused ? _gold : _green1).withOpacity(0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                            hasPaused ? Icons.bolt_rounded : Icons.search_rounded,
-                            color: hasPaused ? _gold : _green1,
-                            size: 20),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              hasPaused ? 'Resume Exam' : 'Resume Exam',
-                              style: const TextStyle(
-                                color: _textMid, 
-                                fontSize: 10
-                              )
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              hasPaused ? ctrl.lastExamName.value : 'Start an exam →',
-                              style: const TextStyle(
-                                color: _textDark,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-    });
-  }
 
   Widget _statCard({
     required IconData icon,

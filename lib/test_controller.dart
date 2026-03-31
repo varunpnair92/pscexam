@@ -348,6 +348,10 @@ var resumeTimeLeft = 0.obs;
     prefs.setInt("exam_${examId}_total", questions.length); // 🔥 SAVE TOTAL
     prefs.setInt("exam_${examId}_remainingSeconds", remainingSeconds.value);
 
+    // 🔥 Track last exam ID & name for global resume
+    prefs.setString('last_exam_id', examId.toString());
+    prefs.setString('last_exam_name', examTitle.value);
+
     if (Get.isRegistered<HomeController>()) {
       Get.find<HomeController>().loadLocalStats();
     }
@@ -546,31 +550,35 @@ Future<int> getAttemptCount(int examId) async {
 //======================check resume availability for exam id========================
 Future<void> checkResume() async {
   final prefs = await SharedPreferences.getInstance();
-
   hasResume.value = false;
 
-  for (int i = 1; i <= 100; i++) {
-    if (prefs.containsKey("exam_${i}_current")) {
+  // 1. Get last tracked exam ID
+  String lastIdStr = prefs.getString('last_exam_id') ?? '';
+  if (lastIdStr.isEmpty) return;
 
-      resumeExamId.value = i;
+  int id = int.tryParse(lastIdStr) ?? 0;
+  if (id <= 0) return;
 
-      /// answered
-      String? ansStr = prefs.getString("exam_${i}_answers");
-      if (ansStr != null) {
-        Map<String, dynamic> map = jsonDecode(ansStr);
-        resumeAnswered.value = map.length;
-      }
+  // 2. Verify if progress exists for this ID
+  if (prefs.containsKey("exam_${id}_current")) {
+    resumeExamId.value = id;
 
-      /// total (approx)
-      resumeTotal.value = 50; // 🔥 you can improve later
-
-      /// time left
-      resumeTimeLeft.value =
-          prefs.getInt("exam_${i}_remainingSeconds") ?? 0;
-
-      hasResume.value = true;
-      return;
+    // 3. Extract answers count
+    String? ansStr = prefs.getString("exam_${id}_answers");
+    if (ansStr != null) {
+      Map<String, dynamic> map = jsonDecode(ansStr);
+      resumeAnswered.value = map.length;
+    } else {
+      resumeAnswered.value = 0;
     }
+
+    // 4. Extract total questions
+    resumeTotal.value = prefs.getInt("exam_${id}_total") ?? 50;
+
+    // 5. Extract time left
+    resumeTimeLeft.value = prefs.getInt("exam_${id}_remainingSeconds") ?? 0;
+
+    hasResume.value = true;
   }
 }
 
