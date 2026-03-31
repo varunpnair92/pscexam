@@ -23,10 +23,26 @@ class _ReviewPageState extends State<ReviewPage> {
 
   List<int> get filteredIndices {
     List<int> list = [];
-    for (int i = 0; i < controller.snapshot.length; i++) {
+    
+    // 1. Get indices by Category
+    List<int> categoryIndices = [];
+    if (controller.selectedCategory.value == "All") {
+      categoryIndices = List.generate(controller.snapshot.length, (i) => i);
+    } else {
+       List<int> qIds = controller.categoryMapping[controller.selectedCategory.value] ?? [];
+       for (var id in qIds) {
+          int idx = controller.questions.indexWhere((q) => q.id == id);
+          if (idx != -1) categoryIndices.add(idx);
+       }
+    }
+
+    // 2. Filter by Status
+    for (int i in categoryIndices) {
       var q = controller.snapshot[i.toString()];
-      String selected = (q?['selected'] ?? "").toString().trim();
-      String correct = (q?['correct'] ?? "").toString().trim();
+      if (q == null) continue;
+      
+      String selected = (q['selected'] ?? "").toString().trim();
+      String correct = (q['correct'] ?? "").toString().trim();
       
       if (selectedFilter.value == 0) {
         list.add(i);
@@ -75,20 +91,23 @@ class _ReviewPageState extends State<ReviewPage> {
     });
 
     // Also listen to filter changes to auto-scroll to current item if it exists in the new filter
-    ever(selectedFilter, (_) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-         if (circleController.hasClients) {
-            int listIndex = filteredIndices.indexOf(controller.current.value);
-            if (listIndex != -1) {
-              double screenWidth = Get.width;
-              double itemWidth = 46.0;
-              double targetScroll = (listIndex * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
-              circleController.jumpTo(targetScroll.clamp(0.0, circleController.position.maxScrollExtent));
-            } else if (circleController.position.pixels != 0) {
-              circleController.jumpTo(0);
-            }
-         }
-      });
+    ever(selectedFilter, (_) => _onFilterChanged());
+    ever(controller.selectedCategory, (_) => _onFilterChanged());
+  }
+
+  void _onFilterChanged() {
+    Future.delayed(const Duration(milliseconds: 100), () {
+        if (circleController.hasClients) {
+          int listIndex = filteredIndices.indexOf(controller.current.value);
+          if (listIndex != -1) {
+            double screenWidth = Get.width;
+            double itemWidth = 46.0;
+            double targetScroll = (listIndex * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
+            circleController.jumpTo(targetScroll.clamp(0.0, circleController.position.maxScrollExtent));
+          } else if (circleController.position.pixels != 0) {
+            circleController.jumpTo(0);
+          }
+        }
     });
   }
 
@@ -231,7 +250,22 @@ class _ReviewPageState extends State<ReviewPage> {
                   ),
             ),
             
-            /// 🔴 FILTER TABS (CHIPS)
+            /// 📂 CATEGORY TABS
+            if (controller.categoryMapping.isNotEmpty)
+              Container(
+                height: 48,
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _buildCategoryTab("All"),
+                    ...controller.categoryMapping.keys.map((cat) => _buildCategoryTab(cat)),
+                  ],
+                ),
+              ),
+
+             /// 🔴 FILTER TABS (CHIPS)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
@@ -308,7 +342,8 @@ class _ReviewPageState extends State<ReviewPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Obx(() {
-                    bool hasPrev = controller.current.value > 0;
+                    int filteredIndex = filteredIndices.indexOf(controller.current.value);
+                    bool hasPrev = filteredIndex > 0;
                     return TextButton.icon(
                       style: TextButton.styleFrom(
                         backgroundColor: hasPrev ? Colors.blue.shade50 : Colors.grey.shade100,
@@ -319,12 +354,13 @@ class _ReviewPageState extends State<ReviewPage> {
                       icon: const Icon(Icons.arrow_back_rounded, size: 18),
                       label: const Text("Previous", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                       onPressed: hasPrev ? () {
-                        controller.previous();
+                        controller.current.value = filteredIndices[filteredIndex - 1];
                       } : null,
                     );
                   }),
                   Obx(() {
-                    bool isLast = controller.current.value == controller.snapshot.length - 1;
+                    int filteredIndex = filteredIndices.indexOf(controller.current.value);
+                    bool isLast = filteredIndex == filteredIndices.length - 1;
                     return ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue.shade600,
@@ -335,7 +371,7 @@ class _ReviewPageState extends State<ReviewPage> {
                       ),
                       onPressed: () {
                         if (!isLast) {
-                          controller.next();
+                           controller.current.value = filteredIndices[filteredIndex + 1];
                         }
                       },
                       child: Row(
@@ -381,6 +417,37 @@ class _ReviewPageState extends State<ReviewPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildCategoryTab(String cat) {
+    return Obx(() {
+      bool isSelected = controller.selectedCategory.value == cat;
+      return GestureDetector(
+        onTap: () {
+          controller.selectedCategory.value = cat;
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.blue.shade600 : Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: isSelected ? Colors.blue.shade600 : Colors.grey.shade300),
+            boxShadow: isSelected ? [BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 4)] : [],
+          ),
+          child: Center(
+            child: Text(
+              cat,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.black87,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildReviewCard(Map<String, dynamic>? q, int qIndex) {

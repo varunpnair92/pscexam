@@ -126,11 +126,11 @@ class ExamSplashPage extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () async {
                       if (isResume) {
-                        await testController.loadProgress(exam.id);
+                        await testController.loadProgress(exam.id, title: exam.specialization);
                       } else {
-                        await testController.loadQuestions(exam.id);
+                        await testController.loadQuestions(exam.id, title: exam.specialization);
                       }
-                      Get.offAndToNamed('/exam', arguments: {'id': exam.id});
+                      Get.offAndToNamed('/exam', arguments: {'id': exam.id, 'title': exam.specialization});
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,

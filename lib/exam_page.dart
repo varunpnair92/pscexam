@@ -30,27 +30,44 @@ class _ExamPageState extends State<ExamPage> {
     
     // Auto-scroll PageView when controller.current changes from outside (e.g., clicking top navigation, auto-advance)
     _worker = ever(controller.current, (index) {
-      if (pageController.hasClients && pageController.page?.round() != index) {
-        pageController.animateToPage(
-          index,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-        );
+      if (pageController.hasClients) {
+        int listIndex = controller.filteredQuestionIndices.indexOf(index);
+        if (listIndex != -1 && pageController.page?.round() != listIndex) {
+           pageController.animateToPage(
+            listIndex,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        }
       }
 
       // Auto-scroll the top horizontal Question Navigator
       if (circleController.hasClients) {
-        // Calculate offset to somewhat center the selected circle
-        double screenWidth = Get.width;
-        double itemWidth = 46.0;
-        double targetScroll = (index * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
-        
-        circleController.animateTo(
-          targetScroll.clamp(0.0, circleController.position.maxScrollExtent),
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+        int listIndex = controller.filteredQuestionIndices.indexOf(index);
+        if (listIndex != -1) {
+          double screenWidth = Get.width;
+          double itemWidth = 46.0;
+          double targetScroll = (listIndex * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
+          
+          circleController.animateTo(
+            targetScroll.clamp(0.0, circleController.position.maxScrollExtent),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
       }
+    });
+
+    // Reset PageView when category changes
+    ever(controller.selectedCategory, (_) {
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (pageController.hasClients) {
+          pageController.jumpToPage(0);
+          if (controller.filteredQuestionIndices.isNotEmpty) {
+            controller.current.value = controller.filteredQuestionIndices.first;
+          }
+        }
+      });
     });
   }
 
@@ -94,10 +111,19 @@ class _ExamPageState extends State<ExamPage> {
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
+        leading: Obx(
+          () => Center(
+            child: Text(
+              "${controller.filteredQuestionIndices.indexOf(controller.current.value) + 1}/${controller.filteredQuestionIndices.length}",
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blueGrey),
+            ),
+          ),
+        ),
+        centerTitle: true,
         title: Obx(
           () => Text(
-            "${controller.current.value + 1}/${controller.questions.length}",
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            controller.examTitle.value,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ),
         actions: [
@@ -133,7 +159,6 @@ class _ExamPageState extends State<ExamPage> {
           children: [
             /// 🔵 QUESTION NAVIGATOR (CIRCLES)
             Container(
-              height: 55,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -141,59 +166,81 @@ class _ExamPageState extends State<ExamPage> {
                   BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2)),
                 ],
               ),
-              child: ListView.builder(
-                controller: circleController,
-                scrollDirection: Axis.horizontal,
-                itemCount: controller.questions.length,
-                itemBuilder: (context, index) {
-                  return Obx(() {
-                    bool isCurrent = index == controller.current.value;
-                    bool isMarked = controller.marked.contains(index);
-                    String? ans = controller.answers[index];
-
-                    Color color;
-                    if (isMarked) {
-                      color = Colors.orange;
-                    } else if (ans == null || ans.isEmpty) {
-                      color = Colors.grey.shade300;
-                    } else {
-                      color = Colors.green.shade500;
-                    }
-
-                    return GestureDetector(
-                      onTap: () {
-                        controller.current.value = index;
-                        controller.saveProgress();
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: 38,
-                        height: 38,
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: color,
-                          border: isCurrent
-                              ? Border.all(color: Colors.blue.shade600, width: 2.5)
-                              : null,
-                          boxShadow: isCurrent 
-                              ? [BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 6)] 
-                              : [],
-                        ),
-                        child: Center(
-                          child: Text(
-                            "${index + 1}",
-                            style: TextStyle(
-                              color: (ans == null || ans.isEmpty) && !isMarked && !isCurrent ? Colors.black54 : Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
+              child: Column(
+                children: [
+                   /// 📂 CATEGORY TABS
+                   if (controller.categoryMapping.isNotEmpty)
+                    Container(
+                      height: 48,
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          _buildCategoryTab("All"),
+                          ...controller.categoryMapping.keys.map((cat) => _buildCategoryTab(cat)),
+                        ],
                       ),
-                    );
-                  });
-                },
+                    ),
+                  
+                  SizedBox(
+                    height: 55,
+                    child: ListView.builder(
+                      controller: circleController,
+                      scrollDirection: Axis.horizontal,
+                      itemCount: controller.filteredQuestionIndices.length,
+                      itemBuilder: (context, index) {
+                        int realIndex = controller.filteredQuestionIndices[index];
+                        return Obx(() {
+                          bool isCurrent = realIndex == controller.current.value;
+                          bool isMarked = controller.marked.contains(realIndex);
+                          String? ans = controller.answers[realIndex];
+
+                          Color color;
+                          if (isMarked) {
+                            color = Colors.orange;
+                          } else if (ans == null || ans.isEmpty) {
+                            color = Colors.grey.shade300;
+                          } else {
+                            color = Colors.green.shade500;
+                          }
+
+                          return GestureDetector(
+                            onTap: () {
+                              controller.current.value = realIndex;
+                              controller.saveProgress();
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: 38,
+                              height: 38,
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: color,
+                                border: isCurrent
+                                    ? Border.all(color: Colors.blue.shade600, width: 2.5)
+                                    : null,
+                                boxShadow: isCurrent 
+                                    ? [BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 6)] 
+                                    : [],
+                              ),
+                              child: Center(
+                                child: Text(
+                                  "${realIndex + 1}",
+                                  style: TextStyle(
+                                    color: (ans == null || ans.isEmpty) && !isMarked && !isCurrent ? Colors.black54 : Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        });
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -214,15 +261,17 @@ class _ExamPageState extends State<ExamPage> {
             Expanded(
               child: PageView.builder(
                 controller: pageController,
-                itemCount: controller.questions.length,
+                itemCount: controller.filteredQuestionIndices.length,
                 onPageChanged: (index) {
-                  if (controller.current.value != index) {
-                    controller.current.value = index;
+                  int realIndex = controller.filteredQuestionIndices[index];
+                  if (controller.current.value != realIndex) {
+                    controller.current.value = realIndex;
                     controller.saveProgress();
                   }
                 },
                 itemBuilder: (context, index) {
-                  return _buildQuestionCard(controller.questions[index], index);
+                  int realIndex = controller.filteredQuestionIndices[index];
+                  return _buildQuestionCard(controller.questions[realIndex], realIndex);
                 },
               ),
             ),
@@ -240,7 +289,8 @@ class _ExamPageState extends State<ExamPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Obx(() {
-                    bool hasPrev = controller.current.value > 0;
+                    int filteredIndex = controller.filteredQuestionIndices.indexOf(controller.current.value);
+                    bool hasPrev = filteredIndex > 0;
                     return TextButton.icon(
                       style: TextButton.styleFrom(
                         backgroundColor: hasPrev ? Colors.blue.shade50 : Colors.grey.shade100,
@@ -251,12 +301,16 @@ class _ExamPageState extends State<ExamPage> {
                       icon: const Icon(Icons.arrow_back_rounded, size: 18),
                       label: const Text("Previous", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                       onPressed: hasPrev ? () {
-                        controller.previous();
+                         int indexInFilter = controller.filteredQuestionIndices.indexOf(controller.current.value);
+                         int prevRealIndex = controller.filteredQuestionIndices[indexInFilter - 1];
+                         controller.current.value = prevRealIndex;
+                         controller.saveProgress();
                       } : null,
                     );
                   }),
                   Obx(() {
-                    bool isLast = controller.current.value == controller.questions.length - 1;
+                    int filteredIndex = controller.filteredQuestionIndices.indexOf(controller.current.value);
+                    bool isLast = (filteredIndex != -1 && filteredIndex == controller.filteredQuestionIndices.length - 1);
                     return ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isLast ? Colors.green.shade600 : Colors.blue.shade600,
@@ -267,7 +321,9 @@ class _ExamPageState extends State<ExamPage> {
                       ),
                       onPressed: () {
                         if (!isLast) {
-                          controller.next();
+                          int idx = controller.filteredQuestionIndices.indexOf(controller.current.value); int nextRealIndex = controller.filteredQuestionIndices[idx + 1];
+                          controller.current.value = nextRealIndex;
+                          controller.saveProgress();
                         } else {
                            Get.bottomSheet(
                               PaletteBottomSheet(),
@@ -418,6 +474,36 @@ class _ExamPageState extends State<ExamPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildCategoryTab(String cat) {
+    return Obx(() {
+      bool isSelected = controller.selectedCategory.value == cat;
+      return GestureDetector(
+        onTap: () {
+          controller.selectedCategory.value = cat;
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.blue.shade600 : Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: isSelected ? [BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 4)] : [],
+          ),
+          child: Center(
+            child: Text(
+              cat,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.black87,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ),
+      );
+    });
   }
 }
 

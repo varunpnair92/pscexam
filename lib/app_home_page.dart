@@ -530,8 +530,8 @@ class AppHomePage extends StatelessWidget {
                   if (hasPaused) {
                     int id = int.tryParse(ctrl.lastExamId.value) ?? 0;
                     if (id > 0 && await testCtrl.hasProgressForExam(id)) {
-                      await testCtrl.loadProgress(id);
-                      Get.toNamed('/exam', arguments: {'id': id});
+                      await testCtrl.loadProgress(id, title: ctrl.lastExamName.value);
+                      Get.toNamed('/exam', arguments: {'id': id, 'title': ctrl.lastExamName.value});
                     } else {
                       Get.toNamed('/home', arguments: {'tab': 1});
                     }

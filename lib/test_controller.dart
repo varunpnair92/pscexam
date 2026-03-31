@@ -30,6 +30,22 @@ var resumeTimeLeft = 0.obs;
   var status = <int, QuestionStatus>{}.obs;
 
   var snapshot = <String, dynamic>{}.obs;
+  var categoryMapping = <String, List<int>>{}.obs; // 🔥 NEW
+  var selectedCategory = "All".obs; // 🔥 NEW
+  var examTitle = "Exam".obs; // 🔥 NEW
+
+  List<int> get filteredQuestionIndices {
+    if (selectedCategory.value == "All") {
+      return List.generate(questions.length, (index) => index);
+    }
+    List<int> qIds = categoryMapping[selectedCategory.value] ?? [];
+    List<int> indices = [];
+    for (var id in qIds) {
+      int idx = questions.indexWhere((q) => q.id == id);
+      if (idx != -1) indices.add(idx);
+    }
+    return indices;
+  }
 
   int examId = 0;
   Timer? timer; // 🔥 nullable for safety
@@ -43,20 +59,30 @@ var resumeTimeLeft = 0.obs;
 
   // ================= LOAD QUESTIONS (NEW EXAM) =================
 
-  Future<void> loadQuestions(int id) async {
+  Future<void> loadQuestions(int id, {String? title}) async {
     resetController(); // 🔥 CLEAR OLD STATE IMMEDIATELY
     examId = id;
+    if (title != null) examTitle.value = title;
 
     try {
       final res = await http.get(Uri.parse("${AppConfig.testExam}$examId/"));
 
       if (res.statusCode == 200) {
-        List data = json.decode(res.body);
-        questions.value = List<Question>.from(
-          data.map((e) => Question.fromJson(e)),
-        );
-        
-        // Save total count for the list view summary
+        final Map<String, dynamic> data = json.decode(res.body);
+
+        if (data['questions'] != null && data['questions'] is List) {
+          questions.value = List<Question>.from(
+            (data['questions'] as List).map((e) => Question.fromJson(e)),
+          );
+        }
+
+        if (data['category_mapping'] != null && data['category_mapping'] is Map) {
+          categoryMapping.value = (data['category_mapping'] as Map).map(
+            (key, value) => MapEntry(key.toString(), List<int>.from(value)),
+          );
+        }
+
+        // Save total count
         final prefs = await SharedPreferences.getInstance();
         prefs.setInt("exam_${id}_total", questions.length);
       } else {
@@ -72,16 +98,28 @@ var resumeTimeLeft = 0.obs;
 
   // ================= LOAD QUESTIONS ONLY (RESUME) =================
 
-  Future<void> loadQuestionsOnly(int id) async {
+  Future<void> loadQuestionsOnly(int id, {String? title}) async {
     examId = id;
+    if (title != null) examTitle.value = title;
 
     try {
       final res = await http.get(Uri.parse("${AppConfig.testExam}$examId/"));
 
       if (res.statusCode == 200) {
-        List data = json.decode(res.body);
-        questions.value = data.map((e) => Question.fromJson(e)).toList();
-        
+        final Map<String, dynamic> data = json.decode(res.body);
+
+        if (data['questions'] != null && data['questions'] is List) {
+          questions.value = List<Question>.from(
+            (data['questions'] as List).map((e) => Question.fromJson(e)),
+          );
+        }
+
+        if (data['category_mapping'] != null && data['category_mapping'] is Map) {
+          categoryMapping.value = (data['category_mapping'] as Map).map(
+            (key, value) => MapEntry(key.toString(), List<int>.from(value)),
+          );
+        }
+
         // Update total count
         final prefs = await SharedPreferences.getInstance();
         prefs.setInt("exam_${id}_total", questions.length);
@@ -317,7 +355,8 @@ var resumeTimeLeft = 0.obs;
 
   // ================= LOAD PROGRESS =================
 
-  Future<bool> loadProgress(int id) async {
+  Future<bool> loadProgress(int id, {String? title}) async {
+    if (title != null) examTitle.value = title;
     final prefs = await SharedPreferences.getInstance();
 
     if (!prefs.containsKey("exam_${id}_current")) return false;
@@ -458,6 +497,8 @@ var resumeTimeLeft = 0.obs;
     marked.clear();
 
     current.value = 0;
+    selectedCategory.value = "All";
+    categoryMapping.clear();
   }
 
   
