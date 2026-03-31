@@ -8,6 +8,17 @@ class ExamMenuController extends GetxController {
 
   var fullTree = [].obs;
   var items = [].obs;
+  var searchQuery = "".obs;
+
+  List<dynamic> get displayedItems {
+    if (searchQuery.value.isEmpty) return items;
+    return items
+        .where((e) => (e["name"] ?? "")
+            .toString()
+            .toLowerCase()
+            .contains(searchQuery.value.toLowerCase()))
+        .toList();
+  }
 
   /// BACK STACK
   var stack = <dynamic>[].obs;
@@ -58,11 +69,9 @@ class ExamMenuController extends GetxController {
     /// NODE → GO DEEPER
     if (item["children"] != null && item["children"].length > 0) {
       stack.add(items);
-
       items.value = item["children"];
-
       keys.add(name);
-
+      searchQuery.value = ""; // 🔥 Reset search on navigation
       return;
     }
 
@@ -74,8 +83,12 @@ class ExamMenuController extends GetxController {
   void goBack() {
     if (stack.isNotEmpty) {
       items.value = stack.removeLast();
-
       keys.removeLast();
+      searchQuery.value = ""; // 🔥 Reset search on back
     }
+  }
+
+  void clearSearch() {
+    searchQuery.value = "";
   }
 }

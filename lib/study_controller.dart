@@ -14,6 +14,17 @@ class StudyController extends GetxController {
 
   /// BREADCRUMB
   var keys = <String>[].obs;
+  var searchQuery = "".obs;
+
+  List<dynamic> get displayedItems {
+    if (searchQuery.value.isEmpty) return items;
+    return items
+        .where((e) => (e["name"] ?? "")
+            .toString()
+            .toLowerCase()
+            .contains(searchQuery.value.toLowerCase()))
+        .toList();
+  }
 
   /// BACK STACK
   var stack = <dynamic>[].obs;
@@ -123,6 +134,7 @@ class StudyController extends GetxController {
       stack.add(items.toList());
       items.assignAll(item["children"]);
       keys.add(name);
+      searchQuery.value = ""; // 🔥 Reset search
       return;
     }
 
@@ -189,7 +201,12 @@ class StudyController extends GetxController {
     if (stack.isNotEmpty) {
       items.assignAll(stack.removeLast());
       if (keys.isNotEmpty) keys.removeLast();
+      searchQuery.value = ""; // 🔥 Reset search
     }
+  }
+
+  void clearSearch() {
+    searchQuery.value = "";
   }
 
   /// QUESTIONS

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'study_controller.dart';
 import 'modern_study_card.dart';
+import 'ui_utils.dart';
 
 class StudyPage extends StatelessWidget {
   final StudyController controller = Get.put(StudyController());
@@ -297,67 +298,142 @@ class StudyPage extends StatelessWidget {
   }
 
   Widget _buildHierarchyGrid(StudyController controller, Color primary, Color lightBg) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: controller.items.length,
-      physics: const BouncingScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 20,
-        childAspectRatio: 0.7, // 🔥 Increased vertical space
-      ),
-      itemBuilder: (_, i) {
-        final item = controller.items[i];
-        final name = item["name"] ?? "";
+    return Column(
+      children: [
+        // ─── SEARCH BAR ───
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          child: Container(
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: TextField(
+              onChanged: (val) => controller.searchQuery.value = val,
+              decoration: InputDecoration(
+                hintText: "Search topics...",
+                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                prefixIcon: Icon(Icons.search_rounded, color: primary, size: 20),
+                suffixIcon: controller.searchQuery.value.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close_rounded, color: Colors.grey, size: 18),
+                        onPressed: () {
+                          FocusManager.instance.primaryFocus?.unfocus();
+                          controller.clearSearch();
+                        },
+                      )
+                    : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ),
 
-        return GestureDetector(
-          onTap: () => controller.onTileTap(item),
-          child: Column(
-            children: [
-              Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: primary.withOpacity(0.1), blurRadius: 15, offset: const Offset(0, 5)),
-                  ],
-                  border: Border.all(color: Colors.grey.shade100),
-                ),
-                child: Center(
-                  child: Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [primary, primary.withOpacity(0.7)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: const Icon(Icons.folder_open_rounded, color: Colors.white, size: 24),
+        // ─── BREADCRUMB INDICATOR ───
+        if (controller.keys.length > 1)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            child: Row(
+              children: [
+                Icon(Icons.folder_shared_rounded, size: 14, color: Colors.grey.shade500),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    controller.keys.join(" / "),
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w500),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                name,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF0D3320),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        );
-      },
+
+        // ─── GRID BODY ───
+        Expanded(
+          child: controller.items.isEmpty
+              ? Center(child: CircularProgressIndicator(color: primary))
+              : controller.displayedItems.isEmpty
+                  ? const Center(child: Text("No matches found", style: TextStyle(color: Colors.grey)))
+                  : GridView.builder(
+                      padding: const EdgeInsets.all(20),
+                      itemCount: controller.displayedItems.length,
+                      physics: const BouncingScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12, // 🔥 Optimized spacing
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 1.3, // 🔥 Same aspect ratio as Home & Exam
+                      ),
+                      itemBuilder: (_, i) {
+                        final item = controller.displayedItems[i];
+                        final name = item["name"] ?? "";
+                        final gradients = UIUtils.getPremiumGradients();
+                        final grad = gradients[i % gradients.length];
+                        final icon = UIUtils.getIconForName(name);
+
+                        return GestureDetector(
+                          onTap: () {
+                            FocusManager.instance.primaryFocus?.unfocus();
+                            controller.onTileTap(item);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: grad,
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: grad.first.withOpacity(0.3),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(icon, color: Colors.white, size: 18),
+                                ),
+                                const Spacer(),
+                                Expanded(
+                                  child: Container(
+                                    alignment: Alignment.bottomLeft,
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        name,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+        ),
+      ],
     );
   }
 }

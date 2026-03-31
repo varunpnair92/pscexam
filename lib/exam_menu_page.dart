@@ -1,87 +1,181 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'exam_menu_controller.dart';
+import 'ui_utils.dart'; // 🔥 Import UI Utils
 
 class ExamMenuPage extends StatelessWidget {
-
   final controller = Get.put(ExamMenuController());
 
   @override
   Widget build(BuildContext context) {
-
     return Obx(
       () => Scaffold(
-
+        backgroundColor: Colors.white,
         appBar: AppBar(
-          title: Text(controller.keys.join(" > ")),
-
+          elevation: 0,
+          backgroundColor: Colors.white,
+          centerTitle: true,
+          title: Text(
+            controller.keys.isNotEmpty ? controller.keys.last : "Exams",
+            style: const TextStyle(
+              color: UIUtils.textDark,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
           leading: controller.keys.length > 1
               ? IconButton(
-                  icon: Icon(Icons.arrow_back),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: UIUtils.textDark, size: 20),
                   onPressed: controller.goBack,
                 )
               : null,
-        ),
-
-        body: controller.items.isEmpty
-            ? Center(child: CircularProgressIndicator())
-
-            : GridView.builder(
-                padding: EdgeInsets.all(16),
-
-                itemCount: controller.items.length,
-
-                gridDelegate:
-                    SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-
-                itemBuilder: (_, i) {
-
-                  final item = controller.items[i];
-
-                  final name = item["name"] ?? "";
-
-                  return GestureDetector(
-
-                    onTap: () => controller.onTileTap(item),
-
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-
-                        Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: [const Color(0xFF1B8A4E), const Color(0xFF27AE60)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.quiz_rounded,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                        ),
-
-                        SizedBox(height: 8),
-
-                        Text(
-                          name,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: IconButton(
+                icon: const Icon(Icons.refresh_rounded, color: UIUtils.textDark),
+                onPressed: controller.fetchTree,
               ),
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            // ─── SEARCH BAR ───
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: TextField(
+                  onChanged: (val) => controller.searchQuery.value = val,
+                  decoration: InputDecoration(
+                    hintText: "Search categories...",
+                    hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                    prefixIcon: const Icon(Icons.search_rounded, color: UIUtils.greenPrimary, size: 20),
+                    suffixIcon: controller.searchQuery.value.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.close_rounded, color: Colors.grey, size: 18),
+                            onPressed: () {
+                              FocusManager.instance.primaryFocus?.unfocus();
+                              controller.clearSearch();
+                            },
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ),
+
+            // ─── BREADCRUMB INDICATOR ───
+            if (controller.keys.length > 1)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.folder_shared_rounded, size: 14, color: UIUtils.textMid),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        controller.keys.join(" / "),
+                        style: const TextStyle(color: UIUtils.textMid, fontSize: 11, fontWeight: FontWeight.w500),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // ─── GRID BODY ───
+            Expanded(
+              child: controller.items.isEmpty
+                  ? const Center(child: CircularProgressIndicator(color: UIUtils.greenPrimary))
+                  : controller.displayedItems.isEmpty
+                      ? const Center(child: Text("No matches found", style: TextStyle(color: Colors.grey)))
+                      : GridView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: controller.displayedItems.length,
+                          physics: const BouncingScrollPhysics(),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 1.3,
+                          ),
+                          itemBuilder: (_, i) {
+                            final item = controller.displayedItems[i];
+                            final name = item["name"] ?? "";
+                            final gradients = UIUtils.getPremiumGradients();
+                            final grad = gradients[i % gradients.length];
+                            final icon = UIUtils.getIconForName(name);
+
+                            return GestureDetector(
+                              onTap: () {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                controller.onTileTap(item);
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: grad,
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: grad.first.withOpacity(0.3),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(icon, color: Colors.white, size: 18),
+                                    ),
+                                    const Spacer(),
+                                    Expanded(
+                                      child: Container(
+                                        alignment: Alignment.bottomLeft,
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            name,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+            ),
+          ],
+        ),
       ),
     );
   }
