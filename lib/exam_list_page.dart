@@ -55,37 +55,32 @@ class ExamListPage extends StatelessWidget {
                           await testController.hasProgressForExam(exam.id);
 
                       if (resume) {
-                        // 🔥 ASK USER RESUME OR RESTART
                         Get.defaultDialog(
                           title: "Resume Exam",
                           middleText: "You have unfinished progress",
                           textCancel: "Restart",
                           textConfirm: "Resume",
-
                           onConfirm: () async {
                             Get.back();
-
-                            await testController.loadProgress(exam.id);
-
-                            Get.toNamed('/exam',
-                                arguments: {'id': exam.id});
+                            Get.toNamed('/examSplash', arguments: {
+                              'exam': exam,
+                              'isResume': true,
+                            });
                           },
-
                           onCancel: () async {
                             Get.back();
-
                             await testController.clearProgress(exam.id);
-                            await testController.loadQuestions(exam.id);
-
-                            Get.toNamed('/exam',
-                                arguments: {'id': exam.id});
+                            Get.toNamed('/examSplash', arguments: {
+                              'exam': exam,
+                              'isResume': false,
+                            });
                           },
                         );
                       } else {
-                        await testController.loadQuestions(exam.id);
-
-                        Get.toNamed('/exam',
-                            arguments: {'id': exam.id});
+                        Get.toNamed('/examSplash', arguments: {
+                          'exam': exam,
+                          'isResume': false,
+                        });
                       }
                     },
             );

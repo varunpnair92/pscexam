@@ -24,7 +24,8 @@ import 'global_analysis_page.dart';
 import 'characteristic_page.dart';
 import 'characteristic_page.dart';
 import 'news_feeder_page.dart';
-import 'splash_page.dart'; // 🔥 Import SplashPage
+import 'splash_page.dart';
+import 'exam_splash_page.dart'; // 🔥 Import ExamSplashPage
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -91,6 +92,9 @@ class MyApp extends StatelessWidget {
 
         // 📰 NEWS FEEDER
         GetPage(name: '/newsfeeder', page: () => NewsFeederPage()),
+
+        // 🚀 EXAM SPLASH
+        GetPage(name: '/examSplash', page: () => const ExamSplashPage()),
       ],
     );
   }

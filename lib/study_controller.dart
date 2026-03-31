@@ -182,13 +182,13 @@ class StudyController extends GetxController {
       showQuestions.value = false;
       questions.clear();
       descriptionPages.clear(); // 🔥 clear pages
-      keys.removeLast();
+      if (keys.isNotEmpty) keys.removeLast();
       return;
     }
 
     if (stack.isNotEmpty) {
       items.assignAll(stack.removeLast());
-      keys.removeLast();
+      if (keys.isNotEmpty) keys.removeLast();
     }
   }
 
