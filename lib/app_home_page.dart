@@ -206,12 +206,39 @@ class AppHomePage extends StatelessWidget {
           ),
         ),
       ),
-      title: const Text(
-        'PSC Online',
-        style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'PSC Online',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.local_fire_department_rounded, color: Color(0xFFFFD700), size: 16),
+                SizedBox(width: 4),
+                Text(
+                  '3', // Placeholder for daily streak
+                  style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       actions: [
         IconButton(
@@ -497,16 +524,45 @@ class AppHomePage extends StatelessWidget {
                   style: TextStyle(color: _textDark, fontSize: 15, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _green1.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    'Live Exams',
-                    style: TextStyle(color: _green1, fontSize: 11, fontWeight: FontWeight.w600),
-                  ),
+                Builder(
+                  builder: (context) {
+                    String badgeName = 'Novice';
+                    Color badgeColor = Colors.brown.shade400;
+                    IconData badgeIcon = Icons.star_border_rounded;
+
+                    if (progress >= 0.8) {
+                      badgeName = 'Master';
+                      badgeColor = const Color(0xFF00E5FF); // Cyan
+                      badgeIcon = Icons.diamond_rounded;
+                    } else if (progress >= 0.5) {
+                      badgeName = 'Expert';
+                      badgeColor = const Color(0xFFFFD700); // Gold
+                      badgeIcon = Icons.workspace_premium_rounded;
+                    } else if (progress >= 0.2) {
+                      badgeName = 'Scholar';
+                      badgeColor = Colors.blueGrey.shade400; // Silver
+                      badgeIcon = Icons.military_tech_rounded;
+                    }
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: badgeColor.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: badgeColor.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(badgeIcon, color: badgeColor, size: 14),
+                          const SizedBox(width: 4),
+                          Text(
+                            badgeName,
+                            style: TextStyle(color: badgeColor, fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                 ),
               ],
             ),
