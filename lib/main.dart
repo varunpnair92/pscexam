@@ -17,24 +17,33 @@ import 'package:psc_exam/test_controller.dart';
 import 'firebase_options.dart';
 import 'news_controller.dart';
 
-// 🔥 ADD THESE IMPORTS
 import 'result_analysis_page.dart';
 import 'story_page.dart';
 import 'global_analysis_page.dart';
 import 'characteristic_page.dart';
-import 'characteristic_page.dart';
 import 'news_feeder_page.dart';
 import 'splash_page.dart';
 import 'exam_splash_page.dart'; // 🔥 Import ExamSplashPage
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'push_notification_service.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print("Handling a background message: ${message.messageId}");
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   Get.put(AuthController());
   await AuthController.instance.loadSession(); // Wait for session
   
+  await PushNotificationService.initialize();
+
   Get.put(TestController(), permanent: true);
   Get.put(NewsController(), permanent: true);
 

@@ -34,6 +34,7 @@ static const String getUserDetails = "${baseUrl}get_userdetails_by_username/";
 
 // ================= NOTIFICATIONS =================
 static const String activeNotifications = "${baseUrl}active-notifications/";
+static const String saveFcmToken = "${baseUrl}save_fcm_token/";
 
 // ================= CHARACTERISTICS =================
 static const String characteristicByKeyword = "${baseUrl}qbkeywordcharacteristic/";
