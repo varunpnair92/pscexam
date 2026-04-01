@@ -174,40 +174,40 @@ class DynamicExamListPage extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 6),
 
-                                    /// QUESTION COUNT
-                                    Text(
-                                      "$total Questions",
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-
-                                    /// PROGRESS TEXT
-                                    Text(
-                                      progressText,
-                                      style: TextStyle(
-                                        color: progressColor,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-
-                                    /// ⭐ ATTEMPT COUNT
-                                    FutureBuilder<int>(
-                                      future: testController.getAttemptCount(exam.id),
-                                      builder: (context, snap) {
-                                        int attempts = snap.data ?? 0;
-                                        return Text(
-                                          "Attempts: $attempts",
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          "$total Qs",
                                           style: const TextStyle(
-                                            fontSize: 12,
                                             color: Colors.grey,
+                                            fontSize: 13,
                                           ),
-                                        );
-                                      },
+                                        ),
+                                        Text(
+                                          progressText,
+                                          style: TextStyle(
+                                            color: progressColor,
+                                            fontWeight: true ? FontWeight.bold : FontWeight.w600,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        FutureBuilder<int>(
+                                          future: testController.getAttemptCount(exam.id),
+                                          builder: (context, snap) {
+                                            int attempts = snap.data ?? 0;
+                                            return Text(
+                                              "Att: $attempts",
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 10),
 
                                     /// PROGRESS BAR
                                     LinearProgressIndicator(

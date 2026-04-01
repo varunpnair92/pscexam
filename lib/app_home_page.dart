@@ -339,7 +339,9 @@ class AppHomePage extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 8),
-                            Row(
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -352,7 +354,6 @@ class AppHomePage extends StatelessWidget {
                                     style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
@@ -510,41 +511,17 @@ class AppHomePage extends StatelessWidget {
             const SizedBox(height: 14),
 
             // 4 Stat Cards Grid (Responsive)
-            LayoutBuilder(builder: (context, constraints) {
-              final isSmall = constraints.maxWidth < 340;
-              if (isSmall) {
-                return Column(
-                  children: [
-                    Row(
-                      children: [
-                        _miniStat('Total', '$total', Icons.list_alt_rounded, _green1),
-                        const SizedBox(width: 8),
-                        _miniStat('Attended', '$attempted', Icons.check_circle_rounded, _green2),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _miniStat('Remaining', '$remaining', Icons.hourglass_top_rounded, _gold),
-                        const SizedBox(width: 8),
-                        _miniStat('Success', '${ratio.toStringAsFixed(1)}%', Icons.emoji_events_rounded, const Color(0xFFE74C3C)),
-                      ],
-                    ),
-                  ],
-                );
-              }
-              return Row(
-                children: [
-                  _miniStat('Total', '$total', Icons.list_alt_rounded, _green1),
-                  const SizedBox(width: 8),
-                  _miniStat('Attended', '$attempted', Icons.check_circle_rounded, _green2),
-                  const SizedBox(width: 8),
-                  _miniStat('Remaining', '$remaining', Icons.hourglass_top_rounded, _gold),
-                  const SizedBox(width: 8),
-                  _miniStat('Success', '${ratio.toStringAsFixed(1)}%', Icons.emoji_events_rounded, const Color(0xFFE74C3C)),
-                ],
-              );
-            }),
+            Row(
+              children: [
+                _miniStat('Total', '$total', Icons.list_alt_rounded, _green1),
+                const SizedBox(width: 8),
+                _miniStat('Attended', '$attempted', Icons.check_circle_rounded, _green2),
+                const SizedBox(width: 8),
+                _miniStat('Remaining', '$remaining', Icons.hourglass_top_rounded, _gold),
+                const SizedBox(width: 8),
+                _miniStat('Success', '${ratio.toStringAsFixed(1)}%', Icons.emoji_events_rounded, const Color(0xFFE74C3C)),
+              ],
+            ),
 
             const SizedBox(height: 14),
 
