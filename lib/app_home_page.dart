@@ -10,6 +10,7 @@ import 'notification_overlay.dart';
 import 'notification_overlay.dart';
 import 'knowledge_capsule_overlay.dart';
 import 'news_ticker_widget.dart';
+import 'booster_story_widget.dart';
 import 'psc_loading_logo.dart'; // 🔥 Import Logo
 import 'ui_utils.dart';
 
@@ -71,6 +72,8 @@ class AppHomePage extends StatelessWidget {
                           delegate: SliverChildListDelegate([
                             const SizedBox(height: 8),
                             const NewsTickerWidget(), // 📰 Flash News
+                            const SizedBox(height: 4),
+                            const BoosterStoryWidget(), // 🌟 Booster Stories
                             const SizedBox(height: 4),
                             _resumeCard(), // 🔥 Premium Green Resume Card
                             const SizedBox(height: 4),

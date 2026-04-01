@@ -13,6 +13,7 @@ class HomeController extends GetxController {
   var examCategories = [].obs;   // children of the EXAM node
   var attemptCategories = [].obs; // children of the GUI1 node
   var studyTopics = [].obs;      // top-level children of the first study root
+  var boosterTopics = [].obs;    // children of the BOOSTER node
   var isLoading = true.obs;
 
   // ─── Stats (from shared_prefs) ────────────────────────────────
@@ -56,6 +57,10 @@ class HomeController extends GetxController {
         // Find GUI1 node
         final gui1Node = data.firstWhereOrNull((e) => e['name'] == 'GUI1');
         if (gui1Node != null) attemptCategories.value = gui1Node['children'] ?? [];
+
+        // Find BOOSTER node
+        final boosterNode = findNodeByName('booster', data);
+        if (boosterNode != null) boosterTopics.value = boosterNode['children'] ?? [];
 
         // Find NEWS node ───── (Recursive check)
         final newsNode = findNodeByName('NEWS', data);
@@ -142,6 +147,7 @@ class HomeController extends GetxController {
     final nav = item['navigation'] ?? '';
     final url = item['url'] ?? '';
     final children = item['children'];
+    final name = item['name'] ?? 'Attempt';
 
     if (nav == 'dynamicExamList' && url.isNotEmpty) {
       Get.toNamed('/dynamicExamList', arguments: {'endpoint': url});
@@ -151,20 +157,38 @@ class HomeController extends GetxController {
     if (url.isNotEmpty) {
       Get.toNamed('/dynamicMenu', arguments: {
         'endpoint': url,
-        'title': item['name'] ?? 'Attempt',
+        'title': name,
         'parentNavigation': nav,
       });
     } else if (children != null && (children as List).isNotEmpty) {
       Get.toNamed('/dynamicMenu', arguments: {
         'items': children,
-        'title': item['name'] ?? 'Attempt',
+        'title': name,
         'parentNavigation': nav,
       });
-    } else if (nav.isNotEmpty) {
-      Get.toNamed(nav);
     } else {
+      // It's a leaf node. We need to pass keywords if any.
+      List<String> keywords = [];
+      if (item["keywords"] != null) {
+        keywords = List<String>.from(item["keywords"]);
+      } else if (item["keyword"] != null) {
+        keywords = [item["keyword"].toString()];
+      }
+      if (keywords.isEmpty) {
+        keywords = [name];
+      }
+
       Get.delete<StudyController>();
-      Get.toNamed('/studyFull', arguments: {"title": item['name'] ?? 'Study'});
+      
+      String routeName = nav.isNotEmpty ? nav : '/studyFull';
+      if (!routeName.startsWith('/')) {
+        routeName = '/$routeName';
+      }
+
+      Get.toNamed(routeName, arguments: {
+        "title": name,
+        "keywords": keywords,
+      });
     }
   }
 

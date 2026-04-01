@@ -41,10 +41,13 @@ class StudyController extends GetxController {
   var examIndex = 0.obs;
   var examAnswers = <int, String>{}.obs;
 
+  var isDirectLoad = false.obs;
+
   @override
   void onInit() {
     final args = Get.arguments;
     if (args != null && (args["keywords"] != null || args["title"] != null)) {
+      isDirectLoad.value = true;
       loadArguments(args);
     } else {
       fetchTree();
@@ -190,6 +193,11 @@ class StudyController extends GetxController {
 
   /// BACK
   void goBack() {
+    if (isDirectLoad.value) {
+      Get.back();
+      return;
+    }
+
     if (showQuestions.value) {
       showQuestions.value = false;
       questions.clear();
@@ -202,6 +210,8 @@ class StudyController extends GetxController {
       items.assignAll(stack.removeLast());
       if (keys.isNotEmpty) keys.removeLast();
       searchQuery.value = ""; // 🔥 Reset search
+    } else {
+      Get.back();
     }
   }
 
