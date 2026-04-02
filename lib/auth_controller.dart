@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'app_config.dart';
+import 'push_notification_service.dart';
 
 class AuthController extends GetxController {
   static AuthController get instance => Get.find();
@@ -48,6 +49,9 @@ class AuthController extends GetxController {
     userName.value = user;
     fullName.value = full;
     isLoggedIn.value = true;
+
+    // 🔔 Trigger FCM token registration now that we are logged in
+    PushNotificationService.initialize();
   }
 
   // 🔥 Google Login
@@ -89,7 +93,7 @@ class AuthController extends GetxController {
         "Failed to sign in. Please check your connection.",
         snackPosition: SnackPosition.BOTTOM,
       );
-      print("Login Error: $e");
+      // print removed
     }
   }
 

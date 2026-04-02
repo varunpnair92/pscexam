@@ -26,12 +26,11 @@ class NotificationController extends GetxController {
             .where((n) => n.active)
             .toList();
       } else {
-        print("Failed to load notifications: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error fetching notifications: $e");
+      // Error fetching notifications
     } finally {
-      isLoading.value = false;
+      isLoading(false);
     }
   }
 }

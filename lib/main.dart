@@ -30,7 +30,6 @@ import 'push_notification_service.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  print("Handling a background message: ${message.messageId}");
 }
 
 void main() async {
@@ -40,9 +39,10 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   Get.put(AuthController());
-  await AuthController.instance.loadSession(); // Wait for session
+  await AuthController.instance.loadSession(); // Wait for local data (fast)
   
-  await PushNotificationService.initialize();
+  // Initialize Push notifications in the background to prevent startup ANR
+  PushNotificationService.initialize();
 
   Get.put(TestController(), permanent: true);
   Get.put(NewsController(), permanent: true);

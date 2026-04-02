@@ -30,10 +30,9 @@ class ImageSliderController extends GetxController {
             .where((item) => item.active && item.category == 'slide')
             .toList();
       } else {
-        print('Failed to load slider images: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching slider images: $e');
+      // Error fetching slider images
     } finally {
       isLoading(false);
     }

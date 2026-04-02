@@ -36,7 +36,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     final AuthController auth = Get.find<AuthController>();
     
     // Smooth transition
-    Get.offAllNamed(auth.isLoggedIn.value ? '/home' : '/home', );
+    Get.offAllNamed(auth.isLoggedIn.value ? '/home' : '/login', );
   }
 
   @override

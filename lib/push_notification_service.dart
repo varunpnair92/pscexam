@@ -1,11 +1,15 @@
+import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'app_config.dart';
 import 'auth_controller.dart';
+import 'exam_model.dart';
+import 'study_controller.dart';
+import 'story_controller.dart';
+import 'characteristic_controller.dart';
 
 class PushNotificationService {
   static final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -16,10 +20,21 @@ class PushNotificationService {
     // 1. Request permissions for iOS and newer Android versions
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
+      announcement: false,
       badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
       sound: true,
     );
-    print('User granted permission: ${settings.authorizationStatus}');
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      // Permission granted
+    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+      // Provisional permission (iOS)
+    } else {
+      // Permission denied or not determined
+    }
 
     // 2. Initialize Local Notifications (For Foreground messages)
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -27,13 +42,22 @@ class PushNotificationService {
     const InitializationSettings initializationSettings =
         InitializationSettings(android: initializationSettingsAndroid);
 
+    // Named parameter 'settings' is required for v21.0.0
     await _localNotificationsPlugin.initialize(
       settings: initializationSettings,
+      onDidReceiveNotificationResponse: (response) {
+        if (response.payload != null) {
+          try {
+            final Map<String, dynamic> data = jsonDecode(response.payload!);
+            _handleNavigation(data);
+          } catch (_) {}
+        }
+      }
     );
 
     // Create a high-importance channel for Android 8.0+
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'high_importance_channel', // id
+      'high_importance_channel_v2', // id (v2 to force refresh)
       'High Importance Notifications', // title
       description: 'This channel is used for important push notifications.', // description
       importance: Importance.max,
@@ -45,14 +69,13 @@ class PushNotificationService {
 
     // 3. Listen to foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Got a message whilst in the foreground!');
-
       if (message.notification != null) {
-        // Show local notification
+        // Show local notification using named parameters (v21.0.0)
         _localNotificationsPlugin.show(
           id: message.notification.hashCode,
-          title: message.notification!.title,
-          body: message.notification!.body,
+          title: message.notification?.title,
+          body: message.notification?.body,
+          payload: jsonEncode(message.data), // 🔥 Pass data to click handler
           notificationDetails: NotificationDetails(
             android: AndroidNotificationDetails(
               channel.id,
@@ -60,18 +83,35 @@ class PushNotificationService {
               channelDescription: channel.description,
               icon: '@mipmap/ic_launcher',
               color: const Color(0xFF1B8A4E),
+              importance: Importance.max,
+              priority: Priority.high,
+              ticker: 'ticker',
             ),
           ),
         );
       }
     });
 
-    // 4. Get FCM Token and send to backend
+    // 4. Handle Notification Clicks (Background/Resume)
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      _handleNavigation(message.data);
+    });
+
+    // 5. Handle Cold Start (App completely closed)
+    // Wait a couple of seconds to ensure GetMaterialApp is ready
+    Future.delayed(const Duration(seconds: 2), () async {
+      RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
+      if (initialMessage != null) {
+        debugPrint("🚀 Handling Cold Start Notification: ${initialMessage.data}");
+        _handleNavigation(initialMessage.data);
+      }
+    });
+
+    // 6. Get FCM Token and send to backend
     try {
       String? token = await _firebaseMessaging.getToken();
       if (token != null) {
-        print("FCM Token Generated: $token");
-        await _saveTokenToBackend(token);
+        _saveTokenToBackend(token);
       }
 
       // Also listen for token refreshes
@@ -79,38 +119,121 @@ class PushNotificationService {
         _saveTokenToBackend(newToken);
       });
     } catch (e) {
-      print("Error getting FCM token: $e");
+      // Handle potential errors quietly
     }
   }
 
-  /// Sends the FCM token to the Django backend to associate with the logged-in user
+  static void _handleNavigation(Map<String, dynamic> data) {
+    debugPrint("🎯 Notification Clicked! Payload: $data");
+
+    // Extract potential navigation keys
+    final String nav = data['navigation']?.toString() ?? data['route']?.toString() ?? "";
+    final String endpoint = data['endpoint']?.toString() ?? data['url']?.toString() ?? "";
+    final String keyword = data['keywords']?.toString() ?? data['keyword']?.toString() ?? "";
+    final String id = data['id']?.toString() ?? data['exam_id']?.toString() ?? "";
+    
+    // Fallback for title: Use provided title OR keywords OR "New Update"
+    final String title = data['title']?.toString() ?? 
+                       data['exam_name']?.toString() ?? 
+                       (keyword.isNotEmpty ? keyword : "New Update");
+
+    if (nav.isEmpty) {
+      debugPrint("⚠️ No navigation route found in payload data");
+      return;
+    }
+
+    // Normalization: Map "hierarchy" or add missing "/"
+    String route = nav;
+    if (nav.toLowerCase() == "hierarchy") {
+      route = "/dynamicMenu";
+    } else if (!nav.startsWith('/')) {
+      route = "/$nav";
+    }
+
+    debugPrint("🗺️ Calculated Route: $route");
+
+    if ((route == "/examSplash" || route == "/exam") && id.isNotEmpty) {
+      debugPrint("📖 Navigating to Exam Splash: $id");
+      // 📝 Construct a temporary Exam model for the splash page
+      final exam = Exam(
+        id: int.tryParse(id) ?? 0,
+        category: data['category']?.toString() ?? "Exam",
+        specialization: title,
+        locked: false,
+        totalQuestions: int.tryParse(data['total_questions']?.toString() ?? "50") ?? 50,
+      );
+      Get.toNamed('/examSplash', arguments: {'exam': exam});
+    } 
+    else if (route == "/story") {
+      debugPrint("📖 Navigating to Story: $title (Key: $keyword)");
+      // 📖 Clear previous story data
+      Get.delete<StoryController>();
+      
+      // 📖 Story Navigation
+      Get.toNamed('/story', arguments: {
+        'title': title,
+        'keywords': [keyword.isNotEmpty ? keyword : title],
+        'endpoint': endpoint
+      });
+    }
+    else if (route == "/characteristic") {
+      debugPrint("✨ Navigating to Characteristic: $title (Key: $keyword)");
+      // ✨ Clear previous characteristic data
+      Get.delete<CharacteristicController>();
+
+      // ✨ Characteristic Navigation
+      Get.toNamed('/characteristic', arguments: {
+        'title': title,
+        'keywords': [keyword.isNotEmpty ? keyword : title]
+      });
+    }
+    else if (route == "/dynamicMenu") {
+      debugPrint("📂 Navigating to Dynamic Menu: $title");
+      // 📂 Dynamic Menu (Hierarchy)
+      Get.toNamed('/dynamicMenu', arguments: {
+        'title': title,
+        'endpoint': endpoint,
+      });
+    }
+    else {
+      debugPrint("🚀 Executing General Navigation to: $route");
+      
+      // 🚀 Special handling for study page
+      if (route == "/studyFull") {
+        Get.delete<StudyController>();
+      }
+
+      // 🚀 General Navigation
+      Get.toNamed(route, arguments: {
+        'title': title,
+        'id': id,
+        'url': endpoint,
+        'endpoint': endpoint,
+        'keywords': [keyword.isNotEmpty ? keyword : title],
+      });
+    }
+  }
+
   static Future<void> _saveTokenToBackend(String fcmToken) async {
     try {
-      // In AuthController, the username is the identifier used in this app's API.
-      // Wait for auth to be fully loaded if needed.
       final authCtrl = Get.find<AuthController>();
-      if (!authCtrl.isLoggedIn.value) return;
+      if (!authCtrl.isLoggedIn.value) {
+        return;
+      }
 
-      final username = authCtrl.userName.value;
-      if (username.isEmpty) return;
-
-      final response = await http.post(
+      final userId = authCtrl.userId.value;
+      
+      await http.post(
         Uri.parse(AppConfig.saveFcmToken),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'username': username,
+          'userid': userId,
           'fcm_token': fcmToken,
-          'device_type': 'android', // or determine dynamically
+          'device_type': 'android',
         }),
       );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        print("Successfully saved FCM token to backend.");
-      } else {
-        print("Failed to save FCM token. Status: ${response.statusCode}");
-      }
-    } catch (e) {
-      print("Error saving FCM token to backend: $e");
+    } catch (_) {
+      // Quietly ignore network failures in background
     }
   }
 }
