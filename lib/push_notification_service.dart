@@ -16,6 +16,7 @@ class PushNotificationService {
       FirebaseMessaging.instance;
   static final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  static RemoteMessage? coldStartMessage; // 🚀 To store message for SplashPage
 
   static Future<void> initialize() async {
     // 1. Request permissions for iOS and newer Android versions
@@ -51,7 +52,7 @@ class PushNotificationService {
         if (response.payload != null) {
           try {
             final Map<String, dynamic> data = jsonDecode(response.payload!);
-            _handleNavigation(data);
+            processNotification(data);
           } catch (_) {}
         }
       },
@@ -99,16 +100,14 @@ class PushNotificationService {
 
     // 4. Handle Notification Clicks (Background/Resume)
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      _handleNavigation(message.data);
+      processNotification(message.data);
     });
 
     // 5. Handle Cold Start (App completely closed)
-    // Wait a couple of seconds to ensure GetMaterialApp is ready
-    Future.delayed(const Duration(seconds: 2), () async {
-      RemoteMessage? initialMessage = await _firebaseMessaging
-          .getInitialMessage();
-      if (initialMessage != null) {
-        _handleNavigation(initialMessage.data);
+    // We fetch it here, but SplashPage will trigger the navigation
+    _firebaseMessaging.getInitialMessage().then((message) {
+      if (message != null) {
+        coldStartMessage = message;
       }
     });
 
@@ -128,7 +127,7 @@ class PushNotificationService {
     }
   }
 
-  static void _handleNavigation(Map<String, dynamic> data) {
+  static void processNotification(Map<String, dynamic> data, {bool isColdStart = false}) {
     // Extract potential navigation keys
     final String nav =
         data['navigation']?.toString() ?? data['route']?.toString() ?? "";
@@ -147,6 +146,17 @@ class PushNotificationService {
 
     if (nav.isEmpty) {
       return;
+    }
+
+    // 🚀 For cold starts, first ensure we go to Home if the user is logged in
+    if (isColdStart) {
+      final auth = Get.find<AuthController>();
+      if (auth.isLoggedIn.value) {
+        Get.offAllNamed('/home');
+      } else {
+        Get.offAllNamed('/login');
+        return; // Don't proceed to target route if not logged in
+      }
     }
 
     // Normalization: Map "hierarchy" or add missing "/"

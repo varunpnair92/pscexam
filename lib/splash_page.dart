@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:psc_exam/auth_controller.dart';
 import 'package:psc_exam/psc_loading_logo.dart';
 import 'dart:async';
+import 'package:psc_exam/push_notification_service.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -31,12 +32,23 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   void _startSplashScreen() async {
     // 3 second delay for splash
     await Future.delayed(const Duration(seconds: 3));
-    
-    // Check session or direct to home (as in main.dart)
+
     final AuthController auth = Get.find<AuthController>();
-    
-    // Smooth transition
-    Get.offAllNamed(auth.isLoggedIn.value ? '/home' : '/login', );
+
+    // 🚀 Check for Cold Start Notification
+    final coldStartMessage = PushNotificationService.coldStartMessage;
+    if (coldStartMessage != null && auth.isLoggedIn.value) {
+      // Clear it so it doesn't trigger again
+      PushNotificationService.coldStartMessage = null;
+      // Handle the navigation (it will go to Home then to target)
+      PushNotificationService.processNotification(
+        coldStartMessage.data,
+        isColdStart: true,
+      );
+    } else {
+      // Regular navigation
+      Get.offAllNamed(auth.isLoggedIn.value ? '/home' : '/login');
+    }
   }
 
   @override
