@@ -12,7 +12,8 @@ import 'story_controller.dart';
 import 'characteristic_controller.dart';
 
 class PushNotificationService {
-  static final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  static final FirebaseMessaging _firebaseMessaging =
+      FirebaseMessaging.instance;
   static final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
@@ -30,7 +31,8 @@ class PushNotificationService {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       // Permission granted
-    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
       // Provisional permission (iOS)
     } else {
       // Permission denied or not determined
@@ -52,19 +54,22 @@ class PushNotificationService {
             _handleNavigation(data);
           } catch (_) {}
         }
-      }
+      },
     );
 
     // Create a high-importance channel for Android 8.0+
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'high_importance_channel_v2', // id (v2 to force refresh)
       'High Importance Notifications', // title
-      description: 'This channel is used for important push notifications.', // description
+      description:
+          'This channel is used for important push notifications.', // description
       importance: Importance.max,
     );
 
     await _localNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(channel);
 
     // 3. Listen to foreground messages
@@ -100,7 +105,8 @@ class PushNotificationService {
     // 5. Handle Cold Start (App completely closed)
     // Wait a couple of seconds to ensure GetMaterialApp is ready
     Future.delayed(const Duration(seconds: 2), () async {
-      RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
+      RemoteMessage? initialMessage = await _firebaseMessaging
+          .getInitialMessage();
       if (initialMessage != null) {
         _handleNavigation(initialMessage.data);
       }
@@ -124,15 +130,20 @@ class PushNotificationService {
 
   static void _handleNavigation(Map<String, dynamic> data) {
     // Extract potential navigation keys
-    final String nav = data['navigation']?.toString() ?? data['route']?.toString() ?? "";
-    final String endpoint = data['endpoint']?.toString() ?? data['url']?.toString() ?? "";
-    final String keyword = data['keywords']?.toString() ?? data['keyword']?.toString() ?? "";
-    final String id = data['id']?.toString() ?? data['exam_id']?.toString() ?? "";
-    
+    final String nav =
+        data['navigation']?.toString() ?? data['route']?.toString() ?? "";
+    final String endpoint =
+        data['endpoint']?.toString() ?? data['url']?.toString() ?? "";
+    final String keyword =
+        data['keywords']?.toString() ?? data['keyword']?.toString() ?? "";
+    final String id =
+        data['id']?.toString() ?? data['exam_id']?.toString() ?? "";
+
     // Fallback for title: Use provided title OR keywords OR "New Update"
-    final String title = data['title']?.toString() ?? 
-                       data['exam_name']?.toString() ?? 
-                       (keyword.isNotEmpty ? keyword : "New Update");
+    final String title =
+        data['title']?.toString() ??
+        data['exam_name']?.toString() ??
+        (keyword.isNotEmpty ? keyword : "New Update");
 
     if (nav.isEmpty) {
       return;
@@ -153,52 +164,58 @@ class PushNotificationService {
         category: data['category']?.toString() ?? "Exam",
         specialization: title,
         locked: false,
-        totalQuestions: int.tryParse(data['total_questions']?.toString() ?? "50") ?? 50,
+        totalQuestions:
+            int.tryParse(data['total_questions']?.toString() ?? "50") ?? 50,
       );
       Get.toNamed('/examSplash', arguments: {'exam': exam});
-    } 
-    else if (route == "/story") {
+    } else if (route == "/story") {
       // 📖 Clear previous story data
       Get.delete<StoryController>();
-      
+
       // 📖 Story Navigation
-      Get.toNamed('/story', arguments: {
-        'title': title,
-        'keywords': [keyword.isNotEmpty ? keyword : title],
-        'endpoint': endpoint
-      });
-    }
-    else if (route == "/characteristic") {
+      Get.toNamed(
+        '/story',
+        arguments: {
+          'title': title,
+          'keywords': [keyword.isNotEmpty ? keyword : title],
+          'endpoint': endpoint,
+        },
+      );
+    } else if (route == "/characteristic") {
       // ✨ Clear previous characteristic data
       Get.delete<CharacteristicController>();
 
       // ✨ Characteristic Navigation
-      Get.toNamed('/characteristic', arguments: {
-        'title': title,
-        'keywords': [keyword.isNotEmpty ? keyword : title]
-      });
-    }
-    else if (route == "/dynamicMenu") {
+      Get.toNamed(
+        '/characteristic',
+        arguments: {
+          'title': title,
+          'keywords': [keyword.isNotEmpty ? keyword : title],
+        },
+      );
+    } else if (route == "/dynamicMenu") {
       // 📂 Dynamic Menu (Hierarchy)
-      Get.toNamed('/dynamicMenu', arguments: {
-        'title': title,
-        'endpoint': endpoint,
-      });
-    }
-    else {
+      Get.toNamed(
+        '/dynamicMenu',
+        arguments: {'title': title, 'endpoint': endpoint},
+      );
+    } else {
       // 🚀 Special handling for study page
       if (route == "/studyFull") {
         Get.delete<StudyController>();
       }
 
       // 🚀 General Navigation
-      Get.toNamed(route, arguments: {
-        'title': title,
-        'id': id,
-        'url': endpoint,
-        'endpoint': endpoint,
-        'keywords': [keyword.isNotEmpty ? keyword : title],
-      });
+      Get.toNamed(
+        route,
+        arguments: {
+          'title': title,
+          'id': id,
+          'url': endpoint,
+          'endpoint': endpoint,
+          'keywords': [keyword.isNotEmpty ? keyword : title],
+        },
+      );
     }
   }
 
@@ -210,7 +227,7 @@ class PushNotificationService {
       }
 
       final userId = authCtrl.userId.value;
-      
+
       await http.post(
         Uri.parse(AppConfig.saveFcmToken),
         headers: {'Content-Type': 'application/json'},
