@@ -102,7 +102,6 @@ class PushNotificationService {
     Future.delayed(const Duration(seconds: 2), () async {
       RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
       if (initialMessage != null) {
-        debugPrint("🚀 Handling Cold Start Notification: ${initialMessage.data}");
         _handleNavigation(initialMessage.data);
       }
     });
@@ -124,8 +123,6 @@ class PushNotificationService {
   }
 
   static void _handleNavigation(Map<String, dynamic> data) {
-    debugPrint("🎯 Notification Clicked! Payload: $data");
-
     // Extract potential navigation keys
     final String nav = data['navigation']?.toString() ?? data['route']?.toString() ?? "";
     final String endpoint = data['endpoint']?.toString() ?? data['url']?.toString() ?? "";
@@ -138,7 +135,6 @@ class PushNotificationService {
                        (keyword.isNotEmpty ? keyword : "New Update");
 
     if (nav.isEmpty) {
-      debugPrint("⚠️ No navigation route found in payload data");
       return;
     }
 
@@ -150,10 +146,7 @@ class PushNotificationService {
       route = "/$nav";
     }
 
-    debugPrint("🗺️ Calculated Route: $route");
-
     if ((route == "/examSplash" || route == "/exam") && id.isNotEmpty) {
-      debugPrint("📖 Navigating to Exam Splash: $id");
       // 📝 Construct a temporary Exam model for the splash page
       final exam = Exam(
         id: int.tryParse(id) ?? 0,
@@ -165,7 +158,6 @@ class PushNotificationService {
       Get.toNamed('/examSplash', arguments: {'exam': exam});
     } 
     else if (route == "/story") {
-      debugPrint("📖 Navigating to Story: $title (Key: $keyword)");
       // 📖 Clear previous story data
       Get.delete<StoryController>();
       
@@ -177,7 +169,6 @@ class PushNotificationService {
       });
     }
     else if (route == "/characteristic") {
-      debugPrint("✨ Navigating to Characteristic: $title (Key: $keyword)");
       // ✨ Clear previous characteristic data
       Get.delete<CharacteristicController>();
 
@@ -188,7 +179,6 @@ class PushNotificationService {
       });
     }
     else if (route == "/dynamicMenu") {
-      debugPrint("📂 Navigating to Dynamic Menu: $title");
       // 📂 Dynamic Menu (Hierarchy)
       Get.toNamed('/dynamicMenu', arguments: {
         'title': title,
@@ -196,8 +186,6 @@ class PushNotificationService {
       });
     }
     else {
-      debugPrint("🚀 Executing General Navigation to: $route");
-      
       // 🚀 Special handling for study page
       if (route == "/studyFull") {
         Get.delete<StudyController>();
