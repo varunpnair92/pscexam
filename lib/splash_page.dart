@@ -47,7 +47,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
       );
     } else {
       // Regular navigation
-      Get.offAllNamed(auth.isLoggedIn.value ? '/home' : '/login');
+      Get.offAllNamed(auth.isLoggedIn.value ? '/home' : '/home');
     }
   }
 

@@ -37,5 +37,8 @@ static const String activeNotifications = "${baseUrl}active-notifications/";
 static const String saveFcmToken = "${baseUrl}save_fcm_token/";
 
 // ================= CHARACTERISTICS =================
-static const String characteristicByKeyword = "${baseUrl}qbkeywordcharacteristic/";
+  static const String characteristicByKeyword = "${baseUrl}qbkeywordcharacteristic/";
+
+  // ================= MULTIPLE COMBINED KEYWORD SEARCH =================
+  static const String keywordMultipleCombinedSimilarWithKeyword = "${baseUrl}qbkeywordmultiplecombinedsimilar-with-keyword";
 }

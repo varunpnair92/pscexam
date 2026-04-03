@@ -4,7 +4,6 @@ import 'package:psc_exam/auth_controller.dart';
 import 'home_controller.dart';
 import 'test_controller.dart';
 import 'image_slider_controller.dart';
-import 'study_controller.dart';
 import 'notification_controller.dart';
 import 'notification_overlay.dart';
 import 'notification_overlay.dart';
@@ -1005,11 +1004,8 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
       // Unfocus keyboard first
       FocusManager.instance.primaryFocus?.unfocus();
       Future.delayed(const Duration(milliseconds: 50), () {
-        Get.delete<StudyController>();
-        final kws = val.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-        Get.toNamed('/studyFull', arguments: {
-          "title": kws.length > 1 ? kws.join(", ") : val.trim(),
-          "keywords": kws,
+        Get.toNamed('/keywordSearch', arguments: {
+          "keyword": val.trim(),
         });
       });
     }
