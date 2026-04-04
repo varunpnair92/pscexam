@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'exam_model.dart';
 import 'test_controller.dart';
+import 'auth_controller.dart';
+
 
 class ExamSplashPage extends StatelessWidget {
   const ExamSplashPage({super.key});
@@ -15,6 +17,13 @@ class ExamSplashPage extends StatelessWidget {
 
     const Color primaryColor = Color(0xFF1B8A4E);
     const Color secondaryColor = Color(0xFF27AE60);
+
+    final auth = AuthController.instance;
+
+
+    final bool isLocked = exam.locked;
+    final bool hasAccess = auth.canAccess(exam);
+
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -124,14 +133,30 @@ class ExamSplashPage extends StatelessWidget {
                   width: double.infinity,
                   height: 64,
                   child: ElevatedButton(
-                    onPressed: () async {
-                      if (isResume) {
-                        await testController.loadProgress(exam.id, title: exam.specialization);
-                      } else {
-                        await testController.loadQuestions(exam.id, title: exam.specialization);
-                      }
-                      Get.offAndToNamed('/exam', arguments: {'id': exam.id, 'title': exam.specialization});
-                    },
+                    onPressed: isLocked
+                        ? () {
+                            Get.snackbar(
+                              "Exam Locked",
+                              "This exam is currently locked and not started.",
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.redAccent,
+                              colorText: Colors.white,
+                            );
+                          }
+                        : (!hasAccess
+                            ? () {
+                                auth.showPremiumAlert();
+                              }
+                            : () async {
+                                if (isResume) {
+                                  await testController.loadProgress(exam.id, title: exam.specialization);
+                                } else {
+                                  await testController.loadQuestions(exam.id, title: exam.specialization);
+                                }
+                                Get.offAndToNamed('/exam', arguments: {'id': exam.id, 'title': exam.specialization});
+                              }),
+
+
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
                       foregroundColor: Colors.white,
@@ -142,11 +167,15 @@ class ExamSplashPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          isResume ? "Resume Exam" : "Start Exam Now",
+                          isLocked
+                              ? "Exam Locked"
+                              : (!hasAccess ? "Premium Required" : (isResume ? "Resume Exam" : "Start Exam Now")),
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(width: 12),
-                        const Icon(Icons.arrow_forward_rounded, size: 22),
+                        Icon(isLocked || !hasAccess ? Icons.lock_outline_rounded : Icons.arrow_forward_rounded, size: 22),
+
+
                       ],
                     ),
                   ),

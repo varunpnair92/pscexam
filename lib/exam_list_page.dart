@@ -20,8 +20,8 @@ class ExamListPage extends StatelessWidget {
         }
 
         final auth = AuthController.instance;
-        final userType = auth.userType.value.toLowerCase().trim();
-        final bool isPremium = userType == "trial" || userType == "paid";
+
+
 
         return ListView.builder(
           itemCount: examController.exams.length,
@@ -58,19 +58,9 @@ class ExamListPage extends StatelessWidget {
                   : Colors.grey.shade100,
 
               onTap: () async {
-                if (!auth.canAccess(exam)) {
-                  auth.showPremiumAlert();
-                  return;
-                }
 
-                if (exam.locked && !isPremium) {
-                  Get.snackbar(
-                    "Exam Locked",
-                    "This exam is currently locked",
-                    snackPosition: SnackPosition.BOTTOM,
-                  );
-                  return;
-                }
+
+
 
                 // 🔓 UNLOCKED / PREMIUM → NORMAL FLOW
                 final prefs = await SharedPreferences.getInstance();

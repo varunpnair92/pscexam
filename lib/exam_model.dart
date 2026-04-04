@@ -26,7 +26,7 @@ class Exam {
       id: json['id'],
       category: json['category'],
       specialization: json['specialization'],
-      locked: json['locked'] ?? false,
+      locked: json['locked'] == true || json['locked'] == "true" || json['locked'] == 1,
       totalQuestions: total,
       accessType: (json['access_type'] ?? json['accessType'] ?? "free").toString().toLowerCase(),
     );

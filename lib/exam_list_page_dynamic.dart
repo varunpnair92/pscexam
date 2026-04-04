@@ -64,8 +64,8 @@ class DynamicExamListPage extends StatelessWidget {
 
                       final auth = AuthController.instance;
                       final bool hasAccess = auth.canAccess(exam);
-                      final String userType = auth.userType.value.toLowerCase();
-                      final bool isPremium = userType == "trial" || userType == "paid";
+
+
 
                       return FutureBuilder<Map<String, dynamic>>(
                         future: testController.getProgressSummary(exam.id),
@@ -102,19 +102,9 @@ class DynamicExamListPage extends StatelessWidget {
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: () async {
-                                if (!auth.canAccess(exam)) {
-                                  auth.showPremiumAlert();
-                                  return;
-                                }
 
-                                if (exam.locked && !isPremium) {
-                                  Get.snackbar(
-                                    "Exam Locked",
-                                    "This exam is currently locked",
-                                    snackPosition: SnackPosition.BOTTOM,
-                                  );
-                                  return;
-                                }
+
+
 
                                 final prefs = await SharedPreferences.getInstance();
                                 prefs.setString('last_exam_name', exam.specialization);

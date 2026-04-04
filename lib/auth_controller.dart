@@ -169,41 +169,43 @@ class AuthController extends GetxController with WidgetsBindingObserver {
   bool canAccess(dynamic item) {
     if (item == null) return true;
 
-    // 1. Determine User Role
-    final String role = userType.value.toLowerCase().trim();
-    // TRIAL or PAID users always have full access
-    if (role == "trial" || role == "paid") return true;
-
-    // 2. Determine Item Access Type (handles Maps and Exam objects)
+    // 1. Determine Item Access Type (handles Maps and Exam objects)
     String itemType = "free";
     bool isExplicitlyLocked = false;
-    
+
     if (item is Map) {
       // Check multiple possible key variations for broad compatibility
-      final dynamic rawType = item['access_type'] ?? 
-                            item['accessType'] ?? 
-                            item['access_level'] ?? 
-                            item['accessLevel'] ?? 
-                            item['access'];
-                            
+      final dynamic rawType = item['access_type'] ??
+          item['accessType'] ??
+          item['access_level'] ??
+          item['accessLevel'] ??
+          item['access'];
+
       itemType = (rawType ?? "free").toString().toLowerCase().trim();
-      
-      // Also check for explicit 'locked' boolean
-      isExplicitlyLocked = (item['locked'] == true);
+
+      // 🔥 Robust detection of 'locked' status in Maps (from JSON dynamic menus)
+      isExplicitlyLocked = (item['locked'] == true ||
+          item['locked'] == "true" ||
+          item['locked'] == 1);
     } else {
       // For Exam objects or other custom objects
       try {
         itemType = (item.accessType).toString().toLowerCase().trim();
         isExplicitlyLocked = (item.locked == true);
       } catch (_) {
-        itemType = "free"; 
+        itemType = "free";
       }
     }
 
-    // 3. Logic: 
-    // - If explicitly locked -> restrict
-    // - If item is "paid" and user is not trial/paid -> restrict
+    // 🔒 HIGH PRIORITY: If an item is explicitly locked, nobody can access it
     if (isExplicitlyLocked) return false;
+
+    // 2. Determine User Role
+    final String role = userType.value.toLowerCase().trim();
+    // TRIAL or PAID users have access to all non-locked content
+    if (role == "trial" || role == "paid") return true;
+
+    // 3. Logic for free users: only "free" items are accessible
     return itemType == "free";
   }
 
