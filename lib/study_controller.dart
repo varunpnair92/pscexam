@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'auth_controller.dart';
 import 'app_config.dart';
 import 'home_controller.dart';
 import 'test_controller.dart';
-import 'question_model.dart';
 
 class StudyController extends GetxController {
   /// FULL TREE
@@ -152,6 +152,13 @@ class StudyController extends GetxController {
 
   /// TILE CLICK
   void onTileTap(dynamic item) {
+    // 🌟 CENTRALIZED ACCESS CHECK
+    final auth = AuthController.instance;
+    if (!auth.canAccess(item)) {
+      auth.showPremiumAlert();
+      return;
+    }
+
     final name = item["name"];
 
     if (item["url"] != null && item["url"] != "") {

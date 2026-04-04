@@ -150,6 +150,13 @@ class HomeController extends GetxController {
   }
 
   void navigateAttemptCategory(dynamic item) {
+    // 🌟 CENTRALIZED ACCESS CHECK
+    final auth = AuthController.instance;
+    if (!auth.canAccess(item)) {
+      auth.showPremiumAlert();
+      return;
+    }
+
     final nav = item['navigation'] ?? '';
     final url = item['url'] ?? '';
     final children = item['children'];
@@ -194,6 +201,13 @@ class HomeController extends GetxController {
   }
 
   void navigateExamCategory(dynamic item) {
+    // 🌟 CENTRALIZED ACCESS CHECK
+    final auth = AuthController.instance;
+    if (!auth.canAccess(item)) {
+      auth.showPremiumAlert();
+      return;
+    }
+
     final nav = item['navigation'] ?? '';
     final url = item['url'] ?? '';
     if (nav == 'dynamicExamList' && url.isNotEmpty) {
