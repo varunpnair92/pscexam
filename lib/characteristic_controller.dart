@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'app_config.dart';
 import 'characteristic_model.dart';
+import 'auth_controller.dart';
 
 class CharacteristicController extends GetxController {
   var isLoading = false.obs;
@@ -22,6 +23,14 @@ class CharacteristicController extends GetxController {
 
   Future<void> fetchCharacteristics(String keyword) async {
     if (keyword.isEmpty) return;
+
+    // 🔥 Centralized Access Check
+    final auth = AuthController.instance;
+    final args = Get.arguments;
+    if (args != null && !auth.canAccess(args)) {
+       auth.showPremiumAlert();
+       return;
+    }
     
     currentKeyword.value = keyword;
     isLoading.value = true;

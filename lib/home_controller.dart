@@ -10,10 +10,10 @@ import 'test_controller.dart';
 
 class HomeController extends GetxController {
   // ─── Node tree data ───────────────────────────────────────────
-  var examCategories = [].obs;   // children of the EXAM node
+  var examCategories = [].obs; // children of the EXAM node
   var attemptCategories = [].obs; // children of the GUI1 node
-  var studyTopics = [].obs;      // top-level children of the first study root
-  var boosterTopics = [].obs;    // children of the BOOSTER node
+  var studyTopics = [].obs; // top-level children of the first study root
+  var boosterTopics = [].obs; // children of the BOOSTER node
   var isLoading = true.obs;
 
   // ─── Stats (from shared_prefs) ────────────────────────────────
@@ -27,7 +27,7 @@ class HomeController extends GetxController {
   var attemptedExams = 0.obs;
   var remainingExams = 0.obs;
   var successRatio = 0.0.obs;
-  
+
   var totalQuestionsAttended = 0.obs;
   var totalCorrectAnswers = 0.obs;
   var questionSuccessRatio = 0.0.obs;
@@ -37,7 +37,7 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    Get.put(NewsController()); 
+    Get.put(NewsController());
     fetchHomeData();
     loadLocalStats();
     fetchUserStats();
@@ -56,11 +56,13 @@ class HomeController extends GetxController {
 
         // Find GUI1 node
         final gui1Node = data.firstWhereOrNull((e) => e['name'] == 'GUI1');
-        if (gui1Node != null) attemptCategories.value = gui1Node['children'] ?? [];
+        if (gui1Node != null)
+          attemptCategories.value = gui1Node['children'] ?? [];
 
         // Find BOOSTER node
         final boosterNode = findNodeByName('booster', data);
-        if (boosterNode != null) boosterTopics.value = boosterNode['children'] ?? [];
+        if (boosterNode != null)
+          boosterTopics.value = boosterNode['children'] ?? [];
 
         // Find NEWS node ───── (Recursive check)
         final newsNode = findNodeByName('NEWS', data);
@@ -74,7 +76,7 @@ class HomeController extends GetxController {
           if (!newsUrl.endsWith('/')) {
             newsUrl = "$newsUrl/";
           }
-          
+
           Get.find<NewsController>().fetchNews(newsUrl);
         }
 
@@ -111,7 +113,9 @@ class HomeController extends GetxController {
     final int userId = Get.find<AuthController>().userId.value;
     statsLoading.value = true;
     try {
-      final res = await http.get(Uri.parse('${AppConfig.userExamStats}$userId/'));
+      final res = await http.get(
+        Uri.parse('${AppConfig.userExamStats}$userId/'),
+      );
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         userName.value = data['fullname'] ?? data['username'] ?? '';
@@ -121,9 +125,11 @@ class HomeController extends GetxController {
         successRatio.value = (data['success_ratio'] ?? 0.0).toDouble();
         totalQuestionsAttended.value = data['total_questions_attended'] ?? 0;
         totalCorrectAnswers.value = data['total_correct_answers'] ?? 0;
-        questionSuccessRatio.value = (data['question_success_ratio'] ?? 0.0).toDouble();
+        questionSuccessRatio.value = (data['question_success_ratio'] ?? 0.0)
+            .toDouble();
       }
-    } catch (_) {} finally {
+    } catch (_) {
+    } finally {
       statsLoading.value = false;
     }
   }
@@ -155,17 +161,15 @@ class HomeController extends GetxController {
     }
 
     if (url.isNotEmpty) {
-      Get.toNamed('/dynamicMenu', arguments: {
-        'endpoint': url,
-        'title': name,
-        'parentNavigation': nav,
-      });
+      Get.toNamed(
+        '/dynamicMenu',
+        arguments: {'endpoint': url, 'title': name, 'parentNavigation': nav},
+      );
     } else if (children != null && (children as List).isNotEmpty) {
-      Get.toNamed('/dynamicMenu', arguments: {
-        'items': children,
-        'title': name,
-        'parentNavigation': nav,
-      });
+      Get.toNamed(
+        '/dynamicMenu',
+        arguments: {'items': children, 'title': name, 'parentNavigation': nav},
+      );
     } else {
       // It's a leaf node. We need to pass keywords if any.
       List<String> keywords = [];
@@ -179,16 +183,13 @@ class HomeController extends GetxController {
       }
 
       Get.delete<StudyController>();
-      
+
       String routeName = nav.isNotEmpty ? nav : '/studyFull';
       if (!routeName.startsWith('/')) {
         routeName = '/$routeName';
       }
 
-      Get.toNamed(routeName, arguments: {
-        "title": name,
-        "keywords": keywords,
-      });
+      Get.toNamed(routeName, arguments: {"title": name, "keywords": keywords});
     }
   }
 
@@ -197,7 +198,8 @@ class HomeController extends GetxController {
     final url = item['url'] ?? '';
     if (nav == 'dynamicExamList' && url.isNotEmpty) {
       Get.toNamed('/dynamicExamList', arguments: {'endpoint': url});
-    } else if (item['children'] != null && (item['children'] as List).isNotEmpty) {
+    } else if (item['children'] != null &&
+        (item['children'] as List).isNotEmpty) {
       Get.toNamed('/home', arguments: {'tab': 1});
     }
   }
@@ -209,8 +211,11 @@ class HomeController extends GetxController {
   Map<String, dynamic>? findExamByName(String name, [List? list]) {
     final searchList = list ?? examCategories;
     for (var item in searchList) {
-      String itemName = (item['specialization'] ?? item['name'] ?? "").toString().toLowerCase();
-      if (itemName == name.toLowerCase()) return Map<String, dynamic>.from(item);
+      String itemName = (item['specialization'] ?? item['name'] ?? "")
+          .toString()
+          .toLowerCase();
+      if (itemName == name.toLowerCase())
+        return Map<String, dynamic>.from(item);
       if (item['children'] != null && item['children'] is List) {
         final found = findExamByName(name, item['children']);
         if (found != null) return found;

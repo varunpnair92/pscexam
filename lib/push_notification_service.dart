@@ -176,7 +176,15 @@ class PushNotificationService {
         locked: false,
         totalQuestions:
             int.tryParse(data['total_questions']?.toString() ?? "50") ?? 50,
+        accessType: data['access_type']?.toString() ?? "free", // 🔥 ADD THIS
       );
+
+      final auth = AuthController.instance;
+      if (!auth.canAccess(exam)) {
+        auth.showPremiumAlert();
+        return;
+      }
+
       Get.toNamed('/examSplash', arguments: {'exam': exam});
     } else if (route == "/story") {
       // 📖 Clear previous story data

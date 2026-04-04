@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'auth_controller.dart';
 
 class ModernStudyCard extends StatefulWidget {
   final Map<String, dynamic> q;
@@ -68,7 +69,14 @@ class _ModernStudyCardState extends State<ModernStudyCard> {
               duration: const Duration(milliseconds: 300),
               crossFadeState: isRevealed ? CrossFadeState.showSecond : CrossFadeState.showFirst,
               firstChild: GestureDetector(
-                onTap: () => setState(() => isRevealed = true),
+                onTap: () {
+                  final auth = AuthController.instance;
+                  if (!auth.canAccess(widget.q)) {
+                    auth.showPremiumAlert();
+                    return;
+                  }
+                  setState(() => isRevealed = true);
+                },
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 24),
@@ -79,10 +87,18 @@ class _ModernStudyCardState extends State<ModernStudyCard> {
                   ),
                   child: Column(
                     children: [
-                      Icon(Icons.visibility_rounded, color: Colors.grey.shade500, size: 28),
+                      Icon(
+                        AuthController.instance.canAccess(widget.q) 
+                          ? Icons.visibility_rounded 
+                          : Icons.lock_rounded, 
+                        color: Colors.grey.shade500, 
+                        size: 28,
+                      ),
                       const SizedBox(height: 8),
                       Text(
-                        "Tap to Reveal Answer",
+                        AuthController.instance.canAccess(widget.q)
+                          ? "Tap to Reveal Answer"
+                          : "Premium Required",
                         style: TextStyle(
                           color: Colors.grey.shade600,
                           fontWeight: FontWeight.w600,

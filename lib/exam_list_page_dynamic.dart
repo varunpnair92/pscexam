@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'exam_controller.dart';
 import 'test_controller.dart';
+import 'auth_controller.dart';
 import 'home_page.dart';
 import 'psc_loading_logo.dart';
 
@@ -61,6 +62,11 @@ class DynamicExamListPage extends StatelessWidget {
                     itemBuilder: (_, i) {
                       var exam = exams[i];
 
+                      final auth = AuthController.instance;
+                      final bool hasAccess = auth.canAccess(exam);
+                      final String userType = auth.userType.value.toLowerCase();
+                      final bool isPremium = userType == "trial" || userType == "paid";
+
                       return FutureBuilder<Map<String, dynamic>>(
                         future: testController.getProgressSummary(exam.id),
                         builder: (context, snapshot) {
@@ -95,128 +101,160 @@ class DynamicExamListPage extends StatelessWidget {
                             ),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
-                              onTap: exam.locked
-                                  ? () {
-                                      Get.snackbar(
-                                        "Exam Locked",
-                                        "This exam is currently locked",
-                                        snackPosition: SnackPosition.BOTTOM,
+                              onTap: () async {
+                                if (!auth.canAccess(exam)) {
+                                  auth.showPremiumAlert();
+                                  return;
+                                }
+
+                                if (exam.locked && !isPremium) {
+                                  Get.snackbar(
+                                    "Exam Locked",
+                                    "This exam is currently locked",
+                                    snackPosition: SnackPosition.BOTTOM,
+                                  );
+                                  return;
+                                }
+
+                                final prefs = await SharedPreferences.getInstance();
+                                prefs.setString('last_exam_name', exam.specialization);
+                                prefs.setString('last_exam_id', exam.id.toString());
+
+                                bool resume = await testController.hasProgressForExam(exam.id);
+
+                                if (resume) {
+                                  Get.defaultDialog(
+                                    title: "Resume Exam",
+                                    middleText: "You have unfinished progress",
+                                    textCancel: "Restart",
+                                    textConfirm: "Resume",
+                                    onConfirm: () async {
+                                      Get.back();
+                                      Get.toNamed(
+                                        '/examSplash',
+                                        arguments: {
+                                          'exam': exam,
+                                          'isResume': true,
+                                        },
                                       );
-                                    }
-                                  : () async {
-                                      final prefs = await SharedPreferences.getInstance();
-                                      prefs.setString('last_exam_name', exam.specialization);
-                                      prefs.setString('last_exam_id', exam.id.toString());
-
-                                      bool resume = await testController.hasProgressForExam(exam.id);
-
-                                      if (resume) {
-                                        Get.defaultDialog(
-                                          title: "Resume Exam",
-                                          middleText: "You have unfinished progress",
-                                          textCancel: "Restart",
-                                          textConfirm: "Resume",
-                                          onConfirm: () async {
-                                            Get.back();
-                                            Get.toNamed(
-                                              '/examSplash',
-                                              arguments: {
-                                                'exam': exam,
-                                                'isResume': true,
-                                              },
-                                            );
-                                          },
-                                          onCancel: () async {
-                                            Get.back();
-                                            await testController.clearProgress(exam.id);
-                                            Get.toNamed(
-                                              '/examSplash',
-                                              arguments: {
-                                                'exam': exam,
-                                                'isResume': false,
-                                              },
-                                            );
-                                          },
-                                        );
-                                      } else {
-                                        Get.toNamed(
-                                          '/examSplash',
-                                          arguments: {
-                                            'exam': exam,
-                                            'isResume': false,
-                                          },
-                                        );
-                                      }
                                     },
+                                    onCancel: () async {
+                                      Get.back();
+                                      await testController.clearProgress(exam.id);
+                                      Get.toNamed(
+                                        '/examSplash',
+                                        arguments: {
+                                          'exam': exam,
+                                          'isResume': false,
+                                        },
+                                      );
+                                    },
+                                  );
+                                } else {
+                                  Get.toNamed(
+                                    '/examSplash',
+                                    arguments: {
+                                      'exam': exam,
+                                      'isResume': false,
+                                    },
+                                  );
+                                }
+                              },
                               child: Padding(
                                 padding: const EdgeInsets.all(14),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                child: Stack(
                                   children: [
-                                    /// TITLE + LOCK ICON
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            exam.specialization,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
+                                    Opacity(
+                                      opacity: hasAccess ? 1.0 : 0.5,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          /// TITLE + LOCK ICON
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  exam.specialization,
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                              Row(
+                                                children: [
+                                                  if (exam.accessType != "free")
+                                                    const Padding(
+                                                      padding: EdgeInsets.only(right: 8.0),
+                                                      child: Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 20),
+                                                    ),
+                                                  Icon(
+                                                    exam.locked ? Icons.lock : Icons.lock_open,
+                                                    color: exam.locked ? Colors.red : Colors.green,
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 6),
+
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                "$total Qs",
+                                                style: const TextStyle(
+                                                  color: Colors.grey,
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                              Text(
+                                                progressText,
+                                                style: TextStyle(
+                                                  color: progressColor,
+                                                  fontWeight: true ? FontWeight.bold : FontWeight.w600,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                              FutureBuilder<int>(
+                                                future: testController.getAttemptCount(exam.id),
+                                                builder: (context, snap) {
+                                                  int attempts = snap.data ?? 0;
+                                                  return Text(
+                                                    "Att: $attempts",
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.grey,
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 10),
+
+                                          /// PROGRESS BAR
+                                          LinearProgressIndicator(
+                                            value: total == 0 ? 0 : answered / total,
+                                            backgroundColor: Colors.grey.shade300,
+                                            valueColor: AlwaysStoppedAnimation<Color>(
+                                              progressColor,
                                             ),
                                           ),
-                                        ),
-                                        Icon(
-                                          exam.locked ? Icons.lock : Icons.lock_open,
-                                          color: exam.locked ? Colors.red : Colors.green,
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          "$total Qs",
-                                          style: const TextStyle(
-                                            color: Colors.grey,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                        Text(
-                                          progressText,
-                                          style: TextStyle(
-                                            color: progressColor,
-                                            fontWeight: true ? FontWeight.bold : FontWeight.w600,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                        FutureBuilder<int>(
-                                          future: testController.getAttemptCount(exam.id),
-                                          builder: (context, snap) {
-                                            int attempts = snap.data ?? 0;
-                                            return Text(
-                                              "Att: $attempts",
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey,
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 10),
-
-                                    /// PROGRESS BAR
-                                    LinearProgressIndicator(
-                                      value: total == 0 ? 0 : answered / total,
-                                      backgroundColor: Colors.grey.shade300,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        progressColor,
+                                        ],
                                       ),
                                     ),
+                                    if (!hasAccess)
+                                      const Positioned.fill(
+                                        child: Center(
+                                          child: Icon(
+                                            Icons.lock_outline_rounded,
+                                            color: Colors.black12,
+                                            size: 40,
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ),

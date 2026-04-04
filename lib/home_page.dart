@@ -8,7 +8,7 @@ import 'package:psc_exam/study_page.dart';
 class HomePage extends StatelessWidget {
   final index = 0.obs;
 
-  final pages = [
+  final List<Widget> pages = [
     AppHomePage(),
     ExamMenuPage(),
     StudyPage(),

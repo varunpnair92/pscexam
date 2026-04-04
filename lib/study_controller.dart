@@ -5,6 +5,7 @@ import 'app_config.dart';
 import 'home_controller.dart';
 import 'test_controller.dart';
 import 'question_model.dart';
+
 class StudyController extends GetxController {
   /// FULL TREE
   var fullTree = [].obs;
@@ -19,10 +20,11 @@ class StudyController extends GetxController {
   List<dynamic> get displayedItems {
     if (searchQuery.value.isEmpty) return items;
     return items
-        .where((e) => (e["name"] ?? "")
-            .toString()
-            .toLowerCase()
-            .contains(searchQuery.value.toLowerCase()))
+        .where(
+          (e) => (e["name"] ?? "").toString().toLowerCase().contains(
+            searchQuery.value.toLowerCase(),
+          ),
+        )
         .toList();
   }
 
@@ -57,21 +59,21 @@ class StudyController extends GetxController {
 
   void loadArguments(dynamic args) {
     if (args == null) return;
-    
+
     final String title = args["title"] ?? "Study";
     List<String> kws = [];
-    
+
     if (args["keywords"] != null) {
       kws = List<String>.from(args["keywords"]);
     } else {
       kws = [title];
     }
-    
+
     keys.clear();
     keys.add(title);
     showQuestions.value = true;
     fetchQuestionsByKeyword(kws);
-    
+
     if (kws.length > 1) {
       // The description endpoint doesn't support multiple comma-separated keywords well.
       description.value = "No data available for multiple keywords.";
@@ -116,7 +118,30 @@ class StudyController extends GetxController {
     );
 
     if (ldcNode != null) {
-      items.value = ldcNode["children"] ?? [];
+      final parentAccess =
+          ldcNode['access_type'] ??
+          ldcNode['accessType'] ??
+          ldcNode['access_level'] ??
+          ldcNode['accessLevel'] ??
+          ldcNode['access'];
+      final List<dynamic> children = List<dynamic>.from(
+        ldcNode["children"] ?? [],
+      );
+
+      // 🔥 Propagate access status to children if they don't have their own
+      if (parentAccess != null) {
+        for (var child in children) {
+          if (child is Map &&
+              child['access_type'] == null &&
+              child['accessType'] == null &&
+              child['access_level'] == null &&
+              child['accessLevel'] == null &&
+              child['access'] == null) {
+            child['access_type'] = parentAccess;
+          }
+        }
+      }
+      items.value = children;
     } else {
       items.value = [];
     }
@@ -134,8 +159,31 @@ class StudyController extends GetxController {
     }
 
     if (item["children"] != null && item["children"].isNotEmpty) {
+      final parentAccess =
+          item['access_type'] ??
+          item['accessType'] ??
+          item['access_level'] ??
+          item['accessLevel'] ??
+          item['access'];
+
+      final List<dynamic> children = List<dynamic>.from(item["children"]);
+
+      // 🔥 Propagate access status to children if they don't have their own
+      if (parentAccess != null) {
+        for (var child in children) {
+          if (child is Map &&
+              child['access_type'] == null &&
+              child['accessType'] == null &&
+              child['access_level'] == null &&
+              child['accessLevel'] == null &&
+              child['access'] == null) {
+            child['access_type'] = parentAccess;
+          }
+        }
+      }
+
       stack.add(items.toList());
-      items.assignAll(item["children"]);
+      items.assignAll(children);
       keys.add(name);
       searchQuery.value = ""; // 🔥 Reset search
       return;
@@ -178,10 +226,10 @@ class StudyController extends GetxController {
         Get.toNamed(routeName, arguments: questions.toList());
       } else {
         // fully dynamic API-driven route
-        Get.toNamed(routeName, arguments: {
-          "title": name,
-          "keywords": keywords,
-        });
+        Get.toNamed(
+          routeName,
+          arguments: {"title": name, "keywords": keywords},
+        );
       }
       return;
     }
@@ -225,19 +273,25 @@ class StudyController extends GetxController {
     if (keywords.length == 1) {
       final homeCtrl = Get.find<HomeController>();
       final liveExam = homeCtrl.findExamByName(keywords.first);
-      
+
       if (liveExam != null && liveExam['id'] != null) {
         final testCtrl = Get.find<TestController>();
         await testCtrl.loadQuestionsOnly(liveExam['id']);
-        
+
         // Convert test_controller questions (ObsList<Question>) to study_controller expected format (ObsList<dynamic>)
-        questions.assignAll(testCtrl.questions.map((q) => {
-          "id": q.id,
-          "question": q.question,
-          "options": q.options,
-          "answer": q.answer,
-          "description": q.description,
-        }).toList());
+        questions.assignAll(
+          testCtrl.questions
+              .map(
+                (q) => {
+                  "id": q.id,
+                  "question": q.question,
+                  "options": q.options,
+                  "answer": q.answer,
+                  "description": q.description,
+                },
+              )
+              .toList(),
+        );
         return;
       }
     }

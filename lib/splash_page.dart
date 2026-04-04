@@ -12,7 +12,8 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateMixin {
+class _SplashPageState extends State<SplashPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
@@ -23,7 +24,10 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
       vsync: this,
       duration: const Duration(seconds: 1),
     );
-    _fadeAnimation = CurvedAnimation(parent: _fadeController, curve: Curves.easeIn);
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeIn,
+    );
     _fadeController.forward();
 
     _startSplashScreen();
@@ -47,7 +51,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
       );
     } else {
       // Regular navigation
-      Get.offAllNamed(auth.isLoggedIn.value ? '/home' : '/home');
+      Get.offAllNamed(auth.isLoggedIn.value ? '/home' : '/login');
     }
   }
 
@@ -71,11 +75,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.white,
-              lightGreen,
-              primaryGreen.withOpacity(0.05),
-            ],
+            colors: [Colors.white, lightGreen, primaryGreen.withOpacity(0.05)],
           ),
         ),
         child: FadeTransition(

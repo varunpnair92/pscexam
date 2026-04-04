@@ -11,7 +11,8 @@ class BoosterStoryWidget extends StatefulWidget {
   State<BoosterStoryWidget> createState() => _BoosterStoryWidgetState();
 }
 
-class _BoosterStoryWidgetState extends State<BoosterStoryWidget> with SingleTickerProviderStateMixin {
+class _BoosterStoryWidgetState extends State<BoosterStoryWidget>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   final HomeController ctrl = Get.find<HomeController>();
 
@@ -19,8 +20,8 @@ class _BoosterStoryWidgetState extends State<BoosterStoryWidget> with SingleTick
   void initState() {
     super.initState();
     _animationController = AnimationController(
-       vsync: this,
-       duration: const Duration(seconds: 4),
+      vsync: this,
+      duration: const Duration(seconds: 4),
     )..repeat();
   }
 
@@ -43,7 +44,10 @@ class _BoosterStoryWidgetState extends State<BoosterStoryWidget> with SingleTick
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFF1B8A4E).withOpacity(0.15), width: 1.5),
+          border: Border.all(
+            color: const Color(0xFF1B8A4E).withOpacity(0.15),
+            width: 1.5,
+          ),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF1B8A4E).withOpacity(0.05),
@@ -103,9 +107,16 @@ class _BoosterStoryWidgetState extends State<BoosterStoryWidget> with SingleTick
                           decoration: BoxDecoration(
                             color: Colors.white,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2), // Creates the gap between ring and content
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 2,
+                            ), // Creates the gap between ring and content
                           ),
-                          child: Icon(icon, size: 24, color: const Color(0xFF1B8A4E)),
+                          child: Icon(
+                            icon,
+                            size: 24,
+                            color: const Color(0xFF1B8A4E),
+                          ),
                         ),
                       ],
                     ),

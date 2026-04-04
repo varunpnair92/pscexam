@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'app_config.dart';
+import 'auth_controller.dart';
 
 class ExamMenuController extends GetxController {
   String lastEndpoint = "";
@@ -56,6 +57,14 @@ class ExamMenuController extends GetxController {
 
   /// TILE CLICK
   void onTileTap(dynamic item) {
+    final auth = AuthController.instance;
+
+    // 🌟 CENTRALIZED ACCESS CHECK
+    if (!auth.canAccess(item)) {
+      auth.showPremiumAlert();
+      return;
+    }
+
     final name = item["name"];
     lastEndpoint = item["url"] ?? lastEndpoint;
 
@@ -92,3 +101,4 @@ class ExamMenuController extends GetxController {
     searchQuery.value = "";
   }
 }
+

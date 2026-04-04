@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'app_config.dart';
+import 'auth_controller.dart';
 
 class StoryItemData {
   final String type; // 'description'
@@ -24,6 +25,14 @@ class StoryController extends GetxController {
     super.onInit();
     final args = Get.arguments;
     if (args != null) {
+      // 🔥 Centralized Access Check
+      final auth = AuthController.instance;
+      if (!auth.canAccess(args)) {
+        auth.showPremiumAlert();
+        Get.back();
+        return;
+      }
+
       final t = args["title"] ?? "Story";
       title.value = t;
       List<String> kws = [];

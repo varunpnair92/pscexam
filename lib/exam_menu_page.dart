@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'exam_menu_controller.dart';
+import 'auth_controller.dart';
 import 'ui_utils.dart'; // 🔥 Import UI Utils
 
 class ExamMenuPage extends StatelessWidget {
@@ -8,6 +9,8 @@ class ExamMenuPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = AuthController.instance;
+    
     return Obx(
       () => Scaffold(
         backgroundColor: Colors.white,
@@ -97,7 +100,7 @@ class ExamMenuPage extends StatelessWidget {
               child: controller.items.isEmpty
                   ? const Center(child: CircularProgressIndicator(color: UIUtils.greenPrimary))
                   : controller.displayedItems.isEmpty
-                      ? const Center(child: Text("No matches found", style: TextStyle(color: Colors.grey)))
+                       ? const Center(child: Text("No matches found", style: TextStyle(color: Colors.grey)))
                       : GridView.builder(
                           padding: const EdgeInsets.all(16),
                           itemCount: controller.displayedItems.length,
@@ -114,6 +117,8 @@ class ExamMenuPage extends StatelessWidget {
                             final gradients = UIUtils.getPremiumGradients();
                             final grad = gradients[i % gradients.length];
                             final icon = UIUtils.getIconForName(name);
+
+                            final bool hasAccess = auth.canAccess(item);
 
                             return GestureDetector(
                               onTap: () {
@@ -137,38 +142,72 @@ class ExamMenuPage extends StatelessWidget {
                                   ],
                                 ),
                                 padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(icon, color: Colors.white, size: 18),
-                                    ),
-                                    const Spacer(),
-                                    Expanded(
-                                      child: Container(
-                                        alignment: Alignment.bottomLeft,
-                                        child: FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            name,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
+                                  child: Stack(
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white.withOpacity(0.2),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: Icon(icon, color: Colors.white, size: 18),
+                                              ),
+                                              if (!hasAccess)
+                                                const Icon(
+                                                  Icons.workspace_premium_rounded,
+                                                  color: Colors.amber,
+                                                  size: 20,
+                                                ),
+                                            ],
+                                          ),
+                                          const Spacer(),
+                                          Expanded(
+                                            child: Container(
+                                              alignment: Alignment.bottomLeft,
+                                              child: FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Opacity(
+                                                  opacity: hasAccess ? 1.0 : 0.6,
+                                                  child: Text(
+                                                    name,
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                    maxLines: 2,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ),
                                             ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+                                      if (!hasAccess)
+                                        Positioned.fill(
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withOpacity(0.15),
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.lock_rounded,
+                                                color: Colors.white70,
+                                                size: 28,
+                                              ),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                    ],
+                                  ),
                               ),
                             );
                           },

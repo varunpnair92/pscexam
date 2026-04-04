@@ -22,14 +22,14 @@ class AppHomePage extends StatelessWidget {
   AppHomePage({super.key});
 
   // ─── Green + White Palette ────────────────────────────────────
-  static const _bg = Color(0xFFF4FBF4);            // off-white background
+  static const _bg = Color(0xFFF4FBF4); // off-white background
   static const _surface = Colors.white;
-  static const _green1 = Color(0xFF1B8A4E);        // deep green
-  static const _green2 = Color(0xFF27AE60);        // mid green
-  static const _green3 = Color(0xFF52C97A);        // light green
-  static const _textDark = Color(0xFF0D3320);      // dark green text
-  static const _textMid = Color(0xFF4D7A5E);       // muted green text
-  static const _gold = Color(0xFFF5A623);          // accent gold
+  static const _green1 = Color(0xFF1B8A4E); // deep green
+  static const _green2 = Color(0xFF27AE60); // mid green
+  static const _green3 = Color(0xFF52C97A); // light green
+  static const _textDark = Color(0xFF0D3320); // dark green text
+  static const _textMid = Color(0xFF4D7A5E); // muted green text
+  static const _gold = Color(0xFFF5A623); // accent gold
 
   @override
   Widget build(BuildContext context) {
@@ -57,9 +57,7 @@ class AppHomePage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(26),
                 child: Obx(() {
                   if (ctrl.isLoading.value) {
-                    return const Center(
-                      child: PSCLoadingLogo(size: 80),
-                    );
+                    return const Center(child: PSCLoadingLogo(size: 80));
                   }
                   return CustomScrollView(
                     physics: const BouncingScrollPhysics(),
@@ -91,7 +89,7 @@ class AppHomePage extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 20),
-                            
+
                             _boxedSection(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,10 +101,8 @@ class AppHomePage extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 20),
-                            
-                            _boxedSection(
-                              child: _quickActions(),
-                            ),
+
+                            _boxedSection(child: _quickActions()),
                             const SizedBox(height: 32),
                           ]),
                         ),
@@ -116,7 +112,7 @@ class AppHomePage extends StatelessWidget {
                 }),
               ),
             ),
-            
+
             // ─── Daily Knowledge Capsule Overlay ───
             KnowledgeCapsuleOverlay(),
           ],
@@ -139,69 +135,73 @@ class AppHomePage extends StatelessWidget {
             bottomRight: Radius.circular(28),
           ),
           child: Container(
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [_green1, _green2, _green3],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [_green1, _green2, _green3],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(28),
+                bottomRight: Radius.circular(28),
+              ),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.15),
+                width: 1.5,
+              ),
             ),
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(28),
-              bottomRight: Radius.circular(28),
-            ),
-            border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.5),
-          ),
-          child: Stack(
-            children: [
-              // decorative circles
-              Positioned(
-                right: -30,
-                top: -30,
-                child: Container(
-                  width: 160,
-                  height: 160,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.08),
+            child: Stack(
+              children: [
+                // decorative circles
+                Positioned(
+                  right: -30,
+                  top: -30,
+                  child: Container(
+                    width: 160,
+                    height: 160,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.08),
+                    ),
                   ),
                 ),
-              ),
-              Positioned(
-                right: 30,
-                bottom: -20,
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.07),
+                Positioned(
+                  right: 30,
+                  bottom: -20,
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.07),
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 40, 20, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-
-                    Obx(() => Text(
-                      'Hello ${ctrl.userName.value.isNotEmpty ? ctrl.userName.value : 'User'} 👋',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.2,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 40, 20, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Obx(
+                        () => Text(
+                          'Hello ${ctrl.userName.value.isNotEmpty ? ctrl.userName.value : 'User'} 👋',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
                       ),
-                    )),
-                    const SizedBox(height: 14),
-                    // ── Search Bar inside header ──
-                    const HomeSearchBar(),
-                  ],
+                      const SizedBox(height: 14),
+                      // ── Search Bar inside header ──
+                      const HomeSearchBar(),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           ),
         ),
       ),
@@ -228,11 +228,19 @@ class AppHomePage extends StatelessWidget {
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.local_fire_department_rounded, color: Color(0xFFFFD700), size: 16),
+                Icon(
+                  Icons.local_fire_department_rounded,
+                  color: Color(0xFFFFD700),
+                  size: 16,
+                ),
                 SizedBox(width: 4),
                 Text(
                   '3', // Placeholder for daily streak
-                  style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -244,40 +252,49 @@ class AppHomePage extends StatelessWidget {
           icon: const Icon(Icons.logout_rounded, color: Colors.white),
           onPressed: () => Get.find<AuthController>().signOut(),
         ),
-        Obx(() => Stack(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-              onPressed: () => Get.to(
-                () => NotificationOverlay(),
-                opaque: false,
-                transition: Transition.fadeIn,
-              ),
-            ),
-            if (notifCtrl.notifications.isNotEmpty)
-              Positioned(
-                right: 12,
-                top: 12,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 8,
-                    minHeight: 8,
-                  ),
+        Obx(
+          () => Stack(
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.notifications_outlined,
+                  color: Colors.white,
+                ),
+                onPressed: () => Get.to(
+                  () => NotificationOverlay(),
+                  opaque: false,
+                  transition: Transition.fadeIn,
                 ),
               ),
-          ],
-        )),
+              if (notifCtrl.notifications.isNotEmpty)
+                Positioned(
+                  right: 12,
+                  top: 12,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 8,
+                      minHeight: 8,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.only(right: 12),
           child: CircleAvatar(
             radius: 16,
             backgroundColor: Colors.white.withOpacity(0.25),
-            child: const Icon(Icons.person_outline, color: Colors.white, size: 18),
+            child: const Icon(
+              Icons.person_outline,
+              color: Colors.white,
+              size: 18,
+            ),
           ),
         ),
       ],
@@ -341,7 +358,11 @@ class AppHomePage extends StatelessWidget {
                           color: Colors.white.withOpacity(0.2),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 30),
+                        child: const Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 30,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -373,25 +394,39 @@ class AppHomePage extends StatelessWidget {
                               runSpacing: 8,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
                                     "$answered/$total Answered",
-                                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
                                     "$min min left",
-                                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -399,7 +434,11 @@ class AppHomePage extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 20),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ],
                   ),
                 ),
@@ -466,7 +505,11 @@ class AppHomePage extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: _green1.withOpacity(0.15)),
             boxShadow: [
-              BoxShadow(color: _green1.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, 3)),
+              BoxShadow(
+                color: _green1.withOpacity(0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
             ],
           ),
           child: const Center(
@@ -500,7 +543,11 @@ class AppHomePage extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: _green1.withOpacity(0.15)),
           boxShadow: [
-            BoxShadow(color: _green1.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, 3)),
+            BoxShadow(
+              color: _green1.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
           ],
         ),
         child: Column(
@@ -515,12 +562,20 @@ class AppHomePage extends StatelessWidget {
                     color: _green1.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.bar_chart_rounded, color: _green1, size: 18),
+                  child: const Icon(
+                    Icons.bar_chart_rounded,
+                    color: _green1,
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 const Text(
                   'Your Progress',
-                  style: TextStyle(color: _textDark, fontSize: 15, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: _textDark,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const Spacer(),
                 Builder(
@@ -544,7 +599,10 @@ class AppHomePage extends StatelessWidget {
                     }
 
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: badgeColor.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(20),
@@ -556,12 +614,16 @@ class AppHomePage extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text(
                             badgeName,
-                            style: TextStyle(color: badgeColor, fontSize: 11, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: badgeColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
                     );
-                  }
+                  },
                 ),
               ],
             ),
@@ -573,11 +635,26 @@ class AppHomePage extends StatelessWidget {
               children: [
                 _miniStat('Total', '$total', Icons.list_alt_rounded, _green1),
                 const SizedBox(width: 8),
-                _miniStat('Attended', '$attempted', Icons.check_circle_rounded, _green2),
+                _miniStat(
+                  'Attended',
+                  '$attempted',
+                  Icons.check_circle_rounded,
+                  _green2,
+                ),
                 const SizedBox(width: 8),
-                _miniStat('Remaining', '$remaining', Icons.hourglass_top_rounded, _gold),
+                _miniStat(
+                  'Remaining',
+                  '$remaining',
+                  Icons.hourglass_top_rounded,
+                  _gold,
+                ),
                 const SizedBox(width: 8),
-                _miniStat('Success', '${ratio.toStringAsFixed(1)}%', Icons.emoji_events_rounded, const Color(0xFFE74C3C)),
+                _miniStat(
+                  'Success',
+                  '${ratio.toStringAsFixed(1)}%',
+                  Icons.emoji_events_rounded,
+                  const Color(0xFFE74C3C),
+                ),
               ],
             ),
 
@@ -590,9 +667,18 @@ class AppHomePage extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Completion', style: TextStyle(color: _textMid, fontSize: 12)),
-                    Text('${(progress * 100).toStringAsFixed(0)}%',
-                        style: const TextStyle(color: _textDark, fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text(
+                      'Completion',
+                      style: TextStyle(color: _textMid, fontSize: 12),
+                    ),
+                    Text(
+                      '${(progress * 100).toStringAsFixed(0)}%',
+                      style: const TextStyle(
+                        color: _textDark,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -620,7 +706,11 @@ class AppHomePage extends StatelessWidget {
               ),
               child: Text(
                 suggestion,
-                style: const TextStyle(color: _textDark, fontSize: 12, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  color: _textDark,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
@@ -650,7 +740,11 @@ class AppHomePage extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   value,
-                  style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -672,7 +766,6 @@ class AppHomePage extends StatelessWidget {
     );
   }
 
-
   Widget _statCard({
     required IconData icon,
     required String label,
@@ -688,9 +781,10 @@ class AppHomePage extends StatelessWidget {
         border: Border.all(color: color.withOpacity(0.25)),
         boxShadow: [
           BoxShadow(
-              color: color.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2)),
+            color: color.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
@@ -699,17 +793,22 @@ class AppHomePage extends StatelessWidget {
           const SizedBox(height: 6),
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(value,
-                style: TextStyle(
-                    color: color,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold)),
+            child: Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           const SizedBox(height: 2),
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(label,
-                style: const TextStyle(color: _textMid, fontSize: 11)),
+            child: Text(
+              label,
+              style: const TextStyle(color: _textMid, fontSize: 11),
+            ),
           ),
         ],
       ),
@@ -721,7 +820,10 @@ class AppHomePage extends StatelessWidget {
     return Text(
       title,
       style: const TextStyle(
-          color: _textDark, fontSize: 17, fontWeight: FontWeight.bold),
+        color: _textDark,
+        fontSize: 17,
+        fontWeight: FontWeight.bold,
+      ),
     );
   }
 
@@ -791,9 +893,10 @@ class AppHomePage extends StatelessWidget {
                     border: Border.all(color: color.withOpacity(0.3)),
                     boxShadow: [
                       BoxShadow(
-                          color: color.withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2)),
+                        color: color.withOpacity(0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
                     ],
                   ),
                   child: Column(
@@ -803,9 +906,10 @@ class AppHomePage extends StatelessWidget {
                       Text(
                         a['label'] as String,
                         style: const TextStyle(
-                            color: _textDark,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600),
+                          color: _textDark,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
@@ -841,59 +945,80 @@ class AppHomePage extends StatelessWidget {
         final grad = cardGradients[i % cardGradients.length];
         final icon = UIUtils.getIconForName(name);
 
-        return GestureDetector(
-          onTap: () => ctrl.navigateAttemptCategory(item),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: grad,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: grad.first.withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+        return Obx(() {
+          final bool hasAccess = AuthController.instance.canAccess(item);
+
+          return GestureDetector(
+            onTap: () => ctrl.navigateAttemptCategory(item),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: grad,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ],
-            ),
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: grad.first.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-                  child: Icon(icon, color: Colors.white, size: 16),
-                ),
-                const Spacer(),
-                Expanded(
-                  child: Container(
-                    alignment: Alignment.bottomLeft,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                ],
+              ),
+              padding: const EdgeInsets.all(14),
+              child: Stack(
+                children: [
+                  Opacity(
+                    opacity: hasAccess ? 1.0 : 0.6,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(icon, color: Colors.white, size: 16),
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                        const Spacer(),
+                        Expanded(
+                          child: Container(
+                            alignment: Alignment.bottomLeft,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                name,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                  if (!hasAccess)
+                    const Positioned.fill(
+                      child: Center(
+                        child: Icon(
+                          Icons.lock_rounded,
+                          color: Colors.white70,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-        );
+          );
+        });
       },
     );
   }
@@ -903,8 +1028,8 @@ class AppHomePage extends StatelessWidget {
     final items = ctrl.examCategories;
     if (items.isEmpty) {
       return const Center(
-          child:
-              Text('No exam categories', style: TextStyle(color: _textMid)));
+        child: Text('No exam categories', style: TextStyle(color: _textMid)),
+      );
     }
 
     final gradients = UIUtils.getPremiumGradients();
@@ -925,64 +1050,84 @@ class AppHomePage extends StatelessWidget {
         final grad = gradients[i % gradients.length];
         final icon = UIUtils.getIconForName(name);
 
-        return GestureDetector(
-          onTap: () => ctrl.navigateExamCategory(item),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: grad,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: grad.first.withOpacity(0.30),
-                  blurRadius: 12,
-                  offset: const Offset(0, 5),
+        return Obx(() {
+          final bool hasAccess = AuthController.instance.canAccess(item);
+
+          return GestureDetector(
+            onTap: () => ctrl.navigateExamCategory(item),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: grad,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // icon in white circle
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, color: Colors.white, size: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.topLeft,
-                      child: Text(
-                        name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: grad.first.withOpacity(0.30),
+                    blurRadius: 12,
+                    offset: const Offset(0, 5),
                   ),
                 ],
               ),
+              child: Stack(
+                children: [
+                  Opacity(
+                    opacity: hasAccess ? 1.0 : 0.6,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // icon in white circle
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(icon, color: Colors.white, size: 16),
+                          ),
+                          const SizedBox(height: 8),
+                          Expanded(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.topLeft,
+                              child: Text(
+                                name,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (!hasAccess)
+                    const Positioned.fill(
+                      child: Center(
+                        child: Icon(
+                          Icons.lock_rounded,
+                          color: Colors.white70,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-        );
+          );
+        });
       },
     );
-
   }
 }
 
@@ -1004,9 +1149,7 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
       // Unfocus keyboard first
       FocusManager.instance.primaryFocus?.unfocus();
       Future.delayed(const Duration(milliseconds: 50), () {
-        Get.toNamed('/keywordSearch', arguments: {
-          "keyword": val.trim(),
-        });
+        Get.toNamed('/keywordSearch', arguments: {"keyword": val.trim()});
       });
     }
   }
@@ -1036,7 +1179,10 @@ class _HomeSearchBarState extends State<HomeSearchBar> {
         controller: _controller,
         textInputAction: TextInputAction.search,
         onSubmitted: _submit,
-        style: const TextStyle(color: Color(0xFF0D3320), fontWeight: FontWeight.w500),
+        style: const TextStyle(
+          color: Color(0xFF0D3320),
+          fontWeight: FontWeight.w500,
+        ),
         decoration: InputDecoration(
           hintText: "Search topics, keywords...",
           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),

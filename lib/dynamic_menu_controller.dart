@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'app_config.dart';
+import 'auth_controller.dart';
 import 'study_controller.dart';
 import 'test_controller.dart';
 import 'story_controller.dart';
@@ -74,6 +75,14 @@ class DynamicMenuController extends GetxController {
 
   /// TILE CLICK
   Future<void> onTileTap(dynamic item) async {
+    final auth = AuthController.instance;
+
+    // 🌟 CENTRALIZED ACCESS CHECK
+    if (!auth.canAccess(item)) {
+      auth.showPremiumAlert();
+      return;
+    }
+
     final title = getTitle(item);
 
     /// 1️⃣ CHILDREN → SUBMENU
@@ -171,18 +180,31 @@ class DynamicMenuController extends GetxController {
   }
 
   Future<void> handleExamNavigation(dynamic item, int examId) async {
+    final auth = AuthController.instance;
+
+    // 🌟 CENTRALIZED ACCESS CHECK
+    if (!auth.canAccess(item)) {
+      auth.showPremiumAlert();
+      return;
+    }
+
     final TestController testController = Get.find<TestController>();
     
     bool isLocked = item["locked"] == true || item["locked"] == "true" || item["locked"] == 1;
 
     if (isLocked) {
-      Get.snackbar(
-        "Exam Locked",
-        "This exam is currently locked",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.white,
-      );
-      return;
+      // Allow Trial/Paid users to bypass lock if that's the requirement
+      final auth = AuthController.instance;
+      final userType = auth.userType.value.toLowerCase();
+      if (userType != "trial" && userType != "paid") {
+        Get.snackbar(
+          "Exam Locked",
+          "This exam is currently locked",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.white,
+        );
+        return;
+      }
     }
 
     bool resume = await testController.hasProgressForExam(examId);
