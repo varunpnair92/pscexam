@@ -4,6 +4,12 @@ import 'package:psc_exam/app_home_page.dart';
 import 'package:psc_exam/exam_menu_page.dart';
 import 'package:psc_exam/study_page.dart';
 import 'package:psc_exam/profile_page.dart';
+import 'package:psc_exam/story_menu_page.dart';
+import 'package:psc_exam/auth_controller.dart';
+import 'package:psc_exam/home_controller.dart';
+import 'package:psc_exam/exam_menu_controller.dart';
+import 'package:psc_exam/story_menu_controller.dart';
+import 'package:psc_exam/study_controller.dart';
 
 class HomePage extends StatelessWidget {
   final index = 0.obs;
@@ -11,6 +17,7 @@ class HomePage extends StatelessWidget {
   final List<Widget> pages = [
     AppHomePage(),
     ExamMenuPage(),
+    StoryMenuPage(),
     StudyPage(),
     ProfilePage(),
   ];
@@ -20,6 +27,40 @@ class HomePage extends StatelessWidget {
     if (args != null && args['tab'] != null) {
       index.value = args['tab'] as int;
     }
+
+    // 🔄 REFRESH CONTENT ON TAB SWITCH (Makes it feel "Live")
+    ever(index, (_) {
+      _refreshActiveTab();
+    });
+
+    // 🔄 RE-FETCH ON USER PRIVILEGE CHANGE
+    ever(AuthController.instance.userType, (_) {
+      _refreshAllContent();
+    });
+  }
+
+  void _refreshActiveTab() {
+    switch (index.value) {
+      case 0:
+        if (Get.isRegistered<HomeController>()) Get.find<HomeController>().fetchHomeData();
+        break;
+      case 1:
+        if (Get.isRegistered<ExamMenuController>()) Get.find<ExamMenuController>().fetchTree();
+        break;
+      case 2:
+        if (Get.isRegistered<StoryMenuController>()) Get.find<StoryMenuController>().fetchTree();
+        break;
+      case 3:
+        if (Get.isRegistered<StudyController>()) Get.find<StudyController>().fetchTree();
+        break;
+    }
+  }
+
+  void _refreshAllContent() {
+    if (Get.isRegistered<HomeController>()) Get.find<HomeController>().fetchHomeData();
+    if (Get.isRegistered<ExamMenuController>()) Get.find<ExamMenuController>().fetchTree();
+    if (Get.isRegistered<StoryMenuController>()) Get.find<StoryMenuController>().fetchTree();
+    if (Get.isRegistered<StudyController>()) Get.find<StudyController>().fetchTree();
   }
 
   @override
@@ -40,6 +81,7 @@ class HomePage extends StatelessWidget {
     final List<Map<String, dynamic>> navItems = [
       {'label': 'Home', 'icon': Icons.home_outlined, 'activeIcon': Icons.home_rounded},
       {'label': 'Exam', 'icon': Icons.quiz_outlined, 'activeIcon': Icons.quiz_rounded},
+      {'label': 'Story', 'icon': Icons.auto_stories_outlined, 'activeIcon': Icons.auto_stories_rounded},
       {'label': 'Study', 'icon': Icons.school_outlined, 'activeIcon': Icons.school_rounded},
       {'label': 'Profile', 'icon': Icons.person_outline_rounded, 'activeIcon': Icons.person_rounded},
     ];

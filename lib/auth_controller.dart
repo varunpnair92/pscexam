@@ -24,6 +24,8 @@ class AuthController extends GetxController with WidgetsBindingObserver {
   var phone = "".obs; // 📱 ADD THIS
   var email = "".obs; // 📧 ADD THIS
   var courses = <int>[].obs; // 📚 ADD THIS
+  var selectedCourseId = 0.obs; // 🎯 ADD THIS
+  var selectedCourseName = "LDC".obs; // 🎯 ADD THIS
   var isLoggedIn = false.obs;
 
   @override
@@ -58,6 +60,8 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     phone.value = prefs.getString('phone') ?? ""; // 📱 ADD
     email.value = prefs.getString('email') ?? ""; // 📧 ADD
     courses.value = (prefs.getStringList('courses') ?? []).map((e) => int.parse(e)).toList(); // 📚 ADD
+    selectedCourseId.value = prefs.getInt('selectedCourseId') ?? 0; // 🎯 ADD
+    selectedCourseName.value = prefs.getString('selectedCourseName') ?? "LDC"; // 🎯 ADD
     isLoggedIn.value = prefs.getBool('isLoggedIn') ?? false;
 
     // 🔄 FRESH FETCH FROM SERVER (Each time app starts)
@@ -89,6 +93,13 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     await prefs.setString('email', emailVal);
     await prefs.setString('phone', phoneVal);
     await prefs.setStringList('courses', courseList.map((e) => e.toString()).toList());
+    
+    // 🎯 Use existing selection or default to first
+    if ((prefs.getInt('selectedCourseId') ?? 0) == 0 && courseList.isNotEmpty) {
+      await prefs.setInt('selectedCourseId', courseList.first);
+      selectedCourseId.value = courseList.first;
+    }
+
     await prefs.setBool('isLoggedIn', true);
     
     userId.value = id;
@@ -201,9 +212,21 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     userId.value = 1;
     userName.value = "";
     fullName.value = "";
-    userType.value = "free"; // 🔥 ADD THIS
+    userType.value = "free";
+    selectedCourseId.value = 0;
+    selectedCourseName.value = "LDC";
     
     Get.offAllNamed('/login');
+  }
+
+  // 🎯 UPDATE SELECTED COURSE
+  Future<void> updateSelectedCourse(int id, String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('selectedCourseId', id);
+    await prefs.setString('selectedCourseName', name);
+    
+    selectedCourseId.value = id;
+    selectedCourseName.value = name;
   }
 
   // 🌟 CENTRALIZED ACCESS CHECK

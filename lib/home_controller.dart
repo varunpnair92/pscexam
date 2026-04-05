@@ -10,10 +10,13 @@ import 'test_controller.dart';
 
 class HomeController extends GetxController {
   // ─── Node tree data ───────────────────────────────────────────
-  var examCategories = [].obs; // children of the EXAM node
-  var attemptCategories = [].obs; // children of the GUI1 node
-  var studyTopics = [].obs; // top-level children of the first study root
-  var boosterTopics = [].obs; // children of the BOOSTER node
+  var examCategories = [].obs;
+  var examSectionName = "Exam Categories".obs; // 🎯 Dynamic
+  var attemptCategories = [].obs;
+  var attemptSectionName = "Attempts".obs; // 🎯 Dynamic
+  var studyTopics = [].obs;
+  var boosterTopics = [].obs;
+  var boosterSectionName = "Booster".obs; // 🎯 Dynamic
   var isLoading = true.obs;
 
   // ─── Stats (from shared_prefs) ────────────────────────────────
@@ -38,6 +41,13 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     Get.put(NewsController());
+    
+    // 🔄 RE-FETCH ON COURSE CHANGE
+    ever(AuthController.instance.selectedCourseName, (_) {
+      fetchHomeData();
+      fetchUserStats();
+    });
+
     fetchHomeData();
     loadLocalStats();
     fetchUserStats();
@@ -50,40 +60,55 @@ class HomeController extends GetxController {
       if (res.statusCode == 200) {
         final List<dynamic> data = jsonDecode(res.body);
 
-        // Find EXAM node
-        final examNode = data.firstWhereOrNull((e) => e['name'] == 'EXAM');
-        if (examNode != null) examCategories.value = examNode['children'] ?? [];
+        // 🎯 1. FIND THE SELECTED COURSE NODE
+        final auth = AuthController.instance;
+        final String selectedCourse = auth.selectedCourseName.value;
+        final courseNode = findNodeByName(selectedCourse, data);
 
-        // Find GUI1 node
-        final gui1Node = data.firstWhereOrNull((e) => e['name'] == 'GUI1');
-        if (gui1Node != null)
-          attemptCategories.value = gui1Node['children'] ?? [];
+        if (courseNode != null && courseNode['children'] != null) {
+          final List<dynamic> children = courseNode['children'];
 
-        // Find BOOSTER node
-        final boosterNode = findNodeByName('booster', data);
-        if (boosterNode != null)
-          boosterTopics.value = boosterNode['children'] ?? [];
+          // 🎯 2. MAP CHILDREN TO CATEGORIES
+          // Reset previous
+          examCategories.clear();
+          attemptCategories.clear();
+          boosterTopics.clear();
+          studyTopics.clear();
 
-        // Find NEWS node ───── (Recursive check)
-        final newsNode = findNodeByName('NEWS', data);
-        if (newsNode != null && newsNode['url'] != null) {
-          String newsUrl = newsNode['url'].toString();
-          // Ensure it's a full URL
-          if (!newsUrl.startsWith('http')) {
-            newsUrl = "${AppConfig.baseUrl}$newsUrl";
+          for (var child in children) {
+            final String cName = (child['name'] ?? "").toString().toUpperCase();
+
+            if (cName.contains("EXAM")) {
+              examCategories.value = child['children'] ?? [];
+              examSectionName.value = child['name'] ?? "Exam Categories";
+            } else if (cName.contains("GUI1") || cName.contains("ATTEMPT")) {
+              attemptCategories.value = child['children'] ?? [];
+              attemptSectionName.value = child['name'] ?? "Attempts";
+            } else if (cName.contains("BOOSTER")) {
+              boosterTopics.value = child['children'] ?? [];
+              boosterSectionName.value = child['name'] ?? "Booster";
+            } else if (cName.contains("STUDY")) {
+              studyTopics.value = child['children'] ?? [];
+            } else if (cName.contains("NEWS") || cName.contains("NEWSFEEDER")) {
+              _handleNewsNode(child);
+            }
           }
-          // Ensure it has a trailing slash (common in your Django backend)
-          if (!newsUrl.endsWith('/')) {
-            newsUrl = "$newsUrl/";
-          }
+        } else {
+          // ─── FALLBACK TO GLOBAL SEARCH (PREVIOUS LOGIC) ───
+          final examNode = data.firstWhereOrNull((e) => e['name'] == 'EXAM');
+          if (examNode != null) examCategories.value = examNode['children'] ?? [];
 
-          Get.find<NewsController>().fetchNews(newsUrl);
-        }
+          final gui1Node = data.firstWhereOrNull((e) => e['name'] == 'GUI1');
+          if (gui1Node != null) attemptCategories.value = gui1Node['children'] ?? [];
 
-        // Use the first root node's top-level children as study topics
-        final studyRoot = data.firstWhereOrNull((e) => e['name'] != 'EXAM');
-        if (studyRoot != null) {
-          studyTopics.value = studyRoot['children'] ?? [];
+          final boosterNode = findNodeByName('booster', data);
+          if (boosterNode != null) boosterTopics.value = boosterNode['children'] ?? [];
+
+          final newsNode = findNodeByName('NEWS', data);
+          if (newsNode != null) _handleNewsNode(newsNode);
+
+          final studyRoot = data.firstWhereOrNull((e) => e['name'] != 'EXAM');
+          if (studyRoot != null) studyTopics.value = studyRoot['children'] ?? [];
         }
       }
     } catch (_) {
@@ -220,6 +245,19 @@ class HomeController extends GetxController {
 
   void navigateStudy(dynamic item) {
     Get.toNamed('/home', arguments: {'tab': 2});
+  }
+
+  void _handleNewsNode(dynamic newsNode) {
+    if (newsNode != null && newsNode['url'] != null) {
+      String newsUrl = newsNode['url'].toString();
+      if (!newsUrl.startsWith('http')) {
+        newsUrl = "${AppConfig.baseUrl}$newsUrl";
+      }
+      if (!newsUrl.endsWith('/')) {
+        newsUrl = "$newsUrl/";
+      }
+      Get.find<NewsController>().fetchNews(newsUrl);
+    }
   }
 
   Map<String, dynamic>? findExamByName(String name, [List? list]) {

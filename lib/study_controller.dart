@@ -47,6 +47,16 @@ class StudyController extends GetxController {
 
   @override
   void onInit() {
+    super.onInit();
+
+    // 🔄 RE-FETCH ON COURSE CHANGE
+    ever(AuthController.instance.selectedCourseName, (_) {
+      fetchTree();
+      stack.clear();
+      keys.clear();
+      showQuestions.value = false;
+    });
+
     final args = Get.arguments;
     if (args != null && (args["keywords"] != null || args["title"] != null)) {
       isDirectLoad.value = true;
@@ -54,7 +64,6 @@ class StudyController extends GetxController {
     } else {
       fetchTree();
     }
-    super.onInit();
   }
 
   void loadArguments(dynamic args) {
@@ -112,21 +121,39 @@ class StudyController extends GetxController {
 
     fullTree.value = data;
 
-    final ldcNode = data.firstWhere(
-      (e) => e["name"] == "LDC",
+    // 🎯 DYNAMIC ENTRY POINT
+    final auth = AuthController.instance;
+    final String selectedName = auth.selectedCourseName.value;
+    
+    var rootNode = data.firstWhere(
+      (e) => e["name"] == selectedName,
       orElse: () => null,
     );
 
-    if (ldcNode != null) {
-      final parentAccess =
-          ldcNode['access_type'] ??
-          ldcNode['accessType'] ??
-          ldcNode['access_level'] ??
-          ldcNode['accessLevel'] ??
-          ldcNode['access'];
-      final List<dynamic> children = List<dynamic>.from(
-        ldcNode["children"] ?? [],
+    // Fallback to LDC if selected course not found in tree
+    if (rootNode == null && selectedName != "LDC") {
+       rootNode = data.firstWhere(
+        (e) => e["name"] == "LDC",
+        orElse: () => null,
       );
+    }
+
+    if (rootNode != null) {
+      // 🎯 3. LOOK FOR "STUDY" CHILD FIRST
+      var studyEntry = (rootNode["children"] as List?)?.firstWhereOrNull(
+        (c) => (c["name"] ?? "").toString().toUpperCase().contains("STUDY"),
+      );
+
+      final List<dynamic> children = List<dynamic>.from(
+        (studyEntry ?? rootNode)["children"] ?? [],
+      );
+
+      final parentAccess =
+          (studyEntry ?? rootNode)['access_type'] ??
+          (studyEntry ?? rootNode)['accessType'] ??
+          (studyEntry ?? rootNode)['access_level'] ??
+          (studyEntry ?? rootNode)['accessLevel'] ??
+          (studyEntry ?? rootNode)['access'];
 
       // 🔥 Propagate access status to children if they don't have their own
       if (parentAccess != null) {
@@ -147,7 +174,7 @@ class StudyController extends GetxController {
     }
 
     keys.clear();
-    keys.add("LDC");
+    keys.add(rootNode?["name"] ?? "LDC");
   }
 
   /// TILE CLICK

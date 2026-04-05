@@ -78,29 +78,35 @@ class AppHomePage extends StatelessWidget {
                             const SizedBox(height: 16),
                             _examStatsSection(),
                             const SizedBox(height: 24),
-                            _boxedSection(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _sectionTitle('🚀 Attempts'),
-                                  const SizedBox(height: 16),
-                                  _attemptCategoriesGrid(),
-                                ],
+                            if (ctrl.attemptCategories.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 20),
+                                child: _boxedSection(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _sectionTitle(ctrl.attemptSectionName.value),
+                                      const SizedBox(height: 16),
+                                      _attemptCategoriesGrid(),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 20),
 
-                            _boxedSection(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _sectionTitle('📋 Exam Categories'),
-                                  const SizedBox(height: 16),
-                                  _examCategoriesGrid(),
-                                ],
+                            if (ctrl.examCategories.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 20),
+                                child: _boxedSection(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _sectionTitle(ctrl.examSectionName.value),
+                                      const SizedBox(height: 16),
+                                      _examCategoriesGrid(),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 20),
 
                             _boxedSection(child: _quickActions()),
                             const SizedBox(height: 32),

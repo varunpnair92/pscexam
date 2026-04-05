@@ -1,11 +1,43 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:psc_exam/auth_controller.dart';
 import 'package:psc_exam/completed_exam_controller.dart';
+import 'package:psc_exam/app_config.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
   final AuthController auth = Get.find<AuthController>();
   final ResultController resultCtrl = Get.put(ResultController());
+
+  List<dynamic> _allCourses = [];
+  bool _isLoadingCourses = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCourses();
+  }
+
+  Future<void> _fetchCourses() async {
+    try {
+      final res = await http.get(Uri.parse(AppConfig.courses));
+      if (res.statusCode == 200) {
+        setState(() {
+          _allCourses = jsonDecode(res.body);
+          _isLoadingCourses = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching courses: $e");
+      setState(() => _isLoadingCourses = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +151,43 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
 
+          // ─── Course Selection ───
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Your Active Course",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0D3320)),
+                      ),
+                      Obx(() => Container(
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: primaryGreen.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          auth.selectedCourseName.value,
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: primaryGreen),
+                        ),
+                      )),
+                    ],
+                  ),
+                  SizedBox(height: 15),
+                  if (_isLoadingCourses)
+                    Center(child: CircularProgressIndicator())
+                  else
+                    _buildCourseList(primaryGreen),
+                ],
+              ),
+            ),
+          ),
+
           // ─── Recent Exams List ───
           SliverToBoxAdapter(
             child: Padding(
@@ -181,6 +250,74 @@ class ProfilePage extends StatelessWidget {
           ),
           SliverToBoxAdapter(child: SizedBox(height: 50)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCourseList(Color primaryColor) {
+    // Filter courses based on user type
+    final role = auth.userType.value.toLowerCase().trim();
+    final isPremium = role == "paid" || role == "trial";
+    
+    final filtered = _allCourses.where((c) {
+      if (isPremium) return true;
+      final type = (c['course_type'] ?? 'free').toString().toLowerCase();
+      return type == 'free';
+    }).toList();
+
+    if (filtered.isEmpty) return Text("No alternative courses available.", style: TextStyle(color: Colors.grey));
+
+    return Container(
+      height: 100,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: filtered.length,
+        itemBuilder: (context, index) {
+          final course = filtered[index];
+          final id = course['id'];
+          final name = course['name'] ?? "Unknown";
+          
+          return Obx(() {
+            final isSelected = auth.selectedCourseId.value == id || auth.selectedCourseName.value == name;
+            
+            return GestureDetector(
+              onTap: () => auth.updateSelectedCourse(id, name),
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                width: 140,
+                margin: EdgeInsets.only(right: 12),
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isSelected ? primaryColor : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: isSelected ? primaryColor : Colors.grey.shade300, width: 2),
+                  boxShadow: isSelected ? [BoxShadow(color: primaryColor.withOpacity(0.3), blurRadius: 8, offset: Offset(0, 4))] : [],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      isSelected ? Icons.check_circle : Icons.book_outlined,
+                      color: isSelected ? Colors.white : primaryColor,
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      name,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          });
+        },
       ),
     );
   }

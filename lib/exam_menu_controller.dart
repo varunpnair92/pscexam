@@ -29,8 +29,16 @@ class ExamMenuController extends GetxController {
 
   @override
   void onInit() {
-    fetchTree();
     super.onInit();
+    
+    // 🔄 RE-FETCH ON COURSE CHANGE
+    ever(AuthController.instance.selectedCourseName, (_) {
+      fetchTree();
+      stack.clear();
+      keys.clear();
+    });
+
+    fetchTree();
   }
 
   /// LOAD TREE
@@ -40,19 +48,37 @@ class ExamMenuController extends GetxController {
     final data = jsonDecode(res.body);
 
     fullTree.value = data;
-
-    /// FIND EXAM NODE
-    final examNode = data.firstWhere(
-      (e) => e["name"] == "EXAM",
+    
+    // 🎯 1. FIND THE SELECTED COURSE NODE
+    final auth = AuthController.instance;
+    final String selectedCourse = auth.selectedCourseName.value;
+    
+    var courseNode = data.firstWhere(
+      (e) => e["name"] == selectedCourse,
       orElse: () => null,
     );
 
-    if (examNode != null) {
-      items.value = examNode["children"] ?? [];
+    // 🎯 2. LOOK FOR "EXAM" CHILD WITHIN COURSE
+    dynamic targetExamNode;
+    if (courseNode != null && courseNode["children"] != null) {
+      targetExamNode = (courseNode["children"] as List).firstWhereOrNull(
+        (c) => (c["name"] ?? "").toString().toUpperCase().contains("EXAM"),
+      );
     }
 
-    keys.clear();
-    keys.add("EXAM");
+    // 🎯 3. FALLBACK TO GLOBAL "EXAM"
+    if (targetExamNode == null) {
+      targetExamNode = data.firstWhere(
+        (e) => e["name"] == "EXAM",
+        orElse: () => null,
+      );
+    }
+
+    if (targetExamNode != null) {
+      items.value = targetExamNode["children"] ?? [];
+      keys.clear();
+      keys.add(targetExamNode["name"] ?? "Exams");
+    }
   }
 
   /// TILE CLICK
