@@ -25,6 +25,7 @@ import 'news_feeder_page.dart';
 import 'splash_page.dart';
 import 'exam_splash_page.dart'; // 🔥 Import ExamSplashPage
 import 'keyword_search_page.dart';
+import 'registration_page.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'push_notification_service.dart';
 
@@ -108,6 +109,9 @@ class MyApp extends StatelessWidget {
 
         // 🔍 KEYWORD SEARCH
         GetPage(name: '/keywordSearch', page: () => KeywordSearchPage()),
+
+        // 📝 REGISTRATION
+        GetPage(name: '/register', page: () => RegistrationPage()),
       ],
     );
   }

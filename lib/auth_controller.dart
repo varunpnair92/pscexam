@@ -54,12 +54,16 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     userType.value = prefs.getString('userType') ?? "free";
     isLoggedIn.value = prefs.getBool('isLoggedIn') ?? false;
 
-    // 🔄 FRESH FETCH FROM SERVER
+    // 🔄 FRESH FETCH FROM SERVER (Each time app starts)
     if (isLoggedIn.value && userName.value.isNotEmpty) {
       try {
-        await fetchUserDetails(userName.value);
+        bool stillExists = await fetchUserDetails(userName.value);
+        if (!stillExists) {
+          // User was deleted or not found, clear session
+          await signOut();
+        }
       } catch (_) {
-        // Silently fail, keep session
+        // Silently fail if network is down, keep existing session data
       }
     }
   }
@@ -110,41 +114,53 @@ class AuthController extends GetxController with WidgetsBindingObserver {
       }
 
       final email = userCredential.user?.email;
+      final displayName = userCredential.user?.displayName;
 
       if (email != null) {
-        await fetchUserDetails(email);
+        bool exists = await fetchUserDetails(email);
+        if (exists) {
+          Get.offAllNamed('/home');
+        } else {
+          // 🆕 Redirect to registration
+          Get.offAllNamed('/register', arguments: {
+            'email': email,
+            'name': displayName ?? "",
+          });
+        }
       }
-      
-      Get.offAllNamed('/home');
     } catch (e) {
       Get.snackbar(
         "Login Error", 
         "Failed to sign in. Please check your connection.",
         snackPosition: SnackPosition.BOTTOM,
       );
-      // print removed
     }
   }
 
   // 🌍 Fetch details from API
-  Future<void> fetchUserDetails(String email) async {
+  Future<bool> fetchUserDetails(String email) async {
     try {
       final res = await http.get(Uri.parse("${AppConfig.getUserDetails}$email/"));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
-        final String role = (data['userType'] ?? data['user_type'] ?? "free").toString().toLowerCase().trim();
+        final String role = (data['userType'] ?? data['user_type'] ?? "trial").toString().toLowerCase().trim(); // Default to trial
         await saveSession(
           data['userid'] ?? 1,
           data['username'] ?? email,
           data['fullname'] ?? data['username'] ?? "User",
           role,
         );
+        return true;
+      } else if (res.statusCode == 404) {
+        return false; // User needs registration
       } else {
-        // Default to userId 1 if not found on server
+        // Other errors, potential guest mode
         await saveSession(1, email, "Guest User", "free");
+        return true; 
       }
     } catch (_) {
       await saveSession(1, email, "Guest User", "free");
+      return true;
     }
   }
 

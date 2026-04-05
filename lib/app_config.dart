@@ -32,6 +32,14 @@ static const String userExamStats = "${baseUrl}user-exam-stats/";
 // ================= USER DETAILS =================
 static const String getUserDetails = "${baseUrl}get_userdetails_by_username/";
 
+// ================= COURSE MANAGEMENT =================
+static const String courses = "${baseUrl}courses/";
+static const String updateCourse = "${baseUrl}update-course/";
+
+// ================= QUALIFICATION MANAGEMENT =================
+static const String qualifications = "${baseUrl}qualifications/";
+static const String updateQualification = "${baseUrl}update-qualification/";
+
 // ================= NOTIFICATIONS =================
 static const String activeNotifications = "${baseUrl}active-notifications/";
 static const String saveFcmToken = "${baseUrl}save_fcm_token/";
