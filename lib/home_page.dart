@@ -30,62 +30,95 @@ class HomePage extends StatelessWidget {
             index: index.value,
             children: pages,
           ),
-          bottomNavigationBar: Container(
-            margin: const EdgeInsets.only(left: 12, right: 12, bottom: 15), 
-            height: 75,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(25),
-              child: BottomNavigationBar(
-                currentIndex: index.value,
-                onTap: (i) => index.value = i,
-                backgroundColor: Colors.white,
-                elevation: 0,
-                iconSize: 22,
-                selectedItemColor: const Color(0xFF1B8A4E),
-                unselectedItemColor: Colors.grey.shade400,
-                type: BottomNavigationBarType.fixed,
-                showSelectedLabels: true,
-                showUnselectedLabels: true,
-                selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10, height: 1.5),
-                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 10, height: 1.5),
-                items: [
-                  _buildNavItem(Icons.home_rounded, 'Home', 0),
-                  _buildNavItem(Icons.quiz_rounded, 'Exam', 1),
-                  _buildNavItem(Icons.school_rounded, 'Study', 2),
-                  _buildNavItem(Icons.person_rounded, 'Profile', 3),
-                ],
-              ),
-            ),
-          ),
+          bottomNavigationBar: _buildTelegramNavBar(),
         ));
   }
 
-  BottomNavigationBarItem _buildNavItem(IconData icon, String label, int i) {
+  Widget _buildTelegramNavBar() {
     const primaryGreen = Color(0xFF1B8A4E);
-    bool isActive = index.value == i;
+    const bgGreen = Color(0xFFE8F5E9); // Very light green for the pill
+    final List<Map<String, dynamic>> navItems = [
+      {'label': 'Home', 'icon': Icons.home_outlined, 'activeIcon': Icons.home_rounded},
+      {'label': 'Exam', 'icon': Icons.quiz_outlined, 'activeIcon': Icons.quiz_rounded},
+      {'label': 'Study', 'icon': Icons.school_outlined, 'activeIcon': Icons.school_rounded},
+      {'label': 'Profile', 'icon': Icons.person_outline_rounded, 'activeIcon': Icons.person_rounded},
+    ];
 
-    return BottomNavigationBarItem(
-      icon: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        decoration: BoxDecoration(
-          color: isActive ? primaryGreen.withOpacity(0.12) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Icon(icon),
+    return Container(
+      margin: const EdgeInsets.only(left: 12, right: 12, bottom: 15),
+      height: 70,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(35), // Pure pill/oval shape
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
-      label: label,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          double itemWidth = constraints.maxWidth / navItems.length;
+          
+          return Stack(
+            children: [
+              // 🧪 The Sliding Pill Background
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeInOutCubic,
+                left: (index.value * itemWidth) + (itemWidth * 0.15),
+                top: 8,
+                child: Container(
+                  width: itemWidth * 0.7,
+                  height: 38, // Pill height
+                  decoration: BoxDecoration(
+                    color: bgGreen,
+                    borderRadius: BorderRadius.circular(19),
+                  ),
+                ),
+              ),
+              
+              // 🏷️ The Icons and Labels
+              Row(
+                children: List.generate(navItems.length, (i) {
+                  bool isActive = index.value == i;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => index.value = i,
+                      behavior: HitTestBehavior.opaque,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AnimatedScale(
+                            scale: isActive ? 1.05 : 1.0,
+                            duration: const Duration(milliseconds: 200),
+                            child: Icon(
+                              isActive ? navItems[i]['activeIcon'] : navItems[i]['icon'],
+                              color: isActive ? primaryGreen : Colors.grey.shade500,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            navItems[i]['label'],
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
+                              color: isActive ? primaryGreen : Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
