@@ -255,65 +255,93 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildCourseList(Color primaryColor) {
-    // Filter courses based on user type
+    // 🌍 NO FILTERING: Show all courses so users know what they are missing!
     final role = auth.userType.value.toLowerCase().trim();
     final isPremium = role == "paid" || role == "trial";
     
-    final filtered = _allCourses.where((c) {
-      if (isPremium) return true;
-      final type = (c['course_type'] ?? 'free').toString().toLowerCase();
-      return type == 'free';
-    }).toList();
-
-    if (filtered.isEmpty) return Text("No alternative courses available.", style: TextStyle(color: Colors.grey));
+    if (_allCourses.isEmpty) return Text("No alternative courses available.", style: TextStyle(color: Colors.grey));
 
     return Container(
       height: 100,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: filtered.length,
+        itemCount: _allCourses.length,
         itemBuilder: (context, index) {
-          final course = filtered[index];
+          final course = _allCourses[index];
           final id = course['id'];
           final name = course['name'] ?? "Unknown";
+          final type = (course['course_type'] ?? 'free').toString().toLowerCase();
+          final isCoursePremium = type != 'free';
+          final hasAccess = isPremium || !isCoursePremium;
           
           return Obx(() {
             final isSelected = auth.selectedCourseId.value == id || auth.selectedCourseName.value == name;
             
             return GestureDetector(
-              onTap: () => auth.updateSelectedCourse(id, name),
-              child: AnimatedContainer(
-                duration: Duration(milliseconds: 300),
-                width: 140,
-                margin: EdgeInsets.only(right: 12),
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isSelected ? primaryColor : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: isSelected ? primaryColor : Colors.grey.shade300, width: 2),
-                  boxShadow: isSelected ? [BoxShadow(color: primaryColor.withOpacity(0.3), blurRadius: 8, offset: Offset(0, 4))] : [],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      isSelected ? Icons.check_circle : Icons.book_outlined,
-                      color: isSelected ? Colors.white : primaryColor,
+              onTap: () {
+                if (hasAccess) {
+                  auth.updateSelectedCourse(id, name);
+                } else {
+                  // 🔒 PREMIUM UNLOCK MESSAGE
+                  Get.snackbar(
+                    "Premium Unlock Required",
+                    "This course is available for Premium users. Unlock now to access!",
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.white,
+                    colorText: Colors.black,
+                    icon: Icon(Icons.lock_outline_rounded, color: Colors.amber),
+                  );
+                }
+              },
+              child: Stack(
+                children: [
+                  AnimatedContainer(
+                    duration: Duration(milliseconds: 300),
+                    width: 140,
+                    margin: EdgeInsets.only(right: 12),
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isSelected ? primaryColor : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: isSelected ? primaryColor : Colors.grey.shade300, width: 2),
+                      boxShadow: isSelected ? [BoxShadow(color: primaryColor.withOpacity(0.3), blurRadius: 8, offset: Offset(0, 4))] : [],
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      name,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: isSelected ? Colors.white : Colors.black87,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          isSelected ? Icons.check_circle : (hasAccess ? Icons.book_outlined : Icons.lock_outline_rounded),
+                          color: isSelected ? Colors.white : (hasAccess ? primaryColor : Colors.grey),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          name,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? Colors.white : (hasAccess ? Colors.black87 : Colors.grey),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!hasAccess)
+                    Positioned(
+                      top: 8,
+                      right: 20,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.amber,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text("PREMIUM", style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white)),
                       ),
                     ),
-                  ],
-                ),
+                ],
               ),
             );
           });
