@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:psc_exam/completed_exam_model.dart';
 import 'package:psc_exam/test_controller.dart';
-import 'result_controller.dart';
+import 'package:psc_exam/completed_exam_controller.dart';
 
 class ResultPage extends StatelessWidget {
   final ResultController ctrl;

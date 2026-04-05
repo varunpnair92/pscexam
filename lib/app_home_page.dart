@@ -248,10 +248,6 @@ class AppHomePage extends StatelessWidget {
         ],
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.logout_rounded, color: Colors.white),
-          onPressed: () => Get.find<AuthController>().signOut(),
-        ),
         Obx(
           () => Stack(
             children: [
@@ -283,18 +279,6 @@ class AppHomePage extends StatelessWidget {
                   ),
                 ),
             ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.white.withOpacity(0.25),
-            child: const Icon(
-              Icons.person_outline,
-              color: Colors.white,
-              size: 18,
-            ),
           ),
         ),
       ],

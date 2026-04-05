@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'result_controller.dart';
+import 'package:psc_exam/completed_exam_controller.dart';
 import 'test_controller.dart';
 
 class ResultPage extends StatelessWidget {

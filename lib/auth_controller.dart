@@ -20,7 +20,10 @@ class AuthController extends GetxController with WidgetsBindingObserver {
   var userId = 1.obs;
   var userName = "".obs;
   var fullName = "".obs;
-  var userType = "free".obs; // 🔥 ADD THIS
+  var userType = "free".obs; 
+  var phone = "".obs; // 📱 ADD THIS
+  var email = "".obs; // 📧 ADD THIS
+  var courses = <int>[].obs; // 📚 ADD THIS
   var isLoggedIn = false.obs;
 
   @override
@@ -52,6 +55,9 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     userName.value = prefs.getString('username') ?? "";
     fullName.value = prefs.getString('fullname') ?? "";
     userType.value = prefs.getString('userType') ?? "free";
+    phone.value = prefs.getString('phone') ?? ""; // 📱 ADD
+    email.value = prefs.getString('email') ?? ""; // 📧 ADD
+    courses.value = (prefs.getStringList('courses') ?? []).map((e) => int.parse(e)).toList(); // 📚 ADD
     isLoggedIn.value = prefs.getBool('isLoggedIn') ?? false;
 
     // 🔄 FRESH FETCH FROM SERVER (Each time app starts)
@@ -68,22 +74,33 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  // 💾 Save to SharedPreferences
-  Future<void> saveSession(int id, String user, String full, String type) async { // 🔥 ADD type
+  // 💾 Save to SharedPreferences (Legacy/Compact)
+  Future<void> saveSession(int id, String user, String full, String type) async {
+    return saveSessionExtra(id, user, full, type, user, "", []);
+  }
+
+  // 🚀 Save to SharedPreferences (Enhanced)
+  Future<void> saveSessionExtra(int id, String user, String full, String type, String emailVal, String phoneVal, List<int> courseList) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('userid', id);
     await prefs.setString('username', user);
     await prefs.setString('fullname', full);
-    await prefs.setString('userType', type); // 🔥 ADD THIS
+    await prefs.setString('userType', type);
+    await prefs.setString('email', emailVal);
+    await prefs.setString('phone', phoneVal);
+    await prefs.setStringList('courses', courseList.map((e) => e.toString()).toList());
     await prefs.setBool('isLoggedIn', true);
     
     userId.value = id;
     userName.value = user;
     fullName.value = full;
-    userType.value = type; // 🔥 ADD THIS
+    userType.value = type;
+    email.value = emailVal;
+    phone.value = phoneVal;
+    courses.value = courseList;
     isLoggedIn.value = true;
 
-    // 🔔 Trigger FCM token registration now that we are logged in
+    // 🔔 Trigger FCM token registration
     PushNotificationService.initialize();
   }
 
@@ -144,11 +161,19 @@ class AuthController extends GetxController with WidgetsBindingObserver {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         final String role = (data['userType'] ?? data['user_type'] ?? "trial").toString().toLowerCase().trim(); // Default to trial
-        await saveSession(
+        
+        final profile = data['profile'] ?? {};
+        final String userPhone = profile['phone_number'] ?? "";
+        final List<int> userCourses = List<int>.from(profile['courses'] ?? []);
+
+        await saveSessionExtra(
           data['userid'] ?? 1,
           data['username'] ?? email,
           data['fullname'] ?? data['username'] ?? "User",
           role,
+          email, // Use username as email
+          userPhone,
+          userCourses,
         );
         return true;
       } else if (res.statusCode == 404) {
