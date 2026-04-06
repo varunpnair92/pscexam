@@ -13,6 +13,8 @@ import 'package:psc_exam/study_controller.dart';
 
 class HomePage extends StatelessWidget {
   final index = 0.obs;
+  // 🎯 Track last loaded course for each tab to prevent redundant reloads
+  final Map<int, int> _lastLoadedCourseForTab = {};
 
   final List<Widget> pages = [
     AppHomePage(),
@@ -35,11 +37,28 @@ class HomePage extends StatelessWidget {
 
     // 🔄 RE-FETCH ON USER PRIVILEGE CHANGE
     ever(AuthController.instance.userType, (_) {
-      _refreshAllContent();
+      _lastLoadedCourseForTab.clear();
+      _refreshActiveTab(force: true);
+    });
+
+    // 🎯 RE-FETCH ON COURSE CHANGE
+    ever(AuthController.instance.selectedCourseId, (_) {
+      _lastLoadedCourseForTab.clear();
+      _refreshActiveTab(force: true);
     });
   }
 
-  void _refreshActiveTab() {
+  void _refreshActiveTab({bool force = false}) {
+    final int currentCourseId = AuthController.instance.selectedCourseId.value;
+
+    // 🛑 If not forced, skip refresh if we already loaded this course for this tab
+    if (!force && _lastLoadedCourseForTab[index.value] == currentCourseId) {
+      return;
+    }
+
+    // 🔄 Mark as loaded for this course
+    _lastLoadedCourseForTab[index.value] = currentCourseId;
+
     switch (index.value) {
       case 0:
         if (Get.isRegistered<HomeController>()) Get.find<HomeController>().fetchHomeData();
@@ -54,13 +73,6 @@ class HomePage extends StatelessWidget {
         if (Get.isRegistered<StudyController>()) Get.find<StudyController>().fetchTree();
         break;
     }
-  }
-
-  void _refreshAllContent() {
-    if (Get.isRegistered<HomeController>()) Get.find<HomeController>().fetchHomeData();
-    if (Get.isRegistered<ExamMenuController>()) Get.find<ExamMenuController>().fetchTree();
-    if (Get.isRegistered<StoryMenuController>()) Get.find<StoryMenuController>().fetchTree();
-    if (Get.isRegistered<StudyController>()) Get.find<StudyController>().fetchTree();
   }
 
   @override
