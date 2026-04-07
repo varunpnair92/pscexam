@@ -7,6 +7,7 @@ import 'app_config.dart';
 import 'study_controller.dart';
 import 'news_controller.dart';
 import 'test_controller.dart';
+import 'exam_model.dart';
 
 class HomeController extends GetxController {
   // ─── Node tree data ───────────────────────────────────────────
@@ -18,6 +19,8 @@ class HomeController extends GetxController {
   var boosterTopics = [].obs;
   var boosterSectionName = "Booster".obs; // 🎯 Dynamic
   var isLoading = true.obs;
+
+  var liveExamsNode = {}.obs;
 
   // ─── Stats (from shared_prefs) ────────────────────────────────
   var totalAttempts = 0.obs;
@@ -59,6 +62,14 @@ class HomeController extends GetxController {
       final res = await http.get(Uri.parse(AppConfig.nodeall));
       if (res.statusCode == 200) {
         final List<dynamic> data = jsonDecode(res.body);
+
+        // 🎯 SAVE LIVE EXAMS NODE IF PRESENT
+        final foundLiveExamNode = findNodeByName('LIVEEXAM', data) ?? findNodeByName('LIVE EXAMS', data);
+        if (foundLiveExamNode != null) {
+          liveExamsNode.value = foundLiveExamNode;
+        } else {
+          liveExamsNode.value = {};
+        }
 
         // 🎯 1. FIND THE SELECTED COURSE NODE
         final auth = AuthController.instance;
@@ -116,6 +127,8 @@ class HomeController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  // Removed fetchLiveExams since node handles it dynamically!
 
   Future<void> loadLocalStats() async {
     final prefs = await SharedPreferences.getInstance();
@@ -192,6 +205,11 @@ class HomeController extends GetxController {
       return;
     }
 
+    if (nav == 'examstorypage' && url.isNotEmpty) {
+      Get.toNamed('/examstorypage', arguments: {'endpoint': url});
+      return;
+    }
+
     if (url.isNotEmpty) {
       Get.toNamed(
         '/dynamicMenu',
@@ -237,6 +255,8 @@ class HomeController extends GetxController {
     final url = item['url'] ?? '';
     if (nav == 'dynamicExamList' && url.isNotEmpty) {
       Get.toNamed('/dynamicExamList', arguments: {'endpoint': url});
+    } else if (nav == 'examstorypage' && url.isNotEmpty) {
+      Get.toNamed('/examstorypage', arguments: {'endpoint': url});
     } else if (item['children'] != null &&
         (item['children'] as List).isNotEmpty) {
       Get.toNamed('/home', arguments: {'tab': 1});

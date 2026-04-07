@@ -85,6 +85,15 @@ class DynamicMenuController extends GetxController {
 
     final title = getTitle(item);
 
+    final String navStr = item["navigation"]?.toString().trim() ?? '';
+    final String urlStr = item["url"]?.toString().trim() ?? '';
+
+    /// 0️⃣ EXPLICIT TERMINAL NAVIGATION FOR EXAM LISTS/STORIES
+    if ((navStr == 'dynamicExamList' || navStr == 'examstorypage') && urlStr.isNotEmpty) {
+      Get.toNamed('/$navStr', arguments: {'endpoint': urlStr});
+      return;
+    }
+
     /// 1️⃣ CHILDREN → SUBMENU
     if (item["children"] != null && item["children"].isNotEmpty) {
       stack.add(items.toList());

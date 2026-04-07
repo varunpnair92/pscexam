@@ -12,6 +12,8 @@ import 'news_ticker_widget.dart';
 import 'booster_story_widget.dart';
 import 'psc_loading_logo.dart'; // 🔥 Import Logo
 import 'ui_utils.dart';
+import 'exam_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppHomePage extends StatelessWidget {
   final HomeController ctrl = Get.put(HomeController());

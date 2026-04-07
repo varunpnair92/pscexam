@@ -35,7 +35,7 @@ class _BoosterStoryWidgetState extends State<BoosterStoryWidget>
   Widget build(BuildContext context) {
     return Obx(() {
       final items = ctrl.boosterTopics;
-      if (items.isEmpty) return const SizedBox.shrink();
+      if (items.isEmpty && ctrl.liveExamsNode.isEmpty) return const SizedBox.shrink();
 
       return Container(
         height: 125,
@@ -59,9 +59,85 @@ class _BoosterStoryWidgetState extends State<BoosterStoryWidget>
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
-          itemCount: items.length,
+          itemCount: items.length + (ctrl.liveExamsNode.isNotEmpty ? 1 : 0),
           itemBuilder: (context, index) {
-            final item = items[index];
+            if (ctrl.liveExamsNode.isNotEmpty && index == 0) {
+              return GestureDetector(
+                onTap: () => ctrl.navigateAttemptCategory(ctrl.liveExamsNode.value),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          AnimatedBuilder(
+                            animation: _animationController,
+                            builder: (context, child) {
+                              return Transform.rotate(
+                                angle: _animationController.value * 2 * math.pi,
+                                child: Container(
+                                  width: 58,
+                                  height: 58,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: SweepGradient(
+                                      colors: [
+                                        Color(0xFFE1306C),
+                                        Color(0xFFF77737),
+                                        Color(0xFFFCAF45),
+                                        Color(0xFFE1306C),
+                                      ],
+                                      stops: [0.0, 0.33, 0.66, 1.0],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 2,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.stream_rounded,
+                              size: 24,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const SizedBox(
+                        width: 66,
+                        child: Text(
+                          "Live Exams",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            final actualIndex = ctrl.liveExamsNode.isNotEmpty ? index - 1 : index;
+            final item = items[actualIndex];
             final name = item['name'] ?? '';
             final icon = UIUtils.getIconForName(name);
 
