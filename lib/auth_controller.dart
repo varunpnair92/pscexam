@@ -118,10 +118,6 @@ class AuthController extends GetxController with WidgetsBindingObserver {
   // 🔥 Google Login
   Future<void> signInWithGoogle() async {
     try {
-      if (!kIsWeb) {
-        Get.dialog(const Center(child: CircularProgressIndicator(color: Color(0xFF1B8A4E))), barrierDismissible: false);
-      }
-
       UserCredential userCredential;
 
       if (kIsWeb) {
@@ -136,9 +132,10 @@ class AuthController extends GetxController with WidgetsBindingObserver {
         ).signIn();
         
         if (googleUser == null) {
-          if (Get.isDialogOpen ?? false) Get.back();
           return;
         }
+
+        Get.dialog(const Center(child: CircularProgressIndicator(color: Color(0xFF1B8A4E))), barrierDismissible: false);
 
         final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
         final credential = GoogleAuthProvider.credential(
