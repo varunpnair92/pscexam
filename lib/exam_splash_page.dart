@@ -85,6 +85,18 @@ class ExamSplashPage extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (exam.description != null && exam.description!.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    exam.description!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey.shade700,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 48),
 
                 // ─── EXAM DETAILS CARD ───
@@ -118,7 +130,9 @@ class ExamSplashPage extends StatelessWidget {
 
                 // ─── INSTRUCTIONS ───
                 Text(
-                  "Read each question carefully before choosing your answer. You can review your answers at the end of the session.",
+                  (exam.instructions != null && exam.instructions!.isNotEmpty) 
+                      ? exam.instructions! 
+                      : "Read each question carefully before choosing your answer. You can review your answers at the end of the session.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.grey.shade500,

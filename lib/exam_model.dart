@@ -5,6 +5,8 @@ class Exam {
   final bool locked;
   final int totalQuestions;
   final String accessType; // 🔥 ADD THIS
+  final String? instructions;
+  final String? description;
 
   Exam({
     required this.id,
@@ -13,6 +15,8 @@ class Exam {
     required this.locked,
     required this.totalQuestions,
     required this.accessType, // 🔥 ADD THIS
+    this.instructions,
+    this.description,
   });
 
   factory Exam.fromJson(Map<String, dynamic> json) {
@@ -29,6 +33,8 @@ class Exam {
       locked: json['locked'] == true || json['locked'] == "true" || json['locked'] == 1,
       totalQuestions: total,
       accessType: (json['access_type'] ?? json['accessType'] ?? "free").toString().toLowerCase(),
+      instructions: json['instructions'],
+      description: json['description'],
     );
   }
 }
