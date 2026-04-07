@@ -41,8 +41,11 @@ static const String qualifications = "${baseUrl}qualifications/";
 static const String updateQualification = "${baseUrl}update-qualification/";
 
 // ================= NOTIFICATIONS =================
-static const String activeNotifications = "${baseUrl}active-notifications/";
-static const String saveFcmToken = "${baseUrl}save_fcm_token/";
+  static const String activeNotifications = "${baseUrl}active-notifications/";
+  static const String saveFcmToken = "${baseUrl}save_fcm_token/";
+
+  // ================= ADVERTISEMENTS =================
+  static const String activeAds = "${baseUrl}active-advertisements/";
 
 // ================= CHARACTERISTICS =================
   static const String characteristicByKeyword = "${baseUrl}qbkeywordcharacteristic/";

@@ -31,6 +31,7 @@ import 'keyword_search_page.dart';
 import 'registration_page.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'push_notification_service.dart';
+import 'ad_controller.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -53,6 +54,7 @@ void main() async {
 
   Get.put(TestController(), permanent: true);
   Get.put(NewsController(), permanent: true);
+  Get.put(AdController(), permanent: true);
 
   runApp(MyApp());
 }
