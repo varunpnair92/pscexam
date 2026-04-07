@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'app_config.dart';
 import 'push_notification_service.dart';
+import 'ad_controller.dart';
 
 class AuthController extends GetxController with WidgetsBindingObserver {
   static AuthController get instance => Get.find();
@@ -195,6 +196,11 @@ class AuthController extends GetxController with WidgetsBindingObserver {
           userPhone,
           userCourses,
         );
+        // 🚀 Trigger Ad Popup after successful login
+        if (Get.isRegistered<AdController>()) {
+          Get.find<AdController>().fetchAndShowAd(force: true);
+        }
+        
         return true;
       } else if (res.statusCode == 404) {
         return false; // User needs registration

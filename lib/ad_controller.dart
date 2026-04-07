@@ -16,7 +16,7 @@ class AdController extends GetxController {
     fetchAndShowAd();
   }
 
-  Future<void> fetchAndShowAd() async {
+  Future<void> fetchAndShowAd({bool force = false}) async {
     try {
       final res = await http.get(Uri.parse(AppConfig.activeAds));
       if (res.statusCode == 200) {
@@ -26,7 +26,7 @@ class AdController extends GetxController {
             .where((a) => a.active && a.category == 'popup')
             .toList();
 
-        if (ads.isNotEmpty && !_shownThisSession) {
+        if (ads.isNotEmpty && (force || !_shownThisSession)) {
           _shownThisSession = true;
           // Small delay to let the home screen render first
           await Future.delayed(const Duration(milliseconds: 800));
