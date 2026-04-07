@@ -23,6 +23,8 @@ import 'global_analysis_page.dart';
 import 'characteristic_page.dart';
 import 'news_feeder_page.dart';
 import 'splash_page.dart';
+import 'app_theme.dart';
+import 'theme_controller.dart';
 import 'exam_splash_page.dart'; // 🔥 Import ExamSplashPage
 import 'exam_story_page.dart';
 import 'keyword_search_page.dart';
@@ -44,6 +46,8 @@ void main() async {
   Get.put(AuthController());
   await AuthController.instance.loadSession(); // Wait for local data (fast)
   
+  Get.put(ThemeController()); // 🔥 Initialize Theme
+  
   // Initialize Push notifications in the background to prevent startup ANR
   PushNotificationService.initialize();
 
@@ -60,6 +64,10 @@ class MyApp extends StatelessWidget {
 
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
+
+      // 🔥 Support theming
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
 
       initialRoute: '/splash',
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:psc_exam/auth_controller.dart';
+import 'theme_controller.dart';
 import 'home_controller.dart';
 import 'test_controller.dart';
 import 'image_slider_controller.dart';
@@ -24,28 +25,30 @@ class AppHomePage extends StatelessWidget {
   AppHomePage({super.key});
 
   // ─── Green + White Palette ────────────────────────────────────
-  static const _bg = Color(0xFFF4FBF4); // off-white background
+  static const _bg = Color(0xFFF4FBF4); 
   static const _surface = Colors.white;
-  static const _green1 = Color(0xFF1B8A4E); // deep green
-  static const _green2 = Color(0xFF27AE60); // mid green
-  static const _green3 = Color(0xFF52C97A); // light green
-  static const _textDark = Color(0xFF0D3320); // dark green text
-  static const _textMid = Color(0xFF4D7A5E); // muted green text
-  static const _gold = Color(0xFFF5A623); // accent gold
+  static const _textDark = Color(0xFF0D3320);
+  static const _textMid = Color(0xFF4D7A5E);
+  static const _green1 = Color(0xFF1B8A4E); 
+  static const _green2 = Color(0xFF27AE60); 
+  static const _green3 = Color(0xFF52C97A); 
+  static const _gold = Color(0xFFF5A623); 
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Container(
-              margin: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: _bg,
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: _green1.withOpacity(0.4), width: 2),
+    return Obx(() {
+      final isDark = ThemeController.instance.isDarkMode.value;
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Container(
+                margin: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E1E) : _bg,
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: _green1.withOpacity(isDark ? 0.2 : 0.4), width: 2),
                 boxShadow: [
                   BoxShadow(
                     color: _green1.withOpacity(0.08),
@@ -127,6 +130,7 @@ class AppHomePage extends StatelessWidget {
         ),
       ),
     );
+    });
   }
 
   // ─── SliverAppBar ─────────────────────────────────────────────
@@ -256,6 +260,17 @@ class AppHomePage extends StatelessWidget {
         ],
       ),
       actions: [
+        Obx(() => IconButton(
+              icon: Icon(
+                ThemeController.instance.isDarkMode.value
+                    ? Icons.brightness_2_rounded
+                    : Icons.brightness_5_rounded,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                ThemeController.instance.toggleTheme();
+              },
+            )),
         Obx(
           () => Stack(
             children: [
@@ -490,21 +505,21 @@ class AppHomePage extends StatelessWidget {
   Widget _examStatsSection() {
     return Obx(() {
       if (ctrl.statsLoading.value) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: _surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _green1.withOpacity(0.15)),
-            boxShadow: [
-              BoxShadow(
-                color: _green1.withOpacity(0.06),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: const Center(
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(Get.context!).cardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _green1.withOpacity(0.15)),
+          boxShadow: [
+            BoxShadow(
+              color: _green1.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: const Center(
             child: SizedBox(height: 100, child: PSCLoadingLogo(size: 50)),
           ),
         );
@@ -531,7 +546,7 @@ class AppHomePage extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: _surface,
+          color: Theme.of(Get.context!).cardColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: _green1.withOpacity(0.15)),
           boxShadow: [
@@ -561,13 +576,9 @@ class AppHomePage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Text(
+                Text(
                   'Your Progress',
-                  style: TextStyle(
-                    color: _textDark,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(Get.context!).textTheme.titleMedium?.copyWith(fontSize: 15),
                 ),
                 const Spacer(),
                 Builder(
@@ -661,15 +672,11 @@ class AppHomePage extends StatelessWidget {
                   children: [
                     Text(
                       'Completion',
-                      style: TextStyle(color: _textMid, fontSize: 12),
+                      style: Theme.of(Get.context!).textTheme.bodyMedium?.copyWith(fontSize: 12),
                     ),
                     Text(
                       '${(progress * 100).toStringAsFixed(0)}%',
-                      style: const TextStyle(
-                        color: _textDark,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(Get.context!).textTheme.titleMedium?.copyWith(fontSize: 12),
                     ),
                   ],
                 ),
@@ -698,11 +705,7 @@ class AppHomePage extends StatelessWidget {
               ),
               child: Text(
                 suggestion,
-                style: const TextStyle(
-                  color: _textDark,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: Theme.of(Get.context!).textTheme.titleMedium?.copyWith(fontSize: 12),
               ),
             ),
           ],

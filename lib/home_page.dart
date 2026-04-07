@@ -10,6 +10,7 @@ import 'package:psc_exam/home_controller.dart';
 import 'package:psc_exam/exam_menu_controller.dart';
 import 'package:psc_exam/story_menu_controller.dart';
 import 'package:psc_exam/study_controller.dart';
+import 'package:psc_exam/theme_controller.dart';
 
 class HomePage extends StatelessWidget {
   final index = 0.obs;
@@ -88,8 +89,12 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildTelegramNavBar() {
+    final bool isDark = ThemeController.instance.isDarkMode.value;
     const primaryGreen = Color(0xFF1B8A4E);
-    const bgGreen = Color(0xFFE8F5E9); // Very light green for the pill
+    final bgGreen = isDark ? const Color(0xFF1E3A2F) : const Color(0xFFE8F5E9);
+    final bgColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final shadowColor = isDark ? Colors.transparent : Colors.black.withOpacity(0.08);
+    final inactiveColor = isDark ? Colors.white54 : Colors.grey.shade500;
     final List<Map<String, dynamic>> navItems = [
       {'label': 'Home', 'icon': Icons.home_outlined, 'activeIcon': Icons.home_rounded},
       {'label': 'Exam', 'icon': Icons.quiz_outlined, 'activeIcon': Icons.quiz_rounded},
@@ -102,11 +107,11 @@ class HomePage extends StatelessWidget {
       margin: const EdgeInsets.only(left: 12, right: 12, bottom: 15),
       height: 70,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: bgColor,
         borderRadius: BorderRadius.circular(35), // Pure pill/oval shape
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: shadowColor,
             blurRadius: 20,
             offset: const Offset(0, 5),
           ),
@@ -150,7 +155,7 @@ class HomePage extends StatelessWidget {
                             duration: const Duration(milliseconds: 200),
                             child: Icon(
                               isActive ? navItems[i]['activeIcon'] : navItems[i]['icon'],
-                              color: isActive ? primaryGreen : Colors.grey.shade500,
+                              color: isActive ? primaryGreen : inactiveColor,
                               size: 24,
                             ),
                           ),
@@ -160,7 +165,7 @@ class HomePage extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
-                              color: isActive ? primaryGreen : Colors.grey.shade500,
+                              color: isActive ? primaryGreen : inactiveColor,
                             ),
                           ),
                         ],
