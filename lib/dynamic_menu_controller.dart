@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'app_config.dart';
@@ -7,6 +8,7 @@ import 'auth_controller.dart';
 import 'study_controller.dart';
 import 'test_controller.dart';
 import 'story_controller.dart';
+import 'exam_model.dart';
 
 class DynamicMenuController extends GetxController {
   var items = [].obs;
@@ -150,6 +152,19 @@ class DynamicMenuController extends GetxController {
         Get.delete<StoryController>();
       }
 
+      if (nav == '/examSplash') {
+        int examId = 0;
+        if (keywords.isNotEmpty) {
+          examId = int.tryParse(keywords.first) ?? 0;
+        }
+        if (examId == 0) {
+          examId = routeArgs["id"] ?? 0;
+        }
+        
+        _fetchAndNavigateSplash(examId, item, title);
+        return;
+      }
+
       Get.toNamed(nav, arguments: routeArgs);
       return;
     }
@@ -253,6 +268,34 @@ class DynamicMenuController extends GetxController {
       }
     } else {
       Get.back();
+    }
+  }
+
+  Future<void> _fetchAndNavigateSplash(int examId, dynamic item, String fallbackTitle) async {
+    Get.dialog(Center(child: CircularProgressIndicator(color: const Color(0xFF1B8A4E))), barrierDismissible: false);
+    try {
+      final res = await http.get(Uri.parse('${AppConfig.testExam}$examId/'));
+      if (res.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(res.body);
+        final exam = Exam(
+          id: examId,
+          category: data["category"]?.toString() ?? item["category"]?.toString() ?? "Exam",
+          specialization: data["specialization"]?.toString() ?? fallbackTitle,
+          locked: item["locked"] == true || item["locked"] == "true" || item["locked"] == 1,
+          totalQuestions: data["questions"]?.length ?? int.tryParse(item['total_questions']?.toString() ?? "50") ?? 50,
+          accessType: item["access_type"]?.toString() ?? "free",
+          instructions: data["instructions"]?.toString(),
+          description: data["description"]?.toString(),
+        );
+        Get.back(); // Remove loading dialog
+        Get.toNamed('/examSplash', arguments: {'exam': exam});
+      } else {
+        Get.back();
+        Get.snackbar("Notice", "Exam content not available");
+      }
+    } catch (_) {
+      Get.back();
+      Get.snackbar("Error", "Network error loading exam");
     }
   }
 }

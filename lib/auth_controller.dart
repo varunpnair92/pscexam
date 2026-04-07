@@ -118,19 +118,27 @@ class AuthController extends GetxController with WidgetsBindingObserver {
   // 🔥 Google Login
   Future<void> signInWithGoogle() async {
     try {
+      if (!kIsWeb) {
+        Get.dialog(const Center(child: CircularProgressIndicator(color: Color(0xFF1B8A4E))), barrierDismissible: false);
+      }
+
       UserCredential userCredential;
 
       if (kIsWeb) {
         // 🌐 Web specific: Use signInWithPopup for better reliability
         GoogleAuthProvider googleProvider = GoogleAuthProvider();
         userCredential = await _auth.signInWithPopup(googleProvider);
+        Get.dialog(const Center(child: CircularProgressIndicator(color: Color(0xFF1B8A4E))), barrierDismissible: false);
       } else {
         // 📱 Mobile specific: Use google_sign_in plugin
         final GoogleSignInAccount? googleUser = await GoogleSignIn(
           clientId: '613180327334-cfu7uttjotlftkv2o206jb4j1i1o8djp.apps.googleusercontent.com',
         ).signIn();
         
-        if (googleUser == null) return;
+        if (googleUser == null) {
+          if (Get.isDialogOpen ?? false) Get.back();
+          return;
+        }
 
         final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
         final credential = GoogleAuthProvider.credential(
@@ -146,6 +154,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
 
       if (email != null) {
         bool exists = await fetchUserDetails(email);
+        if (Get.isDialogOpen ?? false) Get.back();
         if (exists) {
           Get.offAllNamed('/home');
         } else {
@@ -155,8 +164,11 @@ class AuthController extends GetxController with WidgetsBindingObserver {
             'name': displayName ?? "",
           });
         }
+      } else {
+        if (Get.isDialogOpen ?? false) Get.back();
       }
     } catch (e) {
+      if (Get.isDialogOpen ?? false) Get.back();
       Get.snackbar(
         "Login Error", 
         "Failed to sign in. Please check your connection.",

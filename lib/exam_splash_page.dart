@@ -11,15 +11,22 @@ class ExamSplashPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Map<String, dynamic> args = Get.arguments ?? {};
-    final Exam exam = args['exam'];
+    final Exam? exam = args['exam'];
     final bool isResume = args['isResume'] ?? false;
+
+    if (exam == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Error")),
+        body: const Center(child: Text("Exam data lost. Please restart navigation.")),
+      );
+    }
+
     final TestController testController = Get.find<TestController>();
 
     const Color primaryColor = Color(0xFF1B8A4E);
     const Color secondaryColor = Color(0xFF27AE60);
 
     final auth = AuthController.instance;
-
 
     final bool isLocked = exam.locked;
     final bool hasAccess = auth.canAccess(exam);

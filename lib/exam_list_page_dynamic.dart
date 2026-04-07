@@ -18,10 +18,12 @@ class DynamicExamListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final args = Get.arguments;
-    final String endpoint = args["endpoint"];
+    final args = Get.arguments ?? {};
+    final String endpoint = args["endpoint"] ?? "";
 
-    examController.loadFromEndpoint(endpoint);
+    if (endpoint.isNotEmpty) {
+      examController.loadFromEndpoint(endpoint);
+    }
 
     return Obx(() => Scaffold(
           appBar: AppBar(title: const Text("Select Exam")),
