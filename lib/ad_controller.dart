@@ -37,7 +37,7 @@ class AdController extends GetxController {
           _shownThisSession = true;
           // Small delay to let the home screen render first
           await Future.delayed(const Duration(milliseconds: 800));
-          _showAdPopup(ads.first);
+          showAdPopup(ads.first);
         }
       }
     } catch (_) {
@@ -45,7 +45,7 @@ class AdController extends GetxController {
     }
   }
 
-  void _showAdPopup(AdModel ad) {
+  void showAdPopup(AdModel ad) {
     Get.dialog(
       _AdPopupWidget(ad: ad),
       barrierDismissible: false,

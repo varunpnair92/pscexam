@@ -10,6 +10,8 @@ import 'exam_model.dart';
 import 'study_controller.dart';
 import 'story_controller.dart';
 import 'characteristic_controller.dart';
+import 'ad_controller.dart';
+import 'ad_model.dart';
 
 class PushNotificationService {
   static final FirebaseMessaging _firebaseMessaging =
@@ -75,6 +77,18 @@ class PushNotificationService {
 
     // 3. Listen to foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      final String nav = message.data['navigation']?.toString() ?? message.data['route']?.toString() ?? "";
+      final String category = message.data['category']?.toString() ?? "";
+
+      // 🛑 SILENT AD HANDLING: If it's a popup ad, show the UI directly and skip OS notification
+      if (nav == 'popup' || category == 'popup') {
+        if (Get.isRegistered<AdController>()) {
+          final ad = AdModel.fromJson(message.data);
+          Get.find<AdController>().showAdPopup(ad);
+          return; // Skip showing local notification
+        }
+      }
+
       if (message.notification != null) {
         // Show local notification using named parameters (v21.0.0)
         _localNotificationsPlugin.show(
@@ -143,6 +157,17 @@ class PushNotificationService {
         data['title']?.toString() ??
         data['exam_name']?.toString() ??
         (keyword.isNotEmpty ? keyword : "New Update");
+
+    final String category = data['category']?.toString() ?? "";
+
+    // 🚀 AD POPUP HANDLING (on click or forced)
+    if (nav == 'popup' || category == 'popup') {
+      if (Get.isRegistered<AdController>()) {
+        final ad = AdModel.fromJson(data);
+        Get.find<AdController>().showAdPopup(ad);
+        return;
+      }
+    }
 
     if (nav.isEmpty) {
       return;

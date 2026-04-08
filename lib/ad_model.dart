@@ -21,14 +21,14 @@ class AdModel {
 
   factory AdModel.fromJson(Map<String, dynamic> json) {
     return AdModel(
-      id: json['id'] ?? 0,
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       title: json['title'] ?? '',
       category: json['category'] ?? '',
       imageUrl: json['image_url'] ?? json['image'] ?? '',
       description: json['description'],
-      timer: json['timer'] ?? 0,
+      timer: int.tryParse(json['timer']?.toString() ?? '0') ?? 0,
       linkUrl: json['link_url'],
-      active: json['active'] ?? false,
+      active: json['active'] == true || json['active']?.toString() == 'true',
     );
   }
 }
