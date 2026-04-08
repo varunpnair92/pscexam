@@ -77,15 +77,45 @@ class PushNotificationService {
 
     // 3. Listen to foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      final String nav = message.data['navigation']?.toString() ?? message.data['route']?.toString() ?? "";
-      final String category = message.data['category']?.toString() ?? "";
+      final data = message.data;
+      final String nav = (data['navigation'] ?? data['route'] ?? data['type'] ?? "").toString();
+      final String category = (data['category'] ?? "").toString();
 
-      // 🛑 SILENT AD HANDLING: If it's a popup ad, show the UI directly and skip OS notification
-      if (nav == 'popup' || category == 'popup') {
-        if (Get.isRegistered<AdController>()) {
-          final ad = AdModel.fromJson(message.data);
-          Get.find<AdController>().showAdPopup(ad);
-          return; // Skip showing local notification
+      // 🛑 HANDLE NESTED AD PAYLOAD (from push_active_ads_api)
+      if (nav == 'active_advertisements') {
+        try {
+          if (data['ads'] != null) {
+            final List adsList = jsonDecode(data['ads'].toString());
+            AdModel? popupAd;
+            for (var e in adsList) {
+              final ad = AdModel.fromJson(e);
+              if (ad.category == 'popup') {
+                popupAd = ad;
+                break;
+              }
+            }
+            if (popupAd != null && Get.isRegistered<AdController>()) {
+              Get.find<AdController>().showAdPopup(popupAd);
+              return; // Skip showing local notification
+            }
+          }
+        } catch (e) {
+          debugPrint("Error parsing nested ads push: $e");
+        }
+      }
+
+      // 🛑 SILENT AD HANDLING: If it's a flat popup ad
+      if (nav == 'popup' || category == 'popup' || nav == 'ad') {
+        try {
+          if (Get.isRegistered<AdController>()) {
+            final ad = AdModel.fromJson(data);
+            if (ad.title.isNotEmpty) {
+              Get.find<AdController>().showAdPopup(ad);
+              return; // Skip showing local notification
+            }
+          }
+        } catch (e) {
+          debugPrint("Error showing flat ad from push: $e");
         }
       }
 
@@ -158,14 +188,43 @@ class PushNotificationService {
         data['exam_name']?.toString() ??
         (keyword.isNotEmpty ? keyword : "New Update");
 
-    final String category = data['category']?.toString() ?? "";
+    final String category = (data['category'] ?? "").toString();
+
+    // 🛑 HANDLE NESTED AD PAYLOAD (on click)
+    if (nav == 'active_advertisements') {
+      try {
+        if (data['ads'] != null) {
+          final List adsList = jsonDecode(data['ads'].toString());
+          AdModel? popupAd;
+          for (var e in adsList) {
+            final ad = AdModel.fromJson(e);
+            if (ad.category == 'popup') {
+              popupAd = ad;
+              break;
+            }
+          }
+          if (popupAd != null && Get.isRegistered<AdController>()) {
+            Get.find<AdController>().showAdPopup(popupAd);
+            return;
+          }
+        }
+      } catch (e) {
+        debugPrint("Error parsing nested ads push: $e");
+      }
+    }
 
     // 🚀 AD POPUP HANDLING (on click or forced)
-    if (nav == 'popup' || category == 'popup') {
-      if (Get.isRegistered<AdController>()) {
-        final ad = AdModel.fromJson(data);
-        Get.find<AdController>().showAdPopup(ad);
-        return;
+    if (nav == 'popup' || category == 'popup' || nav == 'ad') {
+      try {
+        if (Get.isRegistered<AdController>()) {
+          final ad = AdModel.fromJson(data);
+          if (ad.title.isNotEmpty) {
+            Get.find<AdController>().showAdPopup(ad);
+            return;
+          }
+        }
+      } catch (e) {
+        debugPrint("Error showing flat ad from click: $e");
       }
     }
 
