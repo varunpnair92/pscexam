@@ -196,9 +196,11 @@ class AuthController extends GetxController with WidgetsBindingObserver {
           userPhone,
           userCourses,
         );
-        // 🚀 Trigger Ad Popup after successful login
+        // 🚀 Trigger Ad Popup 1 minute after successful login
         if (Get.isRegistered<AdController>()) {
-          Get.find<AdController>().fetchAndShowAd(force: true);
+          Future.delayed(const Duration(minutes: 1), () {
+            Get.find<AdController>().fetchAndShowAd(force: true);
+          });
         }
         
         return true;

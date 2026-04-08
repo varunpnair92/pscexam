@@ -14,11 +14,18 @@ class AdController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchAndShowAd();
+    // ⏱️ Start a 1-minute timer for the first auto-check after app launch
+    Future.delayed(const Duration(minutes: 1), () {
+      fetchAndShowAd();
+    });
   }
 
+  var isLoading = false;
+
   Future<void> fetchAndShowAd({bool force = false}) async {
+    if (isLoading) return; // 🛑 Prevent parallel calls
     try {
+      isLoading = true;
       final auth = AuthController.instance;
       String url = AppConfig.activeAds;
       if (auth.isLoggedIn.value) {
@@ -42,6 +49,8 @@ class AdController extends GetxController {
       }
     } catch (_) {
       // Silently fail — ads are non-critical
+    } finally {
+      isLoading = false;
     }
   }
 

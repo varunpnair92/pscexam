@@ -11,6 +11,7 @@ import 'package:psc_exam/exam_menu_controller.dart';
 import 'package:psc_exam/story_menu_controller.dart';
 import 'package:psc_exam/study_controller.dart';
 import 'package:psc_exam/theme_controller.dart';
+import 'package:psc_exam/ad_controller.dart';
 
 class HomePage extends StatelessWidget {
   final index = 0.obs;
@@ -63,6 +64,7 @@ class HomePage extends StatelessWidget {
     switch (index.value) {
       case 0:
         if (Get.isRegistered<HomeController>()) Get.find<HomeController>().fetchHomeData();
+        if (Get.isRegistered<AdController>()) Get.find<AdController>().fetchAndShowAd(force: true);
         break;
       case 1:
         if (Get.isRegistered<ExamMenuController>()) Get.find<ExamMenuController>().fetchTree();
