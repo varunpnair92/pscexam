@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'app_config.dart';
 import 'ad_model.dart';
+import 'auth_controller.dart';
 
 class AdController extends GetxController {
   var ads = <AdModel>[].obs;
@@ -18,7 +19,13 @@ class AdController extends GetxController {
 
   Future<void> fetchAndShowAd({bool force = false}) async {
     try {
-      final res = await http.get(Uri.parse(AppConfig.activeAds));
+      final auth = AuthController.instance;
+      String url = AppConfig.activeAds;
+      if (auth.isLoggedIn.value) {
+        url += "?userid=${auth.userId.value}";
+      }
+      
+      final res = await http.get(Uri.parse(url));
       if (res.statusCode == 200) {
         final List data = jsonDecode(res.body);
         ads.value = data
