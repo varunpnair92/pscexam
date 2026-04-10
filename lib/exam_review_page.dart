@@ -56,6 +56,7 @@ class _ReviewPageState extends State<ReviewPage> {
         if (selected.isNotEmpty && selected != correct) list.add(i);
       }
     }
+    list.sort();
     return list;
   }
 

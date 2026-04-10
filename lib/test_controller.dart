@@ -44,6 +44,7 @@ var resumeTimeLeft = 0.obs;
       int idx = questions.indexWhere((q) => q.id == id);
       if (idx != -1) indices.add(idx);
     }
+    indices.sort();
     return indices;
   }
 
