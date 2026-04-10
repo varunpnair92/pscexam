@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dynamic_menu_controller.dart';
 import 'auth_controller.dart';
+import 'navigation_slide_view.dart';
 
 class DynamicMenuPage extends StatelessWidget {
   final DynamicMenuController ctrl = Get.put(DynamicMenuController());
@@ -19,6 +20,14 @@ class DynamicMenuPage extends StatelessWidget {
         ),
       ),
       body: Obx(() {
+        if (ctrl.isSlideView.value) {
+          return NavigationSlideView(
+            items: ctrl.items,
+            onNodeTap: ctrl.onTileTap,
+            getTitle: (item) => ctrl.getTitle(item),
+            getImageUrl: (item) => (item["image_url"] ?? item["image"] ?? "").toString(),
+          );
+        }
         return GridView.builder(
           padding: const EdgeInsets.all(12),
           itemCount: ctrl.items.length,

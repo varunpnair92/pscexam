@@ -16,6 +16,8 @@ class DynamicMenuController extends GetxController {
   var keys = <String>[].obs;
   
   var navStack = <String>[];
+  var slideStack = <bool>[].obs; // 🔥 Track slide state for back navigation
+  var isSlideView = false.obs; // 🔥 Track if current level is slide
   String currentNav = "";
 
   String currentUrl = "";
@@ -85,27 +87,72 @@ class DynamicMenuController extends GetxController {
       return;
     }
 
-    final title = getTitle(item);
+    final String title = getTitle(item);
 
     final String navStr = item["navigation"]?.toString().trim() ?? '';
     final String urlStr = item["url"]?.toString().trim() ?? '';
 
-    /// 0️⃣ EXPLICIT TERMINAL NAVIGATION FOR EXAM LISTS/STORIES
-    if ((navStr == 'dynamicExamList' || navStr == 'examstorypage') && urlStr.isNotEmpty) {
-      Get.toNamed('/$navStr', arguments: {'endpoint': urlStr});
+    /// 0️⃣ EXPLICIT NAVIGATION TARGETS (RE-ORDERED TO TAKE PRIORITY)
+    if (navStr.isNotEmpty) {
+      // Handle navigationSlide specifically to pass items
+      if (navStr == 'navigationSlide' || navStr == '/navigationSlide') {
+        Get.toNamed('/navigationSlide', arguments: {
+          'items': item["children"],
+          'endpoint': urlStr,
+          'title': title,
+        });
+        return;
+      }
+
+      if ((navStr == 'dynamicExamList' || navStr == 'examstorypage') && urlStr.isNotEmpty) {
+        Get.toNamed('/$navStr', arguments: {'endpoint': urlStr});
+        return;
+      }
+
+      // Other explicit routes
+      String nav = navStr;
+      if (!nav.startsWith('/')) nav = '/$nav';
+
+      List<String> keywords = [];
+      if (item["keywords"] != null) {
+        keywords = List<String>.from(item["keywords"]);
+      } else if (item["keyword"] != null) {
+        keywords = [item["keyword"].toString()];
+      }
+
+      Map<String, dynamic> routeArgs = {
+        "keywords": keywords,
+        "title": title,
+        "endpoint": urlStr,
+        "items": item["children"],
+      };
+      if (item["id"] != null) {
+        routeArgs["id"] = int.tryParse(item["id"].toString()) ?? 0;
+      }
+
+      if (nav == '/studyFull') Get.delete<StudyController>();
+      if (nav == '/story') Get.delete<StoryController>();
+
+      if (nav == '/examSplash') {
+        int examId = routeArgs["id"] ?? 0;
+        _fetchAndNavigateSplash(examId, item, title);
+        return;
+      }
+
+      Get.toNamed(nav, arguments: routeArgs);
       return;
     }
 
-    /// 1️⃣ CHILDREN → SUBMENU
+    /// 1️⃣ CHILDREN → SUBMENU (Now fallback if no explicit nav)
     if (item["children"] != null && item["children"].isNotEmpty) {
       stack.add(items.toList());
+      slideStack.add(isSlideView.value); // Save current
+      
       items.value = item["children"];
       keys.add(title);
+      isSlideView.value = false; // Reset for children generally
       
       navStack.add(currentNav);
-      if (item["navigation"] != null && item["navigation"].toString().trim().isNotEmpty) {
-        currentNav = item["navigation"].toString().trim();
-      }
       return;
     }
 
@@ -139,6 +186,7 @@ class DynamicMenuController extends GetxController {
         "keywords": keywords,
         "title": title,
         "endpoint": item["url"] ?? "",
+        "items": item["children"], // 🔥 Pass children for NavigationSlide
       };
       if (item["id"] != null) {
         routeArgs["id"] = int.tryParse(item["id"].toString()) ?? 0;
@@ -263,6 +311,9 @@ class DynamicMenuController extends GetxController {
     if (stack.isNotEmpty) {
       items.value = stack.removeLast();
       keys.removeLast();
+      if (slideStack.isNotEmpty) {
+        isSlideView.value = slideStack.removeLast();
+      }
       if (navStack.isNotEmpty) {
         currentNav = navStack.removeLast();
       }

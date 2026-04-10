@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'story_menu_controller.dart';
 import 'auth_controller.dart';
 import 'ui_utils.dart';
+import 'navigation_slide_view.dart';
 
 class StoryMenuPage extends StatelessWidget {
   final controller = Get.put(StoryMenuController());
@@ -99,10 +100,18 @@ class StoryMenuPage extends StatelessWidget {
             Expanded(
               child: controller.isLoading.value
                   ? const Center(child: CircularProgressIndicator(color: UIUtils.greenPrimary))
-                  : controller.items.isEmpty
+                  : controller.displayedItems.isEmpty
                       ? const Center(child: Text("No stories found", style: TextStyle(color: Colors.grey)))
-                      : controller.displayedItems.isEmpty
-                          ? const Center(child: Text("No matches found", style: TextStyle(color: Colors.grey)))
+                      : controller.isSlideView.value
+                          ? NavigationSlideView(
+                              items: controller.displayedItems,
+                              onNodeTap: (item) {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                controller.onTileTap(item);
+                              },
+                              getTitle: (item) => (item["name"] ?? "").toString(),
+                              getImageUrl: (item) => (item["image"] ?? item["image_url"] ?? "").toString(),
+                            )
                           : GridView.builder(
                               padding: const EdgeInsets.all(16),
                               itemCount: controller.displayedItems.length,

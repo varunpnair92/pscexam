@@ -196,10 +196,20 @@ class HomeController extends GetxController {
       return;
     }
 
-    final nav = item['navigation'] ?? '';
-    final url = item['url'] ?? '';
+    final nav = (item['navigation'] ?? '').toString().trim();
+    final url = (item['url'] ?? '').toString().trim();
     final children = item['children'];
-    final name = item['name'] ?? 'Attempt';
+    final name = (item['name'] ?? 'Browse').toString();
+
+    // 0. EXPLICIT NAVIGATION TARGETS (Priority)
+    if (nav == 'navigationSlide' || nav == '/navigationSlide') {
+      Get.toNamed('/navigationSlide', arguments: {
+        'items': children,
+        'title': name,
+        'endpoint': url,
+      });
+      return;
+    }
 
     if (nav == 'dynamicExamList' && url.isNotEmpty) {
       Get.toNamed('/dynamicExamList', arguments: {'endpoint': url});
@@ -230,6 +240,7 @@ class HomeController extends GetxController {
       return;
     }
 
+    // 1. DEFAULT CHILDREN SUBMENU (Fallback)
     if (url.isNotEmpty) {
       Get.toNamed(
         '/dynamicMenu',

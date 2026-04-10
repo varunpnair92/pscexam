@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'exam_menu_controller.dart';
 import 'auth_controller.dart';
 import 'ui_utils.dart'; // 🔥 Import UI Utils
+import 'navigation_slide_view.dart';
 
 class ExamMenuPage extends StatelessWidget {
   final controller = Get.put(ExamMenuController());
@@ -95,13 +96,22 @@ class ExamMenuPage extends StatelessWidget {
                 ),
               ),
 
-            // ─── GRID BODY ───
             Expanded(
               child: controller.items.isEmpty
                   ? const Center(child: CircularProgressIndicator(color: UIUtils.greenPrimary))
                   : controller.displayedItems.isEmpty
-                       ? const Center(child: Text("No matches found", style: TextStyle(color: Colors.grey)))
-                      : GridView.builder(
+                      ? const Center(child: Text("No matches found", style: TextStyle(color: Colors.grey)))
+                      : controller.isSlideView.value
+                          ? NavigationSlideView(
+                              items: controller.displayedItems,
+                              onNodeTap: (item) {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                controller.onTileTap(item);
+                              },
+                              getTitle: (item) => (item["name"] ?? "").toString(),
+                              getImageUrl: (item) => (item["image"] ?? item["image_url"] ?? "").toString(),
+                            )
+                          : GridView.builder(
                           padding: const EdgeInsets.all(16),
                           itemCount: controller.displayedItems.length,
                           physics: const BouncingScrollPhysics(),

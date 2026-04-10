@@ -8,6 +8,7 @@ class StoryMenuController extends GetxController {
   var items = [].obs;
   var isLoading = true.obs;
   var searchQuery = "".obs;
+  var isSlideView = false.obs; // 🔥 Track if current level is a slide view
 
   List<dynamic> get displayedItems {
     if (searchQuery.value.isEmpty) return items;
@@ -22,6 +23,7 @@ class StoryMenuController extends GetxController {
   /// BREADCRUMB / STACK for future potential nesting
   var keys = <String>["Stories"].obs;
   var stack = <List>[].obs;
+  var slideStack = <bool>[].obs; // 🔥 Track slide state for back navigation
 
   @override
   void onInit() {
@@ -68,6 +70,9 @@ class StoryMenuController extends GetxController {
           if (storyNode != null) {
             items.value = storyNode['children'] ?? [];
             keys.value = [storyNode['name'] ?? "Stories"];
+
+            final String nav = (storyNode['navigation'] ?? '').toString().trim();
+            isSlideView.value = (nav == 'navigationSlide' || nav == '/navigationSlide');
           } else {
             // Fallback to course children themselves if no specific STORY node
             items.value = children;
@@ -90,13 +95,28 @@ class StoryMenuController extends GetxController {
 
     final name = item["name"] ?? "Story";
     final children = item["children"];
+    final String navStr = item["navigation"]?.toString().trim() ?? "";
+
+    if (navStr == 'navigationSlide' || navStr == '/navigationSlide') {
+      stack.add(List.from(items));
+      slideStack.add(isSlideView.value); // Save current
+      
+      items.value = children;
+      keys.add(name);
+      isSlideView.value = true;
+      searchQuery.value = "";
+      return;
+    }
 
     if (children != null && (children as List).isNotEmpty) {
       // Go deeper
       stack.add(List.from(items));
+      slideStack.add(isSlideView.value); // Save current
+
       items.value = children;
       keys.add(name);
       searchQuery.value = "";
+      isSlideView.value = false;
     } else {
       // Interactive story viewer
       List<String> keywords = [];
@@ -120,6 +140,9 @@ class StoryMenuController extends GetxController {
     if (stack.isNotEmpty) {
       items.value = stack.removeLast();
       keys.removeLast();
+      if (slideStack.isNotEmpty) {
+        isSlideView.value = slideStack.removeLast();
+      }
       searchQuery.value = "";
     }
   }

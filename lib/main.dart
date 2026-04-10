@@ -32,6 +32,7 @@ import 'registration_page.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'push_notification_service.dart';
 import 'ad_controller.dart';
+import 'navigation_slide_page.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -124,6 +125,9 @@ class MyApp extends StatelessWidget {
 
         // 📝 REGISTRATION
         GetPage(name: '/register', page: () => RegistrationPage()),
+
+        // 🎢 NAVIGATION SLIDE
+        GetPage(name: '/navigationSlide', page: () => NavigationSlidePage()),
       ],
     );
   }

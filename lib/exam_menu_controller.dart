@@ -12,6 +12,8 @@ class ExamMenuController extends GetxController {
   var fullTree = [].obs;
   var items = [].obs;
   var searchQuery = "".obs;
+  var isSlideView = false.obs; // 🔥 Track if current level is a slide view
+  var slideStack = <bool>[].obs; // 🔥 Track slide state for back navigation
 
   List<dynamic> get displayedItems {
     if (searchQuery.value.isEmpty) return items;
@@ -86,6 +88,9 @@ class ExamMenuController extends GetxController {
       items.value = targetExamNode["children"] ?? [];
       keys.clear();
       keys.add(targetExamNode["name"] ?? "Exams");
+
+      final String nav = (targetExamNode['navigation'] ?? '').toString().trim();
+      isSlideView.value = (nav == 'navigationSlide' || nav == '/navigationSlide');
     }
   }
 
@@ -102,8 +107,18 @@ class ExamMenuController extends GetxController {
     final name = item["name"];
     lastEndpoint = item["url"] ?? lastEndpoint;
 
-    final nav = item["navigation"]?.toString() ?? "";
-    final route = nav.startsWith('/') ? nav : '/$nav';
+    final String navStr = (item['navigation'] ?? '').toString().trim();
+    final String nav = navStr; // for consistency with existing code
+
+    if (navStr == 'navigationSlide' || navStr == '/navigationSlide') {
+      stack.add(items.toList());
+      slideStack.add(isSlideView.value);
+      items.value = item["children"];
+      keys.add(name);
+      isSlideView.value = true;
+      searchQuery.value = "";
+      return;
+    }
 
     if (nav == 'examSplash' || nav == '/examSplash') {
       List<String> keywords = [];
@@ -126,17 +141,19 @@ class ExamMenuController extends GetxController {
     }
 
     /// ACTION → OPEN EXAM LIST
-    if (item["url"] != null && item["url"] != "") {
+    if (item["url"] != null && item["url"] != "" && nav.isNotEmpty) {
       Get.toNamed(item["navigation"], arguments: {"endpoint": item["url"]});
       return;
     }
 
     /// NODE → GO DEEPER
     if (item["children"] != null && item["children"].length > 0) {
-      stack.add(items);
+      stack.add(items.toList()); // Convert to list to clone
+      slideStack.add(isSlideView.value);
       items.value = item["children"];
       keys.add(name);
       searchQuery.value = ""; // 🔥 Reset search on navigation
+      isSlideView.value = false;
       return;
     }
 
@@ -149,6 +166,9 @@ class ExamMenuController extends GetxController {
     if (stack.isNotEmpty) {
       items.value = stack.removeLast();
       keys.removeLast();
+      if (slideStack.isNotEmpty) {
+        isSlideView.value = slideStack.removeLast();
+      }
       searchQuery.value = ""; // 🔥 Reset search on back
     }
   }
