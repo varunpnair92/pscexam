@@ -35,11 +35,57 @@ class UIUtils {
   static List<List<Color>> getPremiumGradients() {
     return [
       [const Color(0xFF1B8A4E), const Color(0xFF27AE60)],   // deep→mid green
-      [const Color(0xFF27AE60), const Color(0xFF52C97A)],   // mid→light green
-      [const Color(0xFF6A11CB), const Color(0xFF2575FC)],   // Blue-Purple
-      [const Color(0xFFFF5F6D), const Color(0xFFFFC371)],   // Red-Orange
+      [const Color(0xFF0F2027), const Color(0xFF203A43), const Color(0xFF2C5364)], // Midnight Blue
+      [const Color(0xFF121212), const Color(0xFF282828)],   // Sleek Dark
+      [const Color(0xFF8E2DE2), const Color(0xFF4A00E0)],   // Electric Purple
+      [const Color(0xFF00c6ff), const Color(0xFF0072ff)],   // Ocean Blue
+      [const Color(0xFFf953c6), const Color(0xFFb91d73)],   // Pinkish
       [const Color(0xFF11998E), const Color(0xFF38EF7D)],   // Green-Cyan
       [const Color(0xFFF2994A), const Color(0xFFF2C94C)],   // Orange-Gold
     ];
+  }
+
+  static Widget buildImmersiveBackground(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFF4FBF4),
+            Color(0xFFE8F5E9),
+            Color(0xFFFFFFFF),
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                color: greenPrimary.withOpacity(0.05),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -50,
+            left: -50,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                color: greenMid.withOpacity(0.05),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

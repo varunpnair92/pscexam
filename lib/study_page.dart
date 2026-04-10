@@ -4,6 +4,7 @@ import 'study_controller.dart';
 import 'modern_study_card.dart';
 import 'auth_controller.dart';
 import 'ui_utils.dart';
+import 'app_theme.dart';
 
 class StudyPage extends StatelessWidget {
   final StudyController controller = Get.put(StudyController());
@@ -12,86 +13,80 @@ class StudyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color greenPrimary = Color(0xFF1B8A4E);
-    const Color greenLight = Color(0xFFF4FBF4);
-
     return Obx(
       () => Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: Colors.white,
-          centerTitle: true,
-          title: Text(
-            controller.keys.isNotEmpty ? controller.keys.last : "Study",
-            style: const TextStyle(
-              color: Color(0xFF0D3320),
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0D3320), size: 20),
-            onPressed: controller.goBack,
-          ),
-        ),
-        body: controller.showQuestions.value
-            ? DefaultTabController(
-                length: 3,
-                child: Column(
-                  children: [
-                    // ─── Custom TabBar ───
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6), // 🔥 Reduced vertical margin
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: TabBar(
-                        dividerColor: Colors.transparent,
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        indicator: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        labelColor: greenPrimary,
-                        unselectedLabelColor: Colors.grey.shade500,
-                        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                        tabs: const [
-                          Tab(text: "Description"),
-                          Tab(text: "Questions"),
-                          Tab(text: "Exam"),
-                        ],
-                      ),
-                    ),
+        backgroundColor: AppTheme.background,
+        body: Stack(
+          children: [
+            // ─── IMMERSIVE BACKGROUND ───
+            AppTheme.buildImmersiveBackground(context),
 
-                    Expanded(
-                      child: TabBarView(
-                        children: [
-                          // ─── DESCRIPTION TAB ───
-                          _buildDescriptionTab(controller, greenPrimary, greenLight),
-
-                          // ─── QUESTIONS TAB ───
-                          _buildQuestionsTab(controller, greenPrimary),
-
-                          // ─── EXAM TAB ───
-                          _buildExamTab(controller, greenPrimary, greenLight),
-                        ],
-                      ),
-                    ),
-                  ],
+            Column(
+              children: [
+                // ─── CUSTOM APP BAR ───
+                AppTheme.buildPremiumAppBar(
+                  title: controller.keys.isNotEmpty ? controller.keys.last : "Study",
+                  onBack: controller.keys.length > 1 ? controller.goBack : null,
                 ),
-              )
-            // ─── HIERARCHY GRID ───
-            : _buildHierarchyGrid(controller, greenPrimary, greenLight),
+
+                Expanded(
+                  child: controller.showQuestions.value
+                      ? DefaultTabController(
+                          length: 3,
+                          child: Column(
+                            children: [
+                              // ─── Custom TabBar ───
+                              Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.white.withOpacity(0.3)),
+                                ),
+                                child: TabBar(
+                                  dividerColor: Colors.transparent,
+                                  indicatorSize: TabBarIndicatorSize.tab,
+                                  indicator: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    color: AppTheme.primary,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppTheme.primary.withOpacity(0.2),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  labelColor: Colors.white,
+                                  unselectedLabelColor: AppTheme.textMid,
+                                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                  tabs: const [
+                                    Tab(text: "Description"),
+                                    Tab(text: "Questions"),
+                                    Tab(text: "Exam"),
+                                  ],
+                                ),
+                              ),
+
+                              Expanded(
+                                child: TabBarView(
+                                  children: [
+                                    _buildDescriptionTab(controller, AppTheme.primary, AppTheme.background),
+                                    _buildQuestionsTab(controller, AppTheme.primary),
+                                    _buildExamTab(controller, AppTheme.primary, AppTheme.background),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _buildHierarchyGrid(controller, AppTheme.primary, AppTheme.background),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -114,54 +109,29 @@ class StudyPage extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Colors.white.withOpacity(0.8),
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.grey.shade100),
+                      border: Border.all(color: Colors.white.withOpacity(0.5)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
+                          color: Colors.black.withOpacity(0.04),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
                       ],
                     ),
                     padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: primary.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(Icons.menu_book_rounded, color: primary, size: 18),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              "Insight Page",
-                              style: TextStyle(color: primary, fontWeight: FontWeight.bold, fontSize: 12),
-                            ),
-                          ],
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Text(
+                        pages[i],
+                        style: const TextStyle(
+                          fontSize: 17,
+                          color: AppTheme.textDark,
+                          height: 1.7,
+                          fontWeight: FontWeight.w500,
                         ),
-                        const SizedBox(height: 24),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            child: Text(
-                              pages[i],
-                              style: const TextStyle(
-                                fontSize: 17,
-                                color: Color(0xFF0D3320),
-                                height: 1.7,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 );
@@ -180,7 +150,7 @@ class StudyPage extends StatelessWidget {
                       height: 6,
                       width: controller.currentPage.value == index ? 24 : 6,
                       decoration: BoxDecoration(
-                        color: controller.currentPage.value == index ? primary : Colors.grey.shade300,
+                        color: controller.currentPage.value == index ? primary : Colors.white.withOpacity(0.5),
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ));
@@ -200,9 +170,9 @@ class StudyPage extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
           child: Row(
             children: [
-              Text(
+              const Text(
                 "Question Feed",
-                style: TextStyle(color: Colors.grey.shade800, fontWeight: FontWeight.bold, fontSize: 15),
+                style: TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.bold, fontSize: 15),
               ),
               const Spacer(),
               Text(
@@ -265,26 +235,29 @@ class StudyPage extends StatelessWidget {
             style: TextStyle(color: Colors.grey.shade600, fontSize: 15, height: 1.5),
           ),
           const SizedBox(height: 48),
-          SizedBox(
-            width: double.infinity,
-            height: 60,
-            child: ElevatedButton(
-              onPressed: () {
-                Get.toNamed("/studyExam", arguments: controller.questions.toList());
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text("Start Practice Mode", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  SizedBox(width: 12),
-                  Icon(Icons.arrow_forward_rounded, size: 20),
-                ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  Get.toNamed("/studyExam", arguments: controller.questions.toList());
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Start Practice Mode", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                    SizedBox(width: 8),
+                    Icon(Icons.rocket_launch_rounded, size: 18),
+                  ],
+                ),
               ),
             ),
           ),
@@ -357,101 +330,89 @@ class StudyPage extends StatelessWidget {
           child: controller.items.isEmpty
               ? Center(child: CircularProgressIndicator(color: primary))
               : controller.displayedItems.isEmpty
-                  ? const Center(child: Text("No matches found", style: TextStyle(color: Colors.grey)))
+                  ? const Center(child: Text("No topics found", style: TextStyle(color: Colors.grey)))
                   : GridView.builder(
                       padding: const EdgeInsets.all(20),
                       itemCount: controller.displayedItems.length,
                       physics: const BouncingScrollPhysics(),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        crossAxisSpacing: 12, // 🔥 Optimized spacing
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 1.3, // 🔥 Same aspect ratio as Home & Exam
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.2,
                       ),
                       itemBuilder: (_, i) {
                         final item = controller.displayedItems[i];
-                        final name = item["name"] ?? "";
+                        final name = (item["name"] ?? "").toString();
                         final gradients = UIUtils.getPremiumGradients();
                         final grad = gradients[i % gradients.length];
                         final icon = UIUtils.getIconForName(name);
+                        final bool hasAccess = AuthController.instance.canAccess(item);
 
-                        return Obx(() {
-                          final bool hasAccess = AuthController.instance.canAccess(item);
-
-                          return GestureDetector(
+                        return TweenAnimationBuilder<double>(
+                          duration: Duration(milliseconds: 300 + (i % 10) * 100),
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          builder: (context, val, child) {
+                            return Transform.translate(
+                              offset: Offset(0, 20 * (1 - val)),
+                              child: Opacity(opacity: val, child: child),
+                            );
+                          },
+                          child: GestureDetector(
                             onTap: () {
                               FocusManager.instance.primaryFocus?.unfocus();
                               controller.onTileTap(item);
                             },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: grad,
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: grad.first.withOpacity(0.3),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              padding: const EdgeInsets.all(16),
-                              child: Stack(
-                                children: [
-                                  Opacity(
-                                    opacity: hasAccess ? 1.0 : 0.6,
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(0.2),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(icon, color: Colors.white, size: 18),
-                                        ),
-                                        const Spacer(),
-                                        Expanded(
-                                          child: Container(
-                                            alignment: Alignment.bottomLeft,
-                                            child: FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              child: Text(
-                                                name,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              decoration: AppTheme.glassBox(gradient: grad),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(24),
+                                child: Stack(
+                                  children: [
+                                    Positioned(
+                                      right: -10,
+                                      top: -10,
+                                      child: Icon(icon, color: Colors.white.withOpacity(0.12), size: 80),
                                     ),
-                                  ),
-                                  if (!hasAccess)
-                                    const Positioned.fill(
-                                      child: Center(
-                                        child: Icon(
-                                          Icons.lock_rounded,
-                                          color: Colors.white70,
-                                          size: 28,
-                                        ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(0.2),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(icon, color: Colors.white, size: 18),
+                                          ),
+                                          const Spacer(),
+                                          Text(
+                                            name,
+                                            style: AppTheme.cardTitleStyle,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                ],
+                                    if (!hasAccess)
+                                      Positioned.fill(
+                                        child: Container(
+                                          color: Colors.black.withOpacity(0.2),
+                                          child: const Center(
+                                            child: Icon(Icons.lock_rounded, color: Colors.white70, size: 28),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
-                          );
-                        });
+                          ),
+                        );
                       },
                     ),
         ),

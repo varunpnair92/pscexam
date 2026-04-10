@@ -12,8 +12,8 @@ class ExamMenuController extends GetxController {
   var fullTree = [].obs;
   var items = [].obs;
   var searchQuery = "".obs;
-  var isSlideView = false.obs; // 🔥 Track if current level is a slide view
-  var slideStack = <bool>[].obs; // 🔥 Track slide state for back navigation
+  var isSlideView = false.obs;
+  var slideStack = <bool>[].obs;
 
   List<dynamic> get displayedItems {
     if (searchQuery.value.isEmpty) return items;
@@ -25,90 +25,60 @@ class ExamMenuController extends GetxController {
         .toList();
   }
 
-  /// BACK STACK
   var stack = <dynamic>[].obs;
-
-  /// BREADCRUMB
   var keys = <String>[].obs;
 
   @override
   void onInit() {
     super.onInit();
-    
-    // 🔄 RE-FETCH ON COURSE CHANGE
     ever(AuthController.instance.selectedCourseName, (_) {
       fetchTree();
       stack.clear();
       keys.clear();
     });
-
     fetchTree();
   }
 
-  /// LOAD TREE
   Future<void> fetchTree() async {
-    final res = await http.get(Uri.parse(AppConfig.nodeall));
+    try {
+      final res = await http.get(Uri.parse(AppConfig.nodeall));
+      final data = jsonDecode(res.body);
+      fullTree.value = data;
+      
+      final String selectedCourse = AuthController.instance.selectedCourseName.value;
+      var courseNode = data.firstWhere((e) => e["name"] == selectedCourse, orElse: () => null);
 
-    final data = jsonDecode(res.body);
+      dynamic targetExamNode;
+      if (courseNode != null && courseNode["children"] != null) {
+        final children = courseNode["children"] as List;
+        targetExamNode = children.firstWhereOrNull((c) => (c["name"] ?? "").toString().toUpperCase() == "EXAM");
+        targetExamNode ??= children.firstWhereOrNull((c) => (c["name"] ?? "").toString().toUpperCase().startsWith("EXAM"));
+      }
 
-    fullTree.value = data;
-    
-    // 🎯 1. FIND THE SELECTED COURSE NODE
-    final auth = AuthController.instance;
-    final String selectedCourse = auth.selectedCourseName.value;
-    
-    var courseNode = data.firstWhere(
-      (e) => e["name"] == selectedCourse,
-      orElse: () => null,
-    );
+      targetExamNode ??= data.firstWhere((e) => e["name"] == "EXAM", orElse: () => null);
 
-    // 🎯 2. LOOK FOR "EXAM" CHILD WITHIN COURSE (exact match first, then fallback)
-    dynamic targetExamNode;
-    if (courseNode != null && courseNode["children"] != null) {
-      final children = courseNode["children"] as List;
-      // Exact match first
-      targetExamNode = children.firstWhereOrNull(
-        (c) => (c["name"] ?? "").toString().toUpperCase() == "EXAM",
-      );
-      // Fallback: starts-with match (avoids liveexam false positive)
-      targetExamNode ??= children.firstWhereOrNull(
-        (c) => (c["name"] ?? "").toString().toUpperCase().startsWith("EXAM"),
-      );
-    }
-
-    // 🎯 3. FALLBACK TO GLOBAL "EXAM"
-    if (targetExamNode == null) {
-      targetExamNode = data.firstWhere(
-        (e) => e["name"] == "EXAM",
-        orElse: () => null,
-      );
-    }
-
-    if (targetExamNode != null) {
-      items.value = targetExamNode["children"] ?? [];
-      keys.clear();
-      keys.add(targetExamNode["name"] ?? "Exams");
-
-      final String nav = (targetExamNode['navigation'] ?? '').toString().trim();
-      isSlideView.value = (nav == 'navigationSlide' || nav == '/navigationSlide');
-    }
+      if (targetExamNode != null) {
+        items.value = targetExamNode["children"] ?? [];
+        keys.clear();
+        keys.add(targetExamNode["name"] ?? "Exams");
+        final String nav = (targetExamNode['navigation'] ?? '').toString().trim();
+        isSlideView.value = (nav == 'navigationSlide' || nav == '/navigationSlide');
+      }
+    } catch (_) {}
   }
 
-  /// TILE CLICK
   void onTileTap(dynamic item) {
     final auth = AuthController.instance;
-
-    // 🌟 CENTRALIZED ACCESS CHECK
     if (!auth.canAccess(item)) {
       auth.showPremiumAlert();
       return;
     }
 
-    final name = item["name"];
+    final name = (item["name"] ?? "").toString();
     lastEndpoint = item["url"] ?? lastEndpoint;
 
     final String navStr = (item['navigation'] ?? '').toString().trim();
-    final String nav = navStr; // for consistency with existing code
+    final String nav = navStr;
 
     if (navStr == 'navigationSlide' || navStr == '/navigationSlide') {
       stack.add(items.toList());
@@ -129,47 +99,35 @@ class ExamMenuController extends GetxController {
       }
       
       int examId = 0;
-      if (keywords.isNotEmpty) {
-        examId = int.tryParse(keywords.first) ?? 0;
-      }
-      if (examId == 0 && item["id"] != null) {
-        examId = int.tryParse(item["id"].toString()) ?? 0;
-      }
+      if (keywords.isNotEmpty) examId = int.tryParse(keywords.first) ?? 0;
+      if (examId == 0 && item["id"] != null) examId = int.tryParse(item["id"].toString()) ?? 0;
       
       _fetchAndNavigateSplash(examId, item, name);
       return;
     }
 
-    /// ACTION → OPEN EXAM LIST
     if (item["url"] != null && item["url"] != "" && nav.isNotEmpty) {
-      Get.toNamed(item["navigation"], arguments: {"endpoint": item["url"]});
+      Get.toNamed(nav, arguments: {"endpoint": item["url"]});
       return;
     }
 
-    /// NODE → GO DEEPER
     if (item["children"] != null && item["children"].length > 0) {
-      stack.add(items.toList()); // Convert to list to clone
+      stack.add(items.toList());
       slideStack.add(isSlideView.value);
       items.value = item["children"];
       keys.add(name);
-      searchQuery.value = ""; // 🔥 Reset search on navigation
+      searchQuery.value = "";
       isSlideView.value = false;
       return;
     }
-
-    /// LEAF
-    //  print("Leaf clicked: $name");
   }
 
-  /// BACK
   void goBack() {
     if (stack.isNotEmpty) {
       items.value = stack.removeLast();
       keys.removeLast();
-      if (slideStack.isNotEmpty) {
-        isSlideView.value = slideStack.removeLast();
-      }
-      searchQuery.value = ""; // 🔥 Reset search on back
+      if (slideStack.isNotEmpty) isSlideView.value = slideStack.removeLast();
+      searchQuery.value = "";
     }
   }
 
@@ -178,7 +136,7 @@ class ExamMenuController extends GetxController {
   }
 
   Future<void> _fetchAndNavigateSplash(int examId, dynamic item, String fallbackTitle) async {
-    Get.dialog(Center(child: CircularProgressIndicator(color: const Color(0xFF1B8A4E))), barrierDismissible: false);
+    Get.dialog(const Center(child: CircularProgressIndicator(color: Color(0xFF1B8A4E))), barrierDismissible: false);
     try {
       final res = await http.get(Uri.parse('${AppConfig.testExam}$examId/'));
       if (res.statusCode == 200) {
@@ -193,16 +151,13 @@ class ExamMenuController extends GetxController {
           instructions: data["instructions"]?.toString(),
           description: data["description"]?.toString(),
         );
-        Get.back(); // Remove loading dialog
+        Get.back();
         Get.toNamed('/examSplash', arguments: {'exam': exam});
       } else {
-        Get.back();
-        Get.snackbar("Notice", "Exam content not available");
+        Get.back(); Get.snackbar("Notice", "Exam content not available");
       }
     } catch (_) {
-      Get.back();
-      Get.snackbar("Error", "Network error loading exam");
+      Get.back(); Get.snackbar("Error", "Network error loading exam");
     }
   }
 }
-

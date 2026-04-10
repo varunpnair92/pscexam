@@ -4,104 +4,159 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:psc_exam/exam_controller.dart';
 import 'package:psc_exam/test_controller.dart';
 import 'package:psc_exam/auth_controller.dart';
+import 'package:psc_exam/app_theme.dart';
+import 'package:psc_exam/ui_utils.dart';
 
 class ExamListPage extends StatelessWidget {
   final examController = Get.put(ExamController());
   final testController = Get.put(TestController());
 
+  ExamListPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Select Exam")),
+      backgroundColor: AppTheme.background,
+      body: Stack(
+        children: [
+          // ─── IMMERSIVE BACKGROUND ───
+          AppTheme.buildImmersiveBackground(context),
 
-      body: Obx(() {
-        if (examController.exams.isEmpty) {
-          return Center(child: CircularProgressIndicator());
-        }
-
-        final auth = AuthController.instance;
-
-
-
-        return ListView.builder(
-          itemCount: examController.exams.length,
-          itemBuilder: (_, i) {
-            var exam = examController.exams[i];
-            final bool hasAccess = auth.canAccess(exam);
-
-            return ListTile(
-              title: Opacity(
-                opacity: hasAccess ? 1.0 : 0.6,
-                child: Text(exam.specialization),
-              ),
-              subtitle: exam.accessType != "free"
-                  ? const Text("⭐ Premium Content", style: TextStyle(color: Colors.amber, fontSize: 10))
-                  : null,
-
-              // 🔒 SHOW LOCK ICON
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (exam.accessType != "free")
-                    const Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 18),
-                  const SizedBox(width: 8),
-                  Icon(
-                    exam.locked ? Icons.lock : Icons.lock_open,
-                    color: exam.locked ? Colors.red : Colors.green,
-                  ),
-                ],
+          Column(
+            children: [
+              // ─── CUSTOM APP BAR ───
+              AppTheme.buildPremiumAppBar(
+                title: "Select Exam",
+                onBack: () => Get.back(),
               ),
 
-              // 🔒 GREY OUT LOCKED EXAM
-              tileColor: hasAccess
-                  ? (exam.locked ? Colors.grey.shade300 : Colors.white)
-                  : Colors.grey.shade100,
+              Expanded(
+                child: Obx(() {
+                  if (examController.exams.isEmpty) {
+                    return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
+                  }
 
-              onTap: () async {
+                  final auth = AuthController.instance;
 
+                  return GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: examController.exams.length,
+                    physics: const BouncingScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.15,
+                      ),
+                    itemBuilder: (_, i) {
+                      final exam = examController.exams[i];
+                      final bool hasAccess = auth.canAccess(exam);
+                      final grad = AppTheme.premiumGradients[i % AppTheme.premiumGradients.length];
+                      final name = exam.specialization;
+                      final icon = UIUtils.getIconForName(name);
 
+                      return AppTheme.buildStaggeredAnimation(
+                        index: i,
+                        child: GestureDetector(
+                          onTap: () async {
+                            final prefs = await SharedPreferences.getInstance();
+                            prefs.setString('last_exam_name', exam.specialization);
+                            prefs.setString('last_exam_id', exam.id.toString());
 
+                            bool resume = await testController.hasProgressForExam(exam.id);
 
-                // 🔓 UNLOCKED / PREMIUM → NORMAL FLOW
-                final prefs = await SharedPreferences.getInstance();
-                prefs.setString('last_exam_name', exam.specialization);
-                prefs.setString('last_exam_id', exam.id.toString());
-
-                bool resume = await testController.hasProgressForExam(exam.id);
-
-                if (resume) {
-                  Get.defaultDialog(
-                    title: "Resume Exam",
-                    middleText: "You have unfinished progress",
-                    textCancel: "Restart",
-                    textConfirm: "Resume",
-                    onConfirm: () async {
-                      Get.back();
-                      Get.toNamed('/examSplash', arguments: {
-                        'exam': exam,
-                        'isResume': true,
-                      });
-                    },
-                    onCancel: () async {
-                      Get.back();
-                      await testController.clearProgress(exam.id);
-                      Get.toNamed('/examSplash', arguments: {
-                        'exam': exam,
-                        'isResume': false,
-                      });
+                            if (resume) {
+                              Get.defaultDialog(
+                                title: "Resume Exam",
+                                middleText: "You have unfinished progress",
+                                textCancel: "Restart",
+                                textConfirm: "Resume",
+                                confirmTextColor: Colors.white,
+                                onConfirm: () async {
+                                  Get.back();
+                                  Get.toNamed('/examSplash', arguments: {
+                                    'exam': exam,
+                                    'isResume': true,
+                                  });
+                                },
+                                onCancel: () async {
+                                  Get.back();
+                                  await testController.clearProgress(exam.id);
+                                  Get.toNamed('/examSplash', arguments: {
+                                    'exam': exam,
+                                    'isResume': false,
+                                  });
+                                },
+                              );
+                            } else {
+                              Get.toNamed('/examSplash', arguments: {
+                                'exam': exam,
+                                'isResume': false,
+                              });
+                            }
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            decoration: AppTheme.glassBox(gradient: grad),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(24),
+                              child: Stack(
+                                children: [
+                                  Positioned(
+                                    right: -10,
+                                    top: -10,
+                                    child: Icon(icon, color: Colors.white.withOpacity(0.12), size: 80),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(0.2),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(icon, color: Colors.white, size: 18),
+                                        ),
+                                        const Spacer(),
+                                        Text(
+                                          name,
+                                          style: AppTheme.cardTitleStyle,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (exam.accessType != "free")
+                                          const Padding(
+                                            padding: EdgeInsets.only(top: 4),
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 14),
+                                                SizedBox(width: 4),
+                                                Text("Premium", style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
+                                              ],
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (!hasAccess || exam.locked)
+                                    Positioned.fill(child: AppTheme.buildLockedOverlay()),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
                     },
                   );
-                } else {
-                  Get.toNamed('/examSplash', arguments: {
-                    'exam': exam,
-                    'isResume': false,
-                  });
-                }
-              },
-            );
-          },
-        );
-      }),
+                }),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

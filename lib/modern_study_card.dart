@@ -79,7 +79,7 @@ class _ModernStudyCardState extends State<ModernStudyCard> {
                 },
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(16),
