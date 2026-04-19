@@ -46,8 +46,21 @@ class AuthController extends GetxController with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // 🔄 REFRESH ON RESUME
-    if (state == AppLifecycleState.resumed && isLoggedIn.value) {
-      loadSession();
+    if (state == AppLifecycleState.resumed) {
+      _checkNotificationPermission();
+      if (isLoggedIn.value) {
+        loadSession();
+      }
+    }
+  }
+
+  Future<void> _checkNotificationPermission() async {
+    // Don't check if we are already on the permission page
+    if (Get.currentRoute == '/notificationPermission') return;
+    
+    final bool hasPermission = await PushNotificationService.hasPermission();
+    if (!hasPermission) {
+      Get.offAllNamed('/notificationPermission');
     }
   }
 

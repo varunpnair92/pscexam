@@ -37,6 +37,13 @@ class _SplashPageState extends State<SplashPage>
     // 3 second delay for splash
     await Future.delayed(const Duration(seconds: 3));
 
+    // 🛡️ Check Notification Permission
+    final bool hasNotificationPermission = await PushNotificationService.hasPermission();
+    if (!hasNotificationPermission) {
+      Get.offAllNamed('/notificationPermission');
+      return;
+    }
+
     final AuthController auth = Get.find<AuthController>();
 
     // 🚀 Check for Cold Start Notification

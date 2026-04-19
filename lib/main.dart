@@ -7,6 +7,8 @@ import 'package:psc_exam/exam_list_page.dart';
 import 'package:psc_exam/exam_list_page_dynamic.dart';
 import 'package:psc_exam/exam_page.dart';
 import 'package:psc_exam/dynamic_menu_page.dart';
+import 'registration_page.dart';
+import 'notification_permission_page.dart';
 import 'package:psc_exam/exam_review_page.dart';
 import 'package:psc_exam/google_sign.dart';
 import 'package:psc_exam/home_page.dart';
@@ -28,7 +30,6 @@ import 'theme_controller.dart';
 import 'exam_splash_page.dart'; // 🔥 Import ExamSplashPage
 import 'exam_story_page.dart';
 import 'keyword_search_page.dart';
-import 'registration_page.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'push_notification_service.dart';
 import 'ad_controller.dart';
@@ -128,6 +129,9 @@ class MyApp extends StatelessWidget {
 
         // 🎢 NAVIGATION SLIDE
         GetPage(name: '/navigationSlide', page: () => NavigationSlidePage()),
+
+        // 🔔 NOTIFICATION PERMISSION
+        GetPage(name: '/notificationPermission', page: () => NotificationPermissionPage()),
       ],
     );
   }

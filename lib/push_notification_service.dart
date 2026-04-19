@@ -4,6 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:permission_handler/permission_handler.dart';
 import 'app_config.dart';
 import 'auth_controller.dart';
 import 'exam_model.dart';
@@ -19,27 +20,18 @@ class PushNotificationService {
   static final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
   static RemoteMessage? coldStartMessage; // 🚀 To store message for SplashPage
+  static bool _initialized = false;
 
   static Future<void> initialize() async {
-    // 1. Request permissions for iOS and newer Android versions
-    NotificationSettings settings = await _firebaseMessaging.requestPermission(
+    if (_initialized) return;
+    _initialized = true;
+
+    // 1. Initial request (Standard)
+    await _firebaseMessaging.requestPermission(
       alert: true,
-      announcement: false,
       badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
       sound: true,
     );
-
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      // Permission granted
-    } else if (settings.authorizationStatus ==
-        AuthorizationStatus.provisional) {
-      // Provisional permission (iOS)
-    } else {
-      // Permission denied or not determined
-    }
 
     // 2. Initialize Local Notifications (For Foreground messages)
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -342,5 +334,29 @@ class PushNotificationService {
     } catch (_) {
       // Quietly ignore network failures in background
     }
+  }
+
+  // 🛡️ CHECK IF PERMISSION IS GRANTED
+  static Future<bool> hasPermission() async {
+    final status = await Permission.notification.status;
+    return status.isGranted || status.isProvisional;
+  }
+
+  // 🚀 REQUEST PERMISSION
+  static Future<bool> requestPermission() async {
+    final status = await Permission.notification.request();
+
+    if (status.isPermanentlyDenied) {
+      // If permanently denied, the system dialog won't show anymore.
+      // We return false, and the UI should prompt to open settings.
+      return false;
+    }
+
+    return status.isGranted || status.isProvisional;
+  }
+
+  // ⚙️ OPEN APP SETTINGS
+  static Future<void> openSettings() async {
+    await openAppSettings();
   }
 }
