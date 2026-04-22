@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:psc_exam/math_formula.dart';
 import 'package:psc_exam/paletee_bottom_sheet.dart';
 import 'package:psc_exam/test_controller.dart';
 import 'package:psc_exam/question_model.dart';
+import 'package:psc_exam/app_config.dart';
 
 class ExamPage extends StatefulWidget {
   ExamPage({super.key});
@@ -277,8 +279,9 @@ class _ExamPageState extends State<ExamPage> {
             ),
 
             // 🧭 FIXED NAVIGATION (Next/Previous)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            if (!AppConfig.showNextPreviousOnlyInWeb || kIsWeb)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
@@ -417,14 +420,22 @@ class _ExamPageState extends State<ExamPage> {
               ],
               border: Border.all(color: Colors.grey.shade200),
             ),
-            child: MathText(text: "Q${qIndex + 1}.  ${q.question}"),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                MathText(text: "Q${qIndex + 1}.  ${q.question}"),
+                _buildImage(q.questionImage),
+              ],
+            ),
           ),
           
           const SizedBox(height: 24),
           
           // Options List
-          ...q.options.where((o) => o.toString().trim().isNotEmpty).map((o) {
-            String optText = o.toString();
+          ...q.options.asMap().entries.where((e) => e.value.toString().trim().isNotEmpty).map((entry) {
+            int optIndex = entry.key;
+            String optText = entry.value.toString();
+            String? optImage = optIndex < q.optionImages.length ? q.optionImages[optIndex] : null;
             return Obx(() {
               final selectedAns = controller.answers[qIndex];
               final bool isSelected = selectedAns == optText;
@@ -463,7 +474,13 @@ class _ExamPageState extends State<ExamPage> {
                       ),
                       const SizedBox(width: 14),
                       Expanded(
-                        child: MathText(text: optText),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            MathText(text: optText),
+                            _buildImage(optImage),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -504,6 +521,59 @@ class _ExamPageState extends State<ExamPage> {
         ),
       );
     });
+  }
+
+  Widget _buildImage(String? imagePath) {
+    if (imagePath == null || imagePath.trim().isEmpty) return const SizedBox.shrink();
+    
+    String fullUrl = imagePath;
+    if (!fullUrl.startsWith('http')) {
+      final domain = AppConfig.baseUrl.split('/api/').first;
+      fullUrl = domain + (fullUrl.startsWith('/') ? fullUrl : '/$fullUrl');
+    }
+
+    return GestureDetector(
+      onTap: () {
+        Get.dialog(
+          Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.all(10),
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                InteractiveViewer(
+                  panEnabled: true,
+                  minScale: 1.0,
+                  maxScale: 4.0,
+                  child: Image.network(fullUrl, fit: BoxFit.contain),
+                ),
+                Positioned(
+                  top: -10,
+                  right: -10,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                    onPressed: () => Get.back(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(top: 12),
+        constraints: const BoxConstraints(maxHeight: 200),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.network(
+            fullUrl, 
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+          ),
+        ),
+      ),
+    );
   }
 }
 

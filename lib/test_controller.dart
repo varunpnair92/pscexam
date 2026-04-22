@@ -262,7 +262,9 @@ var resumeTimeLeft = 0.obs;
     for (int i = 0; i < questions.length; i++) {
       data[i.toString()] = {
         "question": questions[i].question,
+        "questionImage": questions[i].questionImage,
         "options": questions[i].options,
+        "optionImages": questions[i].optionImages,
         "selected": answers[i],
         "correct": questions[i].answer,
         "description": questions[i].description,
@@ -426,7 +428,7 @@ var resumeTimeLeft = 0.obs;
     status.clear();
     current.value = 0;
 
-    questions.value = qlist.map((q) {
+    questions.value = qlist.map<Question>((q) {
       List<String> opts = [];
 
       /// CASE 1: API option1 option2 option3 option4
@@ -469,7 +471,14 @@ var resumeTimeLeft = 0.obs;
       return Question(
         id: q["id"] ?? qlist.indexOf(q),
         question: q["question"],
+        questionImage: q["question_image"]?.toString(),
         options: opts,
+        optionImages: [
+          q["option1_image"]?.toString(),
+          q["option2_image"]?.toString(),
+          q["option3_image"]?.toString(),
+          q["option4_image"]?.toString(),
+        ],
         answer: q["answer"],
         description: q["description"] ?? "",
       );
