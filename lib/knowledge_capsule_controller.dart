@@ -1,49 +1,74 @@
+import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:math';
+import 'package:http/http.dart' as http;
+import 'app_config.dart';
 
 class KnowledgeCapsuleController extends GetxController {
   var isVisible = false.obs;
   var currentFact = "".obs;
-  
-  final List<String> _facts = [
-    "The first silent movie in Malayalam is 'Vigathakumaran' (1928).",
-    "The longest river in Kerala is Periyar (244 km).",
-    "The first district in India to achieve 100% literacy is Kottayam (1989).",
-    "The Father of Kerala Renaissance is Sree Narayana Guru.",
-    "The highest peak in Kerala is Anamudi (2,695m).",
-    "The first newspaper in Malayalam is 'Rajyasamacharam' (1847).",
-    "The only district in Kerala with no forest area is Alappuzha.",
-    "The first hydroelectric project in Kerala is Pallivasal.",
-    "The first solar-powered airport in the world is Cochin International Airport.",
-    "The 'Silicon Valley of Kerala' is Technopark, Thiruvananthapuram.",
-  ];
+  var isLoading = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    _checkDailyShow();
-  }
-
-  Future<void> _checkDailyShow() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String lastShownDate = prefs.getString('last_capsule_date') ?? "";
-    final String todayDate = DateTime.now().toIso8601String().substring(0, 10);
-
-    if (lastShownDate != todayDate) {
-      // It's a new day! Show the capsule.
-      _showCapsule(prefs, todayDate);
+    // 🛡️ Global Toggle Check
+    if (AppConfig.knowledgeCardActive) {
+      _initCapsule();
     }
   }
 
-  void _showCapsule(SharedPreferences prefs, String date) {
-    // Pick a random fact
-    currentFact.value = _facts[Random().nextInt(_facts.length)];
-    
+  Future<void> _initCapsule() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String lastDate = prefs.getString('last_capsule_date') ?? "";
+    final String today = DateTime.now().toIso8601String().substring(0, 10);
+
+    // 🕒 Step 1: Check if we have a fresh fact for today
+    if (lastDate == today) {
+      final String cachedFact = prefs.getString('last_capsule_content') ?? "";
+      if (cachedFact.isNotEmpty) {
+        currentFact.value = cachedFact;
+        _showWithDelay();
+        return;
+      }
+    }
+
+    // 🌐 Step 2: Fetch from API if cache is old or empty
+    await fetchCapsuleFromApi(prefs, today);
+  }
+
+  Future<void> fetchCapsuleFromApi(SharedPreferences prefs, String today) async {
+    try {
+      isLoading.value = true;
+      final res = await http.get(Uri.parse(AppConfig.activeKnowledgeScroll));
+      
+      if (res.statusCode == 200) {
+        final List data = jsonDecode(res.body);
+        if (data.isNotEmpty) {
+          // Take the first active fact
+          final fact = data.firstWhere((e) => e['active'] == true, orElse: () => data.first);
+          final String content = fact['content'] ?? "";
+          
+          if (content.isNotEmpty) {
+            currentFact.value = content;
+            // 💾 Cache it for 24 hours
+            await prefs.setString('last_capsule_date', today);
+            await prefs.setString('last_capsule_content', content);
+            _showWithDelay();
+          }
+        }
+      }
+    } catch (_) {
+      // Silently fail, fall back to last known or do nothing
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void _showWithDelay() {
     // Show after a small delay to let the home screen settle
     Future.delayed(const Duration(milliseconds: 800), () {
       isVisible.value = true;
-      prefs.setString('last_capsule_date', date);
     });
   }
 

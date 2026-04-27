@@ -11,7 +11,10 @@ class NotificationController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchNotifications();
+    // ⏳ Stagger loading to reduce startup peak server load
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      fetchNotifications();
+    });
   }
 
   Future<void> fetchNotifications() async {

@@ -5,6 +5,7 @@ class AppConfig {
 
   // ================= TOGGLES =================
   static const bool showNextPreviousOnlyInWeb = true;
+  static const bool knowledgeCardActive = true; // 🆕 Toggle for Knowledge Capsule
 
   // ================= EXAMS =================
   //static const String listExams = "${baseUrl}listexams/";
@@ -55,4 +56,7 @@ static const String updateQualification = "${baseUrl}update-qualification/";
 
   // ================= MULTIPLE COMBINED KEYWORD SEARCH =================
   static const String keywordMultipleCombinedSimilarWithKeyword = "${baseUrl}qbkeywordmultiplecombinedsimilar-with-keyword";
+
+  // ================= KNOWLEDGE CAPSULE =================
+  static const String activeKnowledgeScroll = "${baseUrl}active-knowledge-scroll/";
 }

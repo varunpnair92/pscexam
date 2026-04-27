@@ -54,7 +54,11 @@ class HomeController extends GetxController {
 
     fetchHomeData();
     loadLocalStats();
-    fetchUserStats();
+    
+    // ⏳ Stagger non-critical stats loading
+    Future.delayed(const Duration(seconds: 2), () {
+      fetchUserStats();
+    });
   }
 
   Future<void> fetchHomeData() async {
