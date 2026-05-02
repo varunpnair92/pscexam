@@ -126,7 +126,7 @@ class DynamicMenuPage extends StatelessWidget {
                                       child: Container(
                                         color: Colors.black.withOpacity(0.2),
                                         child: const Center(
-                                          child: Icon(Icons.lock_rounded, color: Colors.white70, size: 28),
+                                          child: Icon(Icons.lock_rounded, color: Colors.white70, size: 44),
                                         ),
                                       ),
                                     ),

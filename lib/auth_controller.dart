@@ -27,6 +27,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
   var courses = <int>[].obs; // 📚 ADD THIS
   var selectedCourseId = 0.obs; // 🎯 ADD THIS
   var selectedCourseName = "LDC".obs; // 🎯 ADD THIS
+  var subscriptionPlanName = "free".obs; // 💎 ADD THIS
   var isLoggedIn = false.obs;
 
   @override
@@ -76,6 +77,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     courses.value = (prefs.getStringList('courses') ?? []).map((e) => int.parse(e)).toList(); // 📚 ADD
     selectedCourseId.value = prefs.getInt('selectedCourseId') ?? 0; // 🎯 ADD
     selectedCourseName.value = prefs.getString('selectedCourseName') ?? "LDC"; // 🎯 ADD
+    subscriptionPlanName.value = prefs.getString('subscriptionPlanName') ?? "free"; // 💎 ADD
     isLoggedIn.value = prefs.getBool('isLoggedIn') ?? false;
 
     // 🔄 FRESH FETCH FROM SERVER (Each time app starts)
@@ -98,7 +100,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
   }
 
   // 🚀 Save to SharedPreferences (Enhanced)
-  Future<void> saveSessionExtra(int id, String user, String full, String type, String emailVal, String phoneVal, List<int> courseList) async {
+  Future<void> saveSessionExtra(int id, String user, String full, String type, String emailVal, String phoneVal, List<int> courseList, {String planName = "free"}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('userid', id);
     await prefs.setString('username', user);
@@ -107,6 +109,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     await prefs.setString('email', emailVal);
     await prefs.setString('phone', phoneVal);
     await prefs.setStringList('courses', courseList.map((e) => e.toString()).toList());
+    await prefs.setString('subscriptionPlanName', planName); // 💎 ADD
     
     // 🎯 Use existing selection or default to first
     if ((prefs.getInt('selectedCourseId') ?? 0) == 0 && courseList.isNotEmpty) {
@@ -123,6 +126,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     email.value = emailVal;
     phone.value = phoneVal;
     courses.value = courseList;
+    subscriptionPlanName.value = planName; // 💎 ADD
     isLoggedIn.value = true;
 
     // 🔔 Trigger FCM token registration
@@ -200,6 +204,9 @@ class AuthController extends GetxController with WidgetsBindingObserver {
         final String userPhone = profile['phone_number'] ?? "";
         final List<int> userCourses = List<int>.from(profile['courses'] ?? []);
 
+        final planDetails = data['subscription_plan_details'] ?? {};
+        final String planName = (planDetails['name'] ?? "free").toString().toLowerCase().trim();
+
         await saveSessionExtra(
           data['userid'] ?? 1,
           data['username'] ?? email,
@@ -208,6 +215,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
           email, // Use username as email
           userPhone,
           userCourses,
+          planName: planName,
         );
         // 🚀 Trigger Ad Popup 1 minute after successful login
         if (Get.isRegistered<AdController>()) {
@@ -245,6 +253,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     userType.value = "free";
     selectedCourseId.value = 0;
     selectedCourseName.value = "LDC";
+    subscriptionPlanName.value = "free";
     
     Get.offAllNamed('/login');
   }
@@ -263,12 +272,16 @@ class AuthController extends GetxController with WidgetsBindingObserver {
   bool canAccess(dynamic item) {
     if (item == null) return true;
 
-    // 1. Determine Item Access Type (handles Maps and Exam objects)
+    // 1. Determine User Plan (Tiered System)
+    final String userPlan = subscriptionPlanName.value.toLowerCase().trim();
+    if (userPlan.isEmpty) return false; // Lock everything if no plan
+
+    // 2. Determine Item Access Type and Plans
     String itemType = "free";
     bool isExplicitlyLocked = false;
+    List<dynamic> itemPlans = [];
 
     if (item is Map) {
-      // Check multiple possible key variations for broad compatibility
       final dynamic rawType = item['access_type'] ??
           item['accessType'] ??
           item['access_level'] ??
@@ -276,30 +289,42 @@ class AuthController extends GetxController with WidgetsBindingObserver {
           item['access'];
 
       itemType = (rawType ?? "free").toString().toLowerCase().trim();
-
-      // 🔥 Robust detection of 'locked' status in Maps (from JSON dynamic menus)
       isExplicitlyLocked = (item['locked'] == true ||
           item['locked'] == "true" ||
           item['locked'] == 1);
+      
+      itemPlans = item['plans'] ?? [];
     } else {
-      // For Exam objects or other custom objects
       try {
         itemType = (item.accessType).toString().toLowerCase().trim();
         isExplicitlyLocked = (item.locked == true);
+        // Attempt to get plans from custom objects if available
+        itemPlans = (item as dynamic).plans ?? [];
       } catch (_) {
         itemType = "free";
       }
     }
 
-    // 🔒 HIGH PRIORITY: If an item is explicitly locked, nobody can access it
+    // 🔒 HIGH PRIORITY: Explicitly locked
     if (isExplicitlyLocked) return false;
 
-    // 2. Determine User Role
-    final String role = userType.value.toLowerCase().trim();
-    // TRIAL or PAID users have access to all non-locked content
-    if (role == "trial" || role == "paid") return true;
+    // 🔒 HIGH PRIORITY: Explicitly locked
+    if (isExplicitlyLocked) return false;
 
-    // 3. Logic for free users: only "free" items are accessible
+    // 💎 TIERED ACCESS LOGIC (Multiple Plans Support)
+    // We check the 'plans' list first as the source of truth.
+    if (itemPlans.isNotEmpty) {
+      return itemPlans.any((p) {
+        final String pName = (p is Map ? p['name'] : p.toString()).toLowerCase().trim();
+        // Access granted if:
+        // 1. User's plan matches this plan (e.g. user is 'silver' and node has 'silver')
+        // 2. OR this is a 'free' plan node (accessible to all valid users)
+        return pName == userPlan || pName == "free";
+      });
+    }
+
+    // 3. Fallback: if no plans listed, check legacy access_type
+    // (If the user explicitly wants to ignore access_type, this can be removed later)
     return itemType == "free";
   }
 
