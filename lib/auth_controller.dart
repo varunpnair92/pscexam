@@ -312,20 +312,19 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     if (isExplicitlyLocked) return false;
 
     // 💎 TIERED ACCESS LOGIC (Multiple Plans Support)
-    // We check the 'plans' list first as the source of truth.
+    // 1. If the node has specific plans assigned, we must match one of them
     if (itemPlans.isNotEmpty) {
       return itemPlans.any((p) {
         final String pName = (p is Map ? p['name'] : p.toString()).toLowerCase().trim();
         // Access granted if:
-        // 1. User's plan matches this plan (e.g. user is 'silver' and node has 'silver')
-        // 2. OR this is a 'free' plan node (accessible to all valid users)
+        // - User's plan matches this plan (e.g. user is 'silver' and node has 'silver')
+        // - OR this is a 'free' plan node (accessible to all)
         return pName == userPlan || pName == "free";
       });
     }
 
-    // 3. Fallback: if no plans listed, check legacy access_type
-    // (If the user explicitly wants to ignore access_type, this can be removed later)
-    return itemType == "free";
+    // 2. NEW RULE: If NO plans are specified in the node, show it to ALL users
+    return true;
   }
 
   // 🔔 STANDARD PREMIUM ALERT
