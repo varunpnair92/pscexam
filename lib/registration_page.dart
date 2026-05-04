@@ -86,12 +86,16 @@ class _RegistrationPageState extends State<RegistrationPage> {
         final data = jsonDecode(response.body);
         final userData = data['user'] ?? data;
         
+        final planDetails = userData['subscription_plan_details'] ?? {};
+        final String planName = (planDetails['name'] ?? "free").toString().toLowerCase().trim();
+
         // Save session after successful registration
         await auth.saveSession(
           userData['userid'] ?? 1,
           userData['username'] ?? _email,
           userData['fullname'] ?? _fullNameController.text,
           userData['userType'] ?? "trial",
+          planName: planName,
         );
 
         Get.offAllNamed('/home');

@@ -95,8 +95,8 @@ class AuthController extends GetxController with WidgetsBindingObserver {
   }
 
   // 💾 Save to SharedPreferences (Legacy/Compact)
-  Future<void> saveSession(int id, String user, String full, String type) async {
-    return saveSessionExtra(id, user, full, type, user, "", []);
+  Future<void> saveSession(int id, String user, String full, String type, {String planName = "free"}) async {
+    return saveSessionExtra(id, user, full, type, user, "", [], planName: planName);
   }
 
   // 🚀 Save to SharedPreferences (Enhanced)

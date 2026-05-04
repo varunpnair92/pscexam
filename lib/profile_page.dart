@@ -88,7 +88,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         border: Border.all(color: Colors.white.withOpacity(0.3)),
                       ),
                       child: Obx(() => Text(
-                        auth.userType.value.toUpperCase(),
+                        auth.subscriptionPlanName.value.toUpperCase(),
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
                       )),
                     ),
