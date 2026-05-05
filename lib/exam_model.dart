@@ -7,6 +7,7 @@ class Exam {
   final String accessType; // 🔥 ADD THIS
   final String? instructions;
   final String? description;
+  final List<dynamic> plans; // 💎 Subscription Plans
 
   Exam({
     required this.id,
@@ -17,6 +18,7 @@ class Exam {
     required this.accessType, // 🔥 ADD THIS
     this.instructions,
     this.description,
+    this.plans = const [],
   });
 
   factory Exam.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class Exam {
       accessType: (json['access_type'] ?? json['accessType'] ?? "free").toString().toLowerCase(),
       instructions: json['instructions'],
       description: json['description'],
+      plans: json['plans'] ?? [],
     );
   }
 }
