@@ -84,6 +84,14 @@ class DynamicMenuController extends GetxController {
         return;
       }
 
+      if (navStr == 'parentNavigation') {
+        Get.toNamed('/parentNavigation', arguments: {
+          'keyword': item["keywords"] != null && item["keywords"].isNotEmpty ? item["keywords"].last : (item["keyword"] ?? title),
+          'title': title,
+        });
+        return;
+      }
+
       if ((navStr == 'dynamicExamList' || navStr == 'examstorypage') && urlStr.isNotEmpty) {
         Get.toNamed('/$navStr', arguments: {'endpoint': urlStr});
         return;

@@ -34,6 +34,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'push_notification_service.dart';
 import 'ad_controller.dart';
 import 'navigation_slide_page.dart';
+import 'parent_navigation_page.dart';
+
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -132,6 +134,9 @@ class MyApp extends StatelessWidget {
 
         // 🔔 NOTIFICATION PERMISSION
         GetPage(name: '/notificationPermission', page: () => NotificationPermissionPage()),
+
+        // 🌳 PARENT NAVIGATION
+        GetPage(name: '/parentNavigation', page: () => const ParentNavigationPage()),
       ],
     );
   }

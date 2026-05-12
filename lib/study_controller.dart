@@ -187,8 +187,23 @@ class StudyController extends GetxController {
     }
 
     final name = item["name"];
+    final List kws = item["keywords"] ?? [];
+    final String lastKeyword = kws.isNotEmpty ? kws.last : name;
+    final String navigation = (item["navigation"] ?? "").toString().trim();
+
+    if (navigation == "parentNavigation") {
+      Get.toNamed("/parentNavigation", arguments: {
+        "keyword": lastKeyword,
+        "title": name,
+      });
+      return;
+    }
 
     if (item["url"] != null && item["url"] != "") {
+      Get.toNamed('/parentNavigation', arguments: {
+        'keyword': lastKeyword,
+        'title': name,
+      });
       return;
     }
 
@@ -223,15 +238,7 @@ class StudyController extends GetxController {
       return;
     }
 
-    final navigation = (item["navigation"] ?? "").toString().trim();
-
-    List<String> keywords = [];
-    if (item["keywords"] != null) {
-      keywords = List<String>.from(item["keywords"]);
-    } else if (item["keyword"] != null) {
-      keywords = [item["keyword"].toString()];
-    }
-    String lastKeyword = keywords.isNotEmpty ? keywords.last : name;
+    List<String> keywords = kws.isNotEmpty ? List<String>.from(kws) : (item["keyword"] != null ? [item["keyword"].toString()] : [name]);
 
     if (keywords.isEmpty) {
       keywords = [name];
