@@ -1,7 +1,7 @@
 class AppConfig {
 
   // 🔥 Base API URL
-  static const String baseUrl = "http://13.61.184.75:5544/api/";
+  static const String baseUrl = "http://13.61.176.252:5544/api/";
 
   // ================= TOGGLES =================
   static const bool showNextPreviousOnlyInWeb = true;
