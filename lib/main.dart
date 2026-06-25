@@ -35,7 +35,7 @@ import 'push_notification_service.dart';
 import 'ad_controller.dart';
 import 'navigation_slide_page.dart';
 import 'parent_navigation_page.dart';
-
+import 'keyword_details_page.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -137,6 +137,9 @@ class MyApp extends StatelessWidget {
 
         // 🌳 PARENT NAVIGATION
         GetPage(name: '/parentNavigation', page: () => const ParentNavigationPage()),
+
+        // 🔎 KEYWORD DETAILS
+        GetPage(name: '/keywordDetails', page: () => KeywordDetailsPage()),
       ],
     );
   }

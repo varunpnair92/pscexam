@@ -59,4 +59,7 @@ static const String updateQualification = "${baseUrl}update-qualification/";
 
   // ================= KNOWLEDGE CAPSULE =================
   static const String activeKnowledgeScroll = "${baseUrl}active-knowledge-scroll/";
+
+  // ================= KEYWORD FULL DETAILS =================
+  static const String keywordFullDetails = "${baseUrl}keyword-full-details/";
 }
