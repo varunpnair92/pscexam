@@ -56,6 +56,7 @@ class KeywordDetailsPage extends StatelessWidget {
               final String keyword = data["keyword"] ?? "";
               final String manglish = data["keywordmanglish"] ?? "";
               final List characteristics = data["characteristics"] ?? [];
+              final List allQuestions = data["all_mapped_questions"] ?? [];
 
               return ListView(
                 padding: const EdgeInsets.all(16),
@@ -107,8 +108,6 @@ class KeywordDetailsPage extends StatelessWidget {
 
                   if (characteristics.isEmpty)
                     Text("No characteristics available.", style: TextStyle(color: Colors.grey.shade500)),
-
-                  final List allQuestions = data["all_mapped_questions"] ?? [];
 
                   ...characteristics.map((c) {
                     final String charName = c["characteristic_name"] ?? "";
