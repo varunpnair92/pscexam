@@ -108,17 +108,40 @@ class KeywordDetailsPage extends StatelessWidget {
                   if (characteristics.isEmpty)
                     Text("No characteristics available.", style: TextStyle(color: Colors.grey.shade500)),
 
+                  final List allQuestions = data["all_mapped_questions"] ?? [];
+
                   ...characteristics.map((c) {
                     final String charName = c["characteristic_name"] ?? "";
-                    final List nestedQuestions = c["questions"] ?? [];
                     
-                    // Rely strictly on the backend's mapping
+                    // Filter matching questions by ensuring the question text contains BOTH 
+                    // the characteristic name AND the main keyword.
                     final List<String> answers = [];
-                    for (var q in nestedQuestions) {
-                      if (q["answer"] != null && q["answer"].toString().trim().isNotEmpty) {
-                        final ans = q["answer"].toString().trim();
-                        if (!answers.contains(ans)) {
-                          answers.add(ans);
+                    if (charName.isNotEmpty && keyword.isNotEmpty) {
+                      for (var q in allQuestions) {
+                        final qText = (q["question"] ?? "").toString();
+                        final searchName = charName.replaceAll('?', '').trim();
+                        
+                        if (searchName.isNotEmpty && 
+                            qText.contains(searchName) && 
+                            qText.contains(keyword)) {
+                          
+                          final ans = (q["answer"] ?? "").toString().trim();
+                          if (ans.isNotEmpty && !answers.contains(ans)) {
+                            answers.add(ans);
+                          }
+                        }
+                      }
+                    }
+
+                    // Fallback to the nested API response if our strict mapping found nothing
+                    if (answers.isEmpty) {
+                      final List nestedQuestions = c["questions"] ?? [];
+                      for (var q in nestedQuestions) {
+                        if (q["answer"] != null && q["answer"].toString().trim().isNotEmpty) {
+                          final ans = q["answer"].toString().trim();
+                          if (!answers.contains(ans)) {
+                            answers.add(ans);
+                          }
                         }
                       }
                     }
