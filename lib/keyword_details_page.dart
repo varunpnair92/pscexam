@@ -108,14 +108,37 @@ class KeywordDetailsPage extends StatelessWidget {
                   if (characteristics.isEmpty)
                     Text("No characteristics available.", style: TextStyle(color: Colors.grey.shade500)),
 
+                  final List allQuestions = data["all_mapped_questions"] ?? [];
+
                   ...characteristics.map((c) {
                     final String charName = c["characteristic_name"] ?? "";
-                    final List questions = c["questions"] ?? [];
-                    // Extracting answers
+                    
+                    // 1. Try to find matching questions in all_mapped_questions based on the characteristic name
                     final List<String> answers = [];
-                    for (var q in questions) {
-                      if (q["answer"] != null && q["answer"].toString().trim().isNotEmpty) {
-                        answers.add(q["answer"].toString().trim());
+                    if (charName.isNotEmpty) {
+                      for (var q in allQuestions) {
+                        final qText = (q["question"] ?? "").toString();
+                        // Also remove any trailing question marks for better matching
+                        final searchName = charName.replaceAll('?', '').trim();
+                        if (searchName.isNotEmpty && qText.contains(searchName)) {
+                          final ans = (q["answer"] ?? "").toString().trim();
+                          if (ans.isNotEmpty && !answers.contains(ans)) {
+                            answers.add(ans);
+                          }
+                        }
+                      }
+                    }
+
+                    // 2. Fallback to the API's nested questions array if we didn't find any match
+                    if (answers.isEmpty) {
+                      final List nestedQuestions = c["questions"] ?? [];
+                      for (var q in nestedQuestions) {
+                        if (q["answer"] != null && q["answer"].toString().trim().isNotEmpty) {
+                          final ans = q["answer"].toString().trim();
+                          if (!answers.contains(ans)) {
+                            answers.add(ans);
+                          }
+                        }
                       }
                     }
                     
