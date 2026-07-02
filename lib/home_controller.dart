@@ -38,6 +38,8 @@ class HomeController extends GetxController {
   var totalQuestionsAttended = 0.obs;
   var totalCorrectAnswers = 0.obs;
   var questionSuccessRatio = 0.0.obs;
+  
+  var cumulativeTime = {}.obs;
 
   var statsLoading = true.obs;
 
@@ -170,6 +172,12 @@ class HomeController extends GetxController {
         totalCorrectAnswers.value = data['total_correct_answers'] ?? 0;
         questionSuccessRatio.value = (data['question_success_ratio'] ?? 0.0)
             .toDouble();
+            
+        if (data['cumulative_time'] != null && data['cumulative_time'] is Map) {
+          cumulativeTime.value = data['cumulative_time'];
+        } else {
+          cumulativeTime.clear();
+        }
       }
     } catch (_) {
     } finally {

@@ -41,6 +41,8 @@ class GlobalAnalysisPage extends StatelessWidget {
             children: [
               _buildGrowthHeader(ratio),
               const SizedBox(height: 24),
+              _buildTimeAnalysis(ctrl.cumulativeTime, attempted),
+              const SizedBox(height: 24),
               _buildQuestionStats(questionsAttended, correctAnswers, wrongAnswers, questionRatio),
               const SizedBox(height: 24),
               _buildStatsGrid(total, attempted, remaining, ratio),
@@ -89,6 +91,125 @@ class GlobalAnalysisPage extends StatelessWidget {
             ratio >= 70 ? "You are on track consistently! Keep it up 🔥" : "Keep studying, you'll reach your goal soon 🎯",
             style: const TextStyle(color: Colors.white, fontSize: 13),
           )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeAnalysis(Map timeData, int attempted) {
+    if (timeData.isEmpty) return const SizedBox.shrink();
+
+    int totalSec = 0;
+    if (timeData["Total"] is int) totalSec = timeData["Total"];
+    final int avgSec = attempted > 0 ? (totalSec ~/ attempted) : totalSec;
+    
+    // Find categories and sort
+    Map<String, int> categories = {};
+    timeData.forEach((key, value) {
+      if (key != "Total" && value is int) {
+        categories[key] = value;
+      }
+    });
+
+    String strongCategory = "None";
+    String weakCategory = "None";
+    
+    if (categories.isNotEmpty) {
+      var sortedCats = categories.entries.toList()
+        ..sort((a, b) => a.value.compareTo(b.value));
+        
+      strongCategory = sortedCats.first.key; // least time taken
+      weakCategory = sortedCats.last.key;    // most time taken
+    }
+
+    String formatTime(int sec) {
+      int m = sec ~/ 60;
+      int s = sec % 60;
+      if (m > 0) return "${m}m ${s}s";
+      return "${s}s";
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Time Analytics", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0D3320))),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _timeStatBox("Avg Exam Time", formatTime(avgSec), Icons.timer, Colors.blue),
+              _timeStatBox("Total Time", formatTime(totalSec), Icons.access_time_filled, Colors.orange),
+            ],
+          ),
+          if (categories.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(child: _categoryStrength("Strongest", strongCategory, Colors.green)),
+                const SizedBox(width: 12),
+                Expanded(child: _categoryStrength("Needs Work", weakCategory, Colors.red)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 12),
+            const Text("Category Breakdown", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+            const SizedBox(height: 12),
+            ...categories.entries.map((e) => Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(e.key, style: const TextStyle(color: Colors.black54)),
+                  Text(formatTime(e.value), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D3320))),
+                ],
+              ),
+            )),
+          ]
+        ],
+      ),
+    );
+  }
+
+  Widget _timeStatBox(String title, String value, IconData icon, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Text(title, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0D3320))),
+      ],
+    );
+  }
+
+  Widget _categoryStrength(String title, String cat, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+          const SizedBox(height: 4),
+          Text(cat, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
         ],
       ),
     );
@@ -202,7 +323,7 @@ class GlobalAnalysisPage extends StatelessWidget {
           BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -214,12 +335,14 @@ class GlobalAnalysisPage extends StatelessWidget {
                 decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
                 child: Icon(icon, color: color, size: 16),
               ),
-              const SizedBox(width: 8),
-              Text(title, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(title, style: TextStyle(color: Colors.grey.shade600, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF0D3320))),
+          const SizedBox(height: 6),
+          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0D3320))),
         ],
       ),
     );

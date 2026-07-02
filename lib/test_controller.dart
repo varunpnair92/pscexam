@@ -54,6 +54,9 @@ var resumeTimeLeft = 0.obs;
   var remainingSeconds = 0.obs;
   var totalSeconds = 0;
 
+  var totalTimeTaken = 0.obs;
+  var categoryTimeTaken = <String, int>{}.obs;
+
   bool isLocalExam = false;
 
   var marked = <int>[].obs;
@@ -144,6 +147,12 @@ var resumeTimeLeft = 0.obs;
     timer = Timer.periodic(Duration(seconds: 1), (t) async {
       if (remainingSeconds.value > 0) {
         remainingSeconds.value--;
+
+        totalTimeTaken.value++;
+        if (questions.isNotEmpty && current.value >= 0 && current.value < questions.length) {
+          String cat = questions[current.value].category;
+          categoryTimeTaken[cat] = (categoryTimeTaken[cat] ?? 0) + 1;
+        }
 
         // ⭐ KEEP YOUR FEATURE — save every second
         saveProgress();
@@ -281,6 +290,13 @@ var resumeTimeLeft = 0.obs;
 
     snapshot.value = snap;
 
+    Map<String, dynamic> timeData = {
+      "Total": totalTimeTaken.value,
+    };
+    categoryTimeTaken.forEach((key, value) {
+      timeData[key] = value;
+    });
+
     // 🔥 Send to server only for real exam
     if (!isLocalExam) {
       final response = await http.post(
@@ -291,8 +307,14 @@ var resumeTimeLeft = 0.obs;
           "examids": examId,
           "qresponse": snap,
           "mark": correct,
+          "time_taken": timeData,
         }),
       );
+
+      if (response.statusCode != 200) {
+        print("API ERROR: ${response.statusCode} - ${response.body}");
+        Get.snackbar("Error", "Failed to submit result to server");
+      }
 
       final prefs = await SharedPreferences.getInstance();
       int attempts = prefs.getInt("exam_${examId}_attempts") ?? 0;
@@ -327,6 +349,19 @@ var resumeTimeLeft = 0.obs;
     } else {
       snapshot.value = {};
     }
+
+    final timeData = data['time_taken'];
+    if (timeData != null && timeData is Map) {
+      if (timeData['Total'] != null) {
+        totalTimeTaken.value = timeData['Total'] as int;
+      }
+      categoryTimeTaken.clear();
+      timeData.forEach((key, value) {
+        if (key != 'Total' && value is int) {
+          categoryTimeTaken[key] = value;
+        }
+      });
+    }
   }
 }
 
@@ -350,6 +385,9 @@ var resumeTimeLeft = 0.obs;
 
     prefs.setInt("exam_${examId}_total", questions.length); // 🔥 SAVE TOTAL
     prefs.setInt("exam_${examId}_remainingSeconds", remainingSeconds.value);
+    
+    prefs.setInt("exam_${examId}_totalTimeTaken", totalTimeTaken.value);
+    prefs.setString("exam_${examId}_categoryTimeTaken", jsonEncode(categoryTimeTaken));
 
     // 🔥 Track last exam ID & name for global resume
     prefs.setString('last_exam_id', examId.toString());
@@ -372,6 +410,13 @@ var resumeTimeLeft = 0.obs;
 
     current.value = prefs.getInt("exam_${id}_current") ?? 0;
     remainingSeconds.value = prefs.getInt("exam_${id}_remainingSeconds") ?? 0;
+    totalTimeTaken.value = prefs.getInt("exam_${id}_totalTimeTaken") ?? 0;
+    
+    String? catTimeStr = prefs.getString("exam_${id}_categoryTimeTaken");
+    if (catTimeStr != null) {
+      Map<String, dynamic> map = jsonDecode(catTimeStr);
+      categoryTimeTaken.value = map.map((k, v) => MapEntry(k, v as int));
+    }
 
     // restore answers
     String? ansStr = prefs.getString("exam_${id}_answers");
@@ -412,6 +457,8 @@ var resumeTimeLeft = 0.obs;
     await prefs.remove("exam_${id}_answers");
     await prefs.remove("exam_${id}_status");
     await prefs.remove("exam_${id}_remainingSeconds");
+    await prefs.remove("exam_${id}_totalTimeTaken");
+    await prefs.remove("exam_${id}_categoryTimeTaken");
 
     if (Get.isRegistered<HomeController>()) {
       Get.find<HomeController>().loadLocalStats();
@@ -509,6 +556,8 @@ var resumeTimeLeft = 0.obs;
     answers.clear();
     status.clear();
     marked.clear();
+    totalTimeTaken.value = 0;
+    categoryTimeTaken.clear();
 
     current.value = 0;
     selectedCategory.value = "All";

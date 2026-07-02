@@ -1,5 +1,6 @@
 class Question {
   final int id;
+  final String category;
   final String question;
   final String? questionImage;
   final List<String> options;
@@ -9,6 +10,7 @@ class Question {
 
   Question({
     required this.id,
+    this.category = "Unknown",
     required this.question,
     this.questionImage,
     required this.options,
@@ -58,6 +60,7 @@ class Question {
 
     return Question(
       id: json['id'] ?? 0,
+      category: (json['category'] ?? "Unknown").toString(),
       question: (json['question'] ?? "No Question Text").toString(),
       questionImage: json['question_image']?.toString(),
       options: opts,

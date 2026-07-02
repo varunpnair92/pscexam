@@ -17,7 +17,7 @@ class AnalysisPage extends StatelessWidget {
         int wrong = controller.wrong;
         int unanswered = controller.notAttempted;
 
-        int timeTaken = controller.totalSeconds - controller.remainingSeconds.value;
+        int timeTaken = controller.totalTimeTaken.value;
         if (timeTaken < 0) timeTaken = 0;
         int perQuestionSec = controller.attempted > 0 ? timeTaken ~/ controller.attempted : 0;
 
@@ -162,6 +162,23 @@ class AnalysisPage extends StatelessWidget {
                           analyticsItem(Icons.timer, formatTime(timeTaken), "Total Time"),
                         ],
                       ),
+                      if (controller.categoryTimeTaken.isNotEmpty) ...[
+                        SizedBox(height: 24),
+                        Divider(),
+                        SizedBox(height: 12),
+                        Text("Time by Category", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        SizedBox(height: 12),
+                        ...controller.categoryTimeTaken.entries.map((e) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(e.key),
+                              Text(formatTime(e.value), style: TextStyle(fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        )),
+                      ]
                     ],
                   ),
                 ),
