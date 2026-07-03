@@ -50,8 +50,11 @@ class DynamicMenuController extends GetxController {
       if (data is List) {
         items.value = data;
       } else if (data is Map) {
-        // Automatically redirect to KeywordSummaryPage if the API returns a keyword summary response
-        if (data.containsKey('type') && (data['type'] == 'parent' || data['type'] == 'child') || data.containsKey('summary')) {
+        // Automatically redirect to KeywordSummaryPage if the API returns a keyword summary response or missing parameter error
+        bool isSummary = data.containsKey('type') && (data['type'] == 'parent' || data['type'] == 'child') || data.containsKey('summary');
+        bool isSummaryError = data.containsKey('error') && data['error'].toString().toLowerCase().contains('keyword');
+        
+        if (isSummary || isSummaryError) {
           String kw = keys.isNotEmpty ? keys.last : "summary";
           Get.offNamed('/keywordSummary', arguments: {'keyword': kw});
           return;
@@ -101,6 +104,16 @@ class DynamicMenuController extends GetxController {
     final String urlStr = item["url"]?.toString().trim() ?? '';
     
     print("navStr: '$navStr', urlStr: '$urlStr', title: '$title'");
+
+    // FORCE intercept if the url belongs to keyword summary (overrides bad 'navigation' config)
+    if (urlStr.toLowerCase().contains('keyword-search-summary') || urlStr.toLowerCase().contains('keywordsummary')) {
+      String kw = item["keyword"]?.toString() ?? title;
+      if (item["keywords"] != null && (item["keywords"] as List).isNotEmpty) {
+        kw = item["keywords"].last.toString();
+      }
+      Get.toNamed('/keywordSummary', arguments: {'keyword': kw});
+      return;
+    }
 
     if (navStr.isNotEmpty) {
       if (navStr == 'navigationSlide' || navStr == '/navigationSlide') {
