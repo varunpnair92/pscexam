@@ -97,6 +97,15 @@ class DynamicMenuController extends GetxController {
         return;
       }
 
+      if (navStr == 'keywordSummary' || navStr == '/keywordSummary') {
+        String kw = item["keyword"]?.toString() ?? title;
+        if (item["keywords"] != null && (item["keywords"] as List).isNotEmpty) {
+          kw = item["keywords"].last.toString();
+        }
+        Get.toNamed('/keywordSummary', arguments: {'keyword': kw});
+        return;
+      }
+
       String nav = navStr;
       if (!nav.startsWith('/')) nav = '/$nav';
 
@@ -137,6 +146,15 @@ class DynamicMenuController extends GetxController {
       keys.add(title);
       isSlideView.value = false;
       navStack.add(currentNav);
+      return;
+    }
+
+    if (item["url"] != null && item["url"].toString().contains('keyword-search-summary')) {
+      String kw = item["keyword"]?.toString() ?? title;
+      if (item["keywords"] != null && (item["keywords"] as List).isNotEmpty) {
+        kw = item["keywords"].last.toString();
+      }
+      Get.toNamed('/keywordSummary', arguments: {'keyword': kw});
       return;
     }
 

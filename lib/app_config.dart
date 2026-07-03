@@ -62,4 +62,7 @@ static const String updateQualification = "${baseUrl}update-qualification/";
 
   // ================= KEYWORD FULL DETAILS =================
   static const String keywordFullDetails = "${baseUrl}keyword-full-details/";
+
+  // ================= KEYWORD SUMMARY =================
+  static const String keywordSearchSummary = "${baseUrl}keyword-search-summary/";
 }
