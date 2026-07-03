@@ -42,10 +42,28 @@ class DynamicMenuController extends GetxController {
   }
 
   Future<void> fetchData(String url) async {
-    final fullUrl = AppConfig.baseUrl + url;
-    final res = await http.get(Uri.parse(fullUrl));
-    final data = jsonDecode(res.body);
-    items.value = data;
+    try {
+      final fullUrl = AppConfig.baseUrl + url;
+      final res = await http.get(Uri.parse(fullUrl));
+      final data = jsonDecode(res.body);
+      
+      if (data is List) {
+        items.value = data;
+      } else if (data is Map) {
+        if (data.containsKey('data') && data['data'] is List) {
+          items.value = data['data'];
+        } else if (data.containsKey('children') && data['children'] is List) {
+          items.value = data['children'];
+        } else {
+          items.value = [];
+        }
+      } else {
+        items.value = [];
+      }
+    } catch (e) {
+      print("DynamicMenuController fetch error: $e");
+      items.value = [];
+    }
   }
 
   String getTitle(dynamic item) {
