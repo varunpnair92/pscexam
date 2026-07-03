@@ -33,14 +33,14 @@ class KeywordSummaryController extends GetxController {
     currentKeyword.value = keyword;
     
     try {
-      print("Fetching summary for keyword: $keyword");
+     // print("Fetching summary for keyword: $keyword");
       final res = await http.get(
         Uri.parse("${AppConfig.keywordSearchSummary}?keyword=$keyword"),
         headers: {"Content-Type": "application/json"},
       ).timeout(const Duration(seconds: 10));
 
-      print("Response status: ${res.statusCode}");
-      print("Response body: ${res.body}");
+    //  print("Response status: ${res.statusCode}");
+    //  print("Response body: ${res.body}");
 
       if (res.statusCode == 200) {
         final decoded = jsonDecode(utf8.decode(res.bodyBytes));
@@ -63,14 +63,14 @@ class KeywordSummaryController extends GetxController {
         }
       } else {
         responseType.value = 'error';
-        print("Error: Failed to load results (${res.statusCode})");
+       // print("Error: Failed to load results (${res.statusCode})");
       }
     } catch (e) {
-      print("Error fetching summary: $e");
+    //  print("Error fetching summary: $e");
       responseType.value = 'error';
     } finally {
       isLoading.value = false;
-      print("isLoading set to false, responseType is ${responseType.value}");
+     // print("isLoading set to false, responseType is ${responseType.value}");
     }
   }
 

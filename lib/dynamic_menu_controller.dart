@@ -71,7 +71,7 @@ class DynamicMenuController extends GetxController {
         items.value = [];
       }
     } catch (e) {
-      print("DynamicMenuController fetch error: $e");
+     // print("DynamicMenuController fetch error: $e");
       items.value = [];
     }
   }
@@ -92,7 +92,7 @@ class DynamicMenuController extends GetxController {
   }
 
   Future<void> onTileTap(dynamic item) async {
-    print("onTileTap tapped item: $item");
+   // print("onTileTap tapped item: $item");
     final auth = AuthController.instance;
     if (!auth.canAccess(item)) {
       auth.showPremiumAlert();
@@ -103,7 +103,7 @@ class DynamicMenuController extends GetxController {
     final String navStr = item["navigation"]?.toString().trim() ?? '';
     final String urlStr = item["url"]?.toString().trim() ?? '';
     
-    print("navStr: '$navStr', urlStr: '$urlStr', title: '$title'");
+   // print("navStr: '$navStr', urlStr: '$urlStr', title: '$title'");
 
     // FORCE intercept if the url belongs to keyword summary (overrides bad 'navigation' config)
     if (urlStr.toLowerCase().contains('keyword-search-summary') || urlStr.toLowerCase().contains('keywordsummary')) {
