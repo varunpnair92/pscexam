@@ -50,6 +50,13 @@ class DynamicMenuController extends GetxController {
       if (data is List) {
         items.value = data;
       } else if (data is Map) {
+        // Automatically redirect to KeywordSummaryPage if the API returns a keyword summary response
+        if (data.containsKey('type') && (data['type'] == 'parent' || data['type'] == 'child') || data.containsKey('summary')) {
+          String kw = keys.isNotEmpty ? keys.last : "summary";
+          Get.offNamed('/keywordSummary', arguments: {'keyword': kw});
+          return;
+        }
+
         if (data.containsKey('data') && data['data'] is List) {
           items.value = data['data'];
         } else if (data.containsKey('children') && data['children'] is List) {
@@ -82,6 +89,7 @@ class DynamicMenuController extends GetxController {
   }
 
   Future<void> onTileTap(dynamic item) async {
+    print("onTileTap tapped item: $item");
     final auth = AuthController.instance;
     if (!auth.canAccess(item)) {
       auth.showPremiumAlert();
@@ -91,6 +99,8 @@ class DynamicMenuController extends GetxController {
     final String title = getTitle(item);
     final String navStr = item["navigation"]?.toString().trim() ?? '';
     final String urlStr = item["url"]?.toString().trim() ?? '';
+    
+    print("navStr: '$navStr', urlStr: '$urlStr', title: '$title'");
 
     if (navStr.isNotEmpty) {
       if (navStr == 'navigationSlide' || navStr == '/navigationSlide') {
@@ -115,7 +125,7 @@ class DynamicMenuController extends GetxController {
         return;
       }
 
-      if (navStr == 'keywordSummary' || navStr == '/keywordSummary') {
+      if (navStr.toLowerCase().contains('keywordsummary') || navStr.toLowerCase() == 'summary') {
         String kw = item["keyword"]?.toString() ?? title;
         if (item["keywords"] != null && (item["keywords"] as List).isNotEmpty) {
           kw = item["keywords"].last.toString();
@@ -167,7 +177,7 @@ class DynamicMenuController extends GetxController {
       return;
     }
 
-    if (item["url"] != null && item["url"].toString().contains('keyword-search-summary')) {
+    if (item["url"] != null && (item["url"].toString().toLowerCase().contains('keyword-search-summary') || item["url"].toString().toLowerCase().contains('keywordsummary'))) {
       String kw = item["keyword"]?.toString() ?? title;
       if (item["keywords"] != null && (item["keywords"] as List).isNotEmpty) {
         kw = item["keywords"].last.toString();
