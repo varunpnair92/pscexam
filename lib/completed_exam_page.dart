@@ -22,6 +22,14 @@ class ResultPage extends StatelessWidget {
     return "Needs Work";
   }
 
+  String formatTime(int sec) {
+    if (sec <= 0) return "0s";
+    int m = sec ~/ 60;
+    int s = sec % 60;
+    if (m > 0) return "${m}m ${s}s";
+    return "${s}s";
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,7 +110,7 @@ class ResultPage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            "${exam.mark}",
+                            "Mark: ${exam.mark}",
                             style: TextStyle(
                               color: scoreColor,
                               fontWeight: FontWeight.bold,
@@ -123,12 +131,12 @@ class ResultPage extends StatelessWidget {
 
                     const SizedBox(height: 10),
 
-                    /// ATTEMPT + GRADE
+                    /// ATTEMPT + TIME + GRADE
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Attempt ${exam.attempt}",
+                          "Attempt ${exam.attempt} • ⏱ ${formatTime(exam.totalTime)}",
                           style: const TextStyle(fontSize: 13),
                         ),
                         Text(

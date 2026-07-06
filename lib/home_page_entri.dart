@@ -111,7 +111,7 @@ class EntriHomePage extends StatelessWidget {
                 _menu(Icons.flash_on, "Daily", "/daily"),
                 _menu(Icons.bar_chart, "Result", "/result"),
                 _menu(Icons.show_chart, "Progress", "/progress"),
-                _menu(Icons.star, "Special", "/special"),
+                _menu(Icons.amp_stories, "Capsule", "/knowledgeCapsule"),
               ],
             ),
 
