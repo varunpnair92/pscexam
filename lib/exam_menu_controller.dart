@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'app_config.dart';
 import 'auth_controller.dart';
 import 'exam_model.dart';
+import 'tree_service.dart'; // 🔥 Import TreeService
 
 class ExamMenuController extends GetxController {
   String lastEndpoint = "";
@@ -39,10 +40,11 @@ class ExamMenuController extends GetxController {
     fetchTree();
   }
 
-  Future<void> fetchTree() async {
+  Future<void> fetchTree({bool force = false}) async {
     try {
-      final res = await http.get(Uri.parse(AppConfig.nodeall));
-      final data = jsonDecode(res.body);
+      await TreeService.instance.fetchTree(force: force);
+      if (TreeService.instance.fullTree.isEmpty) return;
+      final data = TreeService.instance.fullTree;
       fullTree.value = data;
       
       final String selectedCourse = AuthController.instance.selectedCourseName.value;

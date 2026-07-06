@@ -63,17 +63,17 @@ class HomePage extends StatelessWidget {
 
     switch (index.value) {
       case 0:
-        if (Get.isRegistered<HomeController>()) Get.find<HomeController>().fetchHomeData();
+        if (Get.isRegistered<HomeController>()) Get.find<HomeController>().fetchHomeData(force: force);
         if (Get.isRegistered<AdController>()) Get.find<AdController>().fetchAndShowAd(force: true);
         break;
       case 1:
-        if (Get.isRegistered<ExamMenuController>()) Get.find<ExamMenuController>().fetchTree();
+        if (Get.isRegistered<ExamMenuController>()) Get.find<ExamMenuController>().fetchTree(force: force);
         break;
       case 2:
-        if (Get.isRegistered<StoryMenuController>()) Get.find<StoryMenuController>().fetchTree();
+        if (Get.isRegistered<StoryMenuController>()) Get.find<StoryMenuController>().fetchTree(force: force);
         break;
       case 3:
-        if (Get.isRegistered<StudyController>()) Get.find<StudyController>().fetchTree();
+        if (Get.isRegistered<StudyController>()) Get.find<StudyController>().fetchTree(force: force);
         break;
     }
   }

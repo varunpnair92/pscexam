@@ -37,6 +37,7 @@ import 'navigation_slide_page.dart';
 import 'parent_navigation_page.dart';
 import 'keyword_details_page.dart';
 import 'keyword_summary_page.dart';
+import 'tree_service.dart'; // 🔥 Import TreeService
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -56,6 +57,9 @@ void main() async {
   
   // Initialize Push notifications in the background to prevent startup ANR
   PushNotificationService.initialize();
+
+  // 🔥 Initialize TreeService globally
+  Get.put(TreeService(), permanent: true);
 
   Get.put(TestController(), permanent: true);
   Get.put(NewsController(), permanent: true);

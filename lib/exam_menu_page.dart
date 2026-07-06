@@ -32,7 +32,7 @@ class ExamMenuPage extends StatelessWidget {
                   actions: [
                     IconButton(
                       icon: const Icon(Icons.refresh_rounded, color: AppTheme.textDark),
-                      onPressed: controller.fetchTree,
+                      onPressed: () => controller.fetchTree(force: true),
                     ),
                   ],
                 ),

@@ -5,6 +5,7 @@ import 'auth_controller.dart';
 import 'app_config.dart';
 import 'home_controller.dart';
 import 'test_controller.dart';
+import 'tree_service.dart'; // 🔥 Import TreeService
 
 class StudyController extends GetxController {
   /// FULL TREE
@@ -115,9 +116,9 @@ class StudyController extends GetxController {
   }
 
   /// LOAD TREE
-  Future<void> fetchTree() async {
-    final res = await http.get(Uri.parse(AppConfig.nodeall));
-    final data = jsonDecode(res.body);
+  Future<void> fetchTree({bool force = false}) async {
+    await TreeService.instance.fetchTree(force: force);
+    final data = TreeService.instance.fullTree;
 
     fullTree.value = data;
 

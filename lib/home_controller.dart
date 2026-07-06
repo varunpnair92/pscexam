@@ -9,6 +9,7 @@ import 'study_controller.dart';
 import 'news_controller.dart';
 import 'test_controller.dart';
 import 'exam_model.dart';
+import 'tree_service.dart'; // 🔥 Import TreeService
 
 class HomeController extends GetxController {
   // ─── Node tree data ───────────────────────────────────────────
@@ -63,12 +64,12 @@ class HomeController extends GetxController {
     });
   }
 
-  Future<void> fetchHomeData() async {
+  Future<void> fetchHomeData({bool force = false}) async {
     isLoading.value = true;
     try {
-      final res = await http.get(Uri.parse(AppConfig.nodeall));
-      if (res.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(res.body);
+      await TreeService.instance.fetchTree(force: force);
+      if (TreeService.instance.fullTree.isNotEmpty) {
+        final List<dynamic> data = TreeService.instance.fullTree;
 
         // 🎯 SAVE LIVE EXAMS NODE IF PRESENT
         final foundLiveExamNode = findNodeByName('LIVEEXAM', data) ?? findNodeByName('LIVE EXAMS', data);
