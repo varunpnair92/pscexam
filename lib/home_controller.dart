@@ -20,6 +20,7 @@ class HomeController extends GetxController {
   var studyTopics = [].obs;
   var boosterTopics = [].obs;
   var boosterSectionName = "Booster".obs; // 🎯 Dynamic
+  var extraDynamicCategories = <Map<String, dynamic>>[].obs; // 🎯 For unknown nodes
   var isLoading = true.obs;
 
   var liveExamsNode = {}.obs;
@@ -93,6 +94,7 @@ class HomeController extends GetxController {
           attemptCategories.clear();
           boosterTopics.clear();
           studyTopics.clear();
+          extraDynamicCategories.clear();
 
           for (var child in children) {
             final String cName = (child['name'] ?? "").toString().toUpperCase();
@@ -104,12 +106,18 @@ class HomeController extends GetxController {
               attemptCategories.value = child['children'] ?? [];
               attemptSectionName.value = child['name'] ?? "Attempts";
             } else if (cName.contains("BOOSTER")) {
-              boosterTopics.value = child['children'] ?? [];
+              boosterTopics.addAll(child['children'] ?? []);
               boosterSectionName.value = child['name'] ?? "Booster";
             } else if (cName.contains("STUDY")) {
               studyTopics.value = child['children'] ?? [];
             } else if (cName.contains("NEWS") || cName.contains("NEWSFEEDER")) {
               _handleNewsNode(child);
+            } else if (cName != "LIVEEXAM" && cName != "LIVE EXAMS" && !cName.contains("STORY")) {
+              // 🎯 Add any unhandled node as its own dynamic category
+              extraDynamicCategories.add({
+                'title': child['name'] ?? 'Extra',
+                'items': child['children'] ?? []
+              });
             }
           }
         } else {
@@ -121,13 +129,33 @@ class HomeController extends GetxController {
           if (gui1Node != null) attemptCategories.value = gui1Node['children'] ?? [];
 
           final boosterNode = findNodeByName('booster', data);
-          if (boosterNode != null) boosterTopics.value = boosterNode['children'] ?? [];
+          if (boosterNode != null) boosterTopics.addAll(boosterNode['children'] ?? []);
 
           final newsNode = findNodeByName('NEWS', data);
           if (newsNode != null) _handleNewsNode(newsNode);
 
           final studyRoot = data.firstWhereOrNull((e) => e['name'] != 'EXAM');
           if (studyRoot != null) studyTopics.value = studyRoot['children'] ?? [];
+
+          // 🎯 Fallback: find any node that wasn't mapped and add it to extra dynamic categories
+          for (var child in data) {
+            final String cName = (child['name'] ?? "").toString().toUpperCase();
+            if (!cName.contains("EXAM") && 
+                !cName.contains("GUI1") && 
+                !cName.contains("ATTEMPT") && 
+                !cName.contains("BOOSTER") && 
+                !cName.contains("STUDY") && 
+                !cName.contains("NEWS") && 
+                !cName.contains("NEWSFEEDER") &&
+                !cName.contains("STORY") &&
+                cName != "LIVEEXAM" && 
+                cName != "LIVE EXAMS") {
+              extraDynamicCategories.add({
+                'title': child['name'] ?? 'Extra',
+                'items': child['children'] ?? []
+              });
+            }
+          }
         }
       }
     } catch (_) {
@@ -283,7 +311,11 @@ class HomeController extends GetxController {
         routeName = '/$routeName';
       }
 
-      Get.toNamed(routeName, arguments: {"title": name, "keywords": keywords});
+      Get.toNamed(routeName, arguments: {
+        "title": name, 
+        "keywords": keywords,
+        "endpoint": url
+      });
     }
   }
 

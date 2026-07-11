@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'app_config.dart';
 import 'auth_controller.dart';
-import 'tree_service.dart'; // 🔥 Import TreeService
+import 'home_controller.dart';
 
 class StoryMenuController extends GetxController {
   var items = [].obs;
@@ -43,9 +43,9 @@ class StoryMenuController extends GetxController {
   Future<void> fetchTree({bool force = false}) async {
     isLoading.value = true;
     try {
-      await TreeService.instance.fetchTree(force: force);
-      if (TreeService.instance.fullTree.isNotEmpty) {
-        final List<dynamic> data = TreeService.instance.fullTree;
+      final res = await http.get(Uri.parse(AppConfig.nodeall));
+      if (res.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(res.body);
 
         // 🎯 1. FIND THE SELECTED COURSE NODE
         final auth = AuthController.instance;
@@ -119,21 +119,8 @@ class StoryMenuController extends GetxController {
       searchQuery.value = "";
       isSlideView.value = false;
     } else {
-      // Interactive story viewer
-      List<String> keywords = [];
-      if (item["keywords"] != null) {
-        keywords = List<String>.from(item["keywords"]);
-      } else if (item["keyword"] != null) {
-        keywords = [item["keyword"].toString()];
-      }
-      if (keywords.isEmpty) keywords = [name];
-
-      Get.toNamed('/story', arguments: {
-        "title": name,
-        "keywords": keywords,
-        "endpoint": item["url"] ?? "",
-        "access": item["access"], // Propagate for check in StoryController
-      });
+      // Delegate to HomeController for standard navigation rules
+      Get.find<HomeController>().navigateAttemptCategory(item);
     }
   }
 

@@ -11,6 +11,7 @@ import 'notification_overlay.dart';
 import 'knowledge_capsule_overlay.dart';
 import 'news_ticker_widget.dart';
 import 'booster_story_widget.dart';
+import 'dynamic_story_widget.dart';
 import 'psc_loading_logo.dart'; // 🔥 Import Logo
 import 'ui_utils.dart';
 import 'exam_model.dart';
@@ -76,6 +77,15 @@ class AppHomePage extends StatelessWidget {
                             const NewsTickerWidget(), // 📰 Flash News
                             const SizedBox(height: 4),
                             const BoosterStoryWidget(), // 🌟 Booster Stories
+                            ...ctrl.extraDynamicCategories.map((cat) {
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: DynamicStoryWidget(
+                                  title: cat['title'] ?? '',
+                                  items: cat['items'] ?? [],
+                                ),
+                              );
+                            }),
                             const SizedBox(height: 4),
                             _resumeCard(), // 🔥 Premium Green Resume Card
                             const SizedBox(height: 4),
@@ -98,6 +108,7 @@ class AppHomePage extends StatelessWidget {
                                 ),
                               ),
 
+                            /*
                             if (ctrl.examCategories.isNotEmpty)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 20),
@@ -112,6 +123,7 @@ class AppHomePage extends StatelessWidget {
                                   ),
                                 ),
                               ),
+                            */
 
                             _boxedSection(child: _quickActions()),
                             const SizedBox(height: 32),

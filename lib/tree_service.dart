@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'auth_controller.dart';
 import 'app_config.dart';
 
 class TreeService extends GetxService {
@@ -27,7 +28,11 @@ class TreeService extends GetxService {
     
     isLoading.value = true;
     try {
-      final res = await http.get(Uri.parse(AppConfig.nodeall));
+      final auth = AuthController.instance;
+      final userId = auth.userId.value;
+      final url = "${AppConfig.nodeall}?userid=$userId";
+      
+      final res = await http.get(Uri.parse(url));
       if (res.statusCode == 200) {
         fullTree.value = jsonDecode(res.body);
       }
