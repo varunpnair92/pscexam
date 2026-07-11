@@ -4,6 +4,9 @@ import 'package:psc_exam/auth_controller.dart';
 import 'theme_controller.dart';
 import 'home_controller.dart';
 import 'test_controller.dart';
+import 'exam_menu_controller.dart';
+import 'story_menu_controller.dart';
+import 'study_controller.dart';
 import 'image_slider_controller.dart';
 import 'notification_controller.dart';
 import 'notification_overlay.dart';
@@ -272,6 +275,17 @@ class AppHomePage extends StatelessWidget {
         ],
       ),
       actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh, color: Colors.white),
+          onPressed: () async {
+            final auth = AuthController.instance;
+            await auth.fetchUserDetails(auth.userName.value);
+            if (Get.isRegistered<HomeController>()) Get.find<HomeController>().fetchHomeData(force: true);
+            if (Get.isRegistered<ExamMenuController>()) Get.find<ExamMenuController>().fetchTree(force: true);
+            if (Get.isRegistered<StoryMenuController>()) Get.find<StoryMenuController>().fetchTree(force: true);
+            if (Get.isRegistered<StudyController>()) Get.find<StudyController>().fetchTree(force: true);
+          },
+        ),
         Obx(() => IconButton(
               icon: Icon(
                 ThemeController.instance.isDarkMode.value

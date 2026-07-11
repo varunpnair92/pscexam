@@ -65,7 +65,12 @@ class HomeController extends GetxController {
     });
   }
 
+  String _lastParsedCourse = "";
+
   Future<void> fetchHomeData({bool force = false}) async {
+    final String currentCourse = AuthController.instance.selectedCourseName.value;
+    if (!force && _lastParsedCourse == currentCourse && TreeService.instance.fullTree.isNotEmpty) return;
+
     isLoading.value = true;
     try {
       await TreeService.instance.fetchTree(force: force);
@@ -100,16 +105,16 @@ class HomeController extends GetxController {
             final String cName = (child['name'] ?? "").toString().toUpperCase();
 
             if (cName.contains("EXAM")) {
-              examCategories.value = child['children'] ?? [];
+              examCategories.value = List.from(child['children'] ?? []);
               examSectionName.value = child['name'] ?? "Exam Categories";
             } else if (cName.contains("GUI1") || cName.contains("ATTEMPT")) {
-              attemptCategories.value = child['children'] ?? [];
+              attemptCategories.value = List.from(child['children'] ?? []);
               attemptSectionName.value = child['name'] ?? "Attempts";
             } else if (cName.contains("BOOSTER")) {
               boosterTopics.addAll(child['children'] ?? []);
               boosterSectionName.value = child['name'] ?? "Booster";
             } else if (cName.contains("STUDY")) {
-              studyTopics.value = child['children'] ?? [];
+              studyTopics.value = List.from(child['children'] ?? []);
             } else if (cName.contains("NEWS") || cName.contains("NEWSFEEDER")) {
               _handleNewsNode(child);
             } else if (cName != "LIVEEXAM" && cName != "LIVE EXAMS" && !cName.contains("STORY")) {
@@ -123,10 +128,10 @@ class HomeController extends GetxController {
         } else {
           // ─── FALLBACK TO GLOBAL SEARCH (PREVIOUS LOGIC) ───
           final examNode = data.firstWhereOrNull((e) => e['name'] == 'EXAM');
-          if (examNode != null) examCategories.value = examNode['children'] ?? [];
+          if (examNode != null) examCategories.value = List.from(examNode['children'] ?? []);
 
           final gui1Node = data.firstWhereOrNull((e) => e['name'] == 'GUI1');
-          if (gui1Node != null) attemptCategories.value = gui1Node['children'] ?? [];
+          if (gui1Node != null) attemptCategories.value = List.from(gui1Node['children'] ?? []);
 
           final boosterNode = findNodeByName('booster', data);
           if (boosterNode != null) boosterTopics.addAll(boosterNode['children'] ?? []);
@@ -135,7 +140,7 @@ class HomeController extends GetxController {
           if (newsNode != null) _handleNewsNode(newsNode);
 
           final studyRoot = data.firstWhereOrNull((e) => e['name'] != 'EXAM');
-          if (studyRoot != null) studyTopics.value = studyRoot['children'] ?? [];
+          if (studyRoot != null) studyTopics.value = List.from(studyRoot['children'] ?? []);
 
           // 🎯 Fallback: find any node that wasn't mapped and add it to extra dynamic categories
           for (var child in data) {
@@ -157,8 +162,10 @@ class HomeController extends GetxController {
             }
           }
         }
+        _lastParsedCourse = currentCourse;
       }
-    } catch (_) {
+    } catch (e) {
+      print("fetchHomeData Error: $e");
     } finally {
       isLoading.value = false;
     }
