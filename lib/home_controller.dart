@@ -250,6 +250,24 @@ class HomeController extends GetxController {
     final name = (item['name'] ?? 'Browse').toString();
 
     // 0. EXPLICIT NAVIGATION TARGETS (Priority)
+    if (nav.toLowerCase().contains('timeline') || url.toLowerCase().contains('keywordtimeline')) {
+      List<String> keywords = [];
+      if (item["keywords"] != null) {
+        keywords = List<String>.from(item["keywords"]);
+      } else if (item["keyword"] != null) {
+        keywords = [item["keyword"].toString()];
+      }
+      Map<String, dynamic> args = {'title': name, 'endpoint': url};
+      if (keywords.isNotEmpty) {
+        String kw = keywords.last.trim();
+        if (kw.toLowerCase() != 'timeline' && kw.toLowerCase() != '/timeline') {
+          args['keyword'] = kw;
+        }
+      }
+      Get.toNamed('/timeline', arguments: args);
+      return;
+    }
+
     if (nav == 'navigationSlide' || nav == '/navigationSlide') {
       Get.toNamed('/navigationSlide', arguments: {
         'items': children,

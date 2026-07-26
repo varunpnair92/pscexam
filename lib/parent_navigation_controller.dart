@@ -57,6 +57,18 @@ class ParentNavigationController extends GetxController {
   }
 
   void onNodeTap(ParentNavigationNode node) {
+    if (node.navigation != null && node.navigation!.toLowerCase().contains('timeline')) {
+      Map<String, dynamic> args = {'title': node.name};
+      if (node.keywords != null && node.keywords!.isNotEmpty) {
+        String kw = node.keywords!.last.trim();
+        if (kw.toLowerCase() != 'timeline' && kw.toLowerCase() != '/timeline') {
+          args['keyword'] = kw;
+        }
+      }
+      Get.toNamed('/timeline', arguments: args);
+      return;
+    }
+
     Map<String, dynamic> routeArgs = {
       "title": node.name,
       "keywords": node.keywords ?? [node.name],

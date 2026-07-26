@@ -39,6 +39,7 @@ import 'keyword_details_page.dart';
 import 'keyword_summary_page.dart';
 import 'tree_service.dart'; // 🔥 Import TreeService
 import 'keyword_summary_capsule_page.dart';
+import 'timeline_page.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -152,6 +153,9 @@ class MyApp extends StatelessWidget {
         
         // 🧠 KNOWLEDGE CAPSULE
         GetPage(name: '/knowledgeCapsule', page: () => KeywordSummaryKnowledgeCapsulePage()),
+
+        // ⏳ TIMELINE
+        GetPage(name: '/timeline', page: () => const TimelinePage()),
       ],
     );
   }

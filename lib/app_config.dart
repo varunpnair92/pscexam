@@ -68,4 +68,7 @@ static const String updateQualification = "${baseUrl}update-qualification/";
 
   // ================= KEYWORD SUMMARY KNOWLEDGE CAPSULE =================
   static const String keywordSummaryKnowledgeCapsule = "${baseUrl}keyword-summary-knowledge-capsule/";
+
+  // ================= KEYWORD TIMELINE =================
+  static const String keywordTimeline = "${baseUrl}keywordtimeline/";
 }

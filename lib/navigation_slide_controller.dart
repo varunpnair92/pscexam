@@ -78,6 +78,24 @@ class NavigationSlideController extends GetxController {
     final String navStr = item["navigation"]?.toString().trim() ?? '';
     final String urlStr = item["url"]?.toString().trim() ?? '';
 
+    if (navStr.toLowerCase().contains('timeline') || urlStr.toLowerCase().contains('keywordtimeline')) {
+      List<String> keywords = [];
+      if (item["keywords"] != null) {
+        keywords = List<String>.from(item["keywords"]);
+      } else if (item["keyword"] != null) {
+        keywords = [item["keyword"].toString()];
+      }
+      Map<String, dynamic> args = {'title': title, 'endpoint': urlStr};
+      if (keywords.isNotEmpty) {
+        String kw = keywords.last.trim();
+        if (kw.toLowerCase() != 'timeline' && kw.toLowerCase() != '/timeline') {
+          args['keyword'] = kw;
+        }
+      }
+      Get.toNamed('/timeline', arguments: args);
+      return;
+    }
+
     // 1. Children -> Open another NavigationSlide or DynamicMenu
     if (item["children"] != null && item["children"].isNotEmpty) {
       Get.toNamed('/navigationSlide', arguments: {

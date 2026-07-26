@@ -82,6 +82,19 @@ class ExamMenuController extends GetxController {
     final String navStr = (item['navigation'] ?? '').toString().trim();
     final String nav = navStr;
 
+    if (navStr.toLowerCase().contains('timeline')) {
+      String? kw = item["keyword"]?.toString();
+      if (item["keywords"] != null && (item["keywords"] as List).isNotEmpty) {
+        kw = (item["keywords"] as List).last.toString();
+      }
+      Map<String, dynamic> args = {'title': name, 'endpoint': item["url"]};
+      if (kw != null && kw.trim().isNotEmpty && kw.trim().toLowerCase() != 'timeline') {
+        args['keyword'] = kw.trim();
+      }
+      Get.toNamed('/timeline', arguments: args);
+      return;
+    }
+
     if (navStr == 'navigationSlide' || navStr == '/navigationSlide') {
       stack.add(items.toList());
       slideStack.add(isSlideView.value);
