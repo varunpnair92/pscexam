@@ -84,6 +84,8 @@ class AppTheme {
     required String hintText,
     required TextEditingController controller,
     VoidCallback? onClear,
+    ValueChanged<String>? onSubmitted,
+    VoidCallback? onSearchTap,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -100,16 +102,66 @@ class AppTheme {
         child: TextField(
           controller: controller,
           onChanged: onChanged,
+          textInputAction: (onSubmitted != null || onSearchTap != null)
+              ? TextInputAction.search
+              : TextInputAction.done,
+          onSubmitted: (val) {
+            FocusManager.instance.primaryFocus?.unfocus();
+            if (onSubmitted != null) {
+              onSubmitted(val);
+            } else if (onSearchTap != null) {
+              onSearchTap();
+            }
+          },
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-            prefixIcon: const Icon(Icons.search_rounded, color: primary, size: 20),
-            suffixIcon: controller.text.isNotEmpty
+            prefixIcon: (onSearchTap != null || onSubmitted != null)
                 ? IconButton(
-                    icon: const Icon(Icons.close_rounded, color: Colors.grey, size: 18),
-                    onPressed: onClear,
+                    icon: const Icon(Icons.search_rounded, color: primary, size: 20),
+                    onPressed: () {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      if (onSearchTap != null) {
+                        onSearchTap();
+                      } else if (onSubmitted != null) {
+                        onSubmitted(controller.text);
+                      }
+                    },
                   )
-                : null,
+                : const Icon(Icons.search_rounded, color: primary, size: 20),
+            suffixIcon: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: controller,
+              builder: (context, value, child) {
+                final hasText = value.text.isNotEmpty;
+                final showSearchBtn = onSearchTap != null || onSubmitted != null;
+
+                if (!hasText && !showSearchBtn) return const SizedBox.shrink();
+
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (hasText && onClear != null)
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, color: Colors.grey, size: 18),
+                        onPressed: onClear,
+                      ),
+                    if (showSearchBtn)
+                      IconButton(
+                        icon: const Icon(Icons.arrow_forward_rounded, color: primary, size: 20),
+                        tooltip: "Search",
+                        onPressed: () {
+                          FocusManager.instance.primaryFocus?.unfocus();
+                          if (onSearchTap != null) {
+                            onSearchTap();
+                          } else if (onSubmitted != null) {
+                            onSubmitted(controller.text);
+                          }
+                        },
+                      ),
+                  ],
+                );
+              },
+            ),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 13),
           ),

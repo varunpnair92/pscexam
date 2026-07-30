@@ -7,31 +7,87 @@ class KeywordSearchController extends GetxController {
   var isLoading = false.obs;
   var questions = [].obs;
   
-  // ─── History Management ───
+  // ─── History & Keywords Management ───
   var searchHistory = <String>[].obs;
-  var currentKeyword = "".obs;
+  var keywordsList = <String>[].obs;
+  var selectedKeyword = "".obs; // empty string = combined mode (all keywords)
 
   @override
   void onInit() {
     super.onInit();
     final args = Get.arguments;
     if (args != null && args["keyword"] != null) {
-      String kw = args["keyword"];
-      searchHistory.add(kw);
-      currentKeyword.value = kw;
-      fetchQuestions(kw);
+      String rawKw = args["keyword"].toString();
+      processSearchQuery(rawKw);
     }
   }
 
-  Future<void> fetchQuestions(String keyword) async {
-    isLoading.value = true;
-    currentKeyword.value = keyword;
+  void processSearchQuery(String query) {
+    if (query.trim().isEmpty) return;
+
+    List<String> parsedKws = query
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+
+    if (parsedKws.isEmpty) return;
+
+    for (String kw in parsedKws) {
+      if (!keywordsList.any((k) => k.toLowerCase() == kw.toLowerCase())) {
+        keywordsList.add(kw);
+      }
+    }
     
+    if (!searchHistory.contains(query)) {
+      searchHistory.add(query);
+    }
+    
+    selectedKeyword.value = "";
+    fetchQuestions();
+  }
+
+  void selectKeywordTile(String keyword) {
+    String trimmed = keyword.trim();
+    if (trimmed.isEmpty) {
+      selectedKeyword.value = "";
+    } else if (selectedKeyword.value.toLowerCase() == trimmed.toLowerCase()) {
+      // Toggle off to combined mode if tapped again
+      selectedKeyword.value = "";
+    } else {
+      selectedKeyword.value = trimmed;
+    }
+    fetchQuestions();
+  }
+
+  void removeKeywordTile(String keyword) {
+    String trimmed = keyword.trim();
+    keywordsList.removeWhere((k) => k.toLowerCase() == trimmed.toLowerCase());
+    
+    if (selectedKeyword.value.toLowerCase() == trimmed.toLowerCase()) {
+      selectedKeyword.value = "";
+    }
+
+    fetchQuestions();
+  }
+
+  Future<void> fetchQuestions() async {
+    if (keywordsList.isEmpty) {
+      questions.clear();
+      return;
+    }
+
+    isLoading.value = true;
+    
+    List<String> targetKeywords = selectedKeyword.value.isNotEmpty
+        ? [selectedKeyword.value]
+        : keywordsList.toList();
+
     try {
       final res = await http.post(
         Uri.parse(AppConfig.keywordMultipleCombinedSimilarWithKeyword),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"keywords": [keyword]}),
+        body: jsonEncode({"keywords": targetKeywords}),
       );
 
       if (res.statusCode == 200) {
@@ -49,21 +105,17 @@ class KeywordSearchController extends GetxController {
   }
 
   void onHashtagTap(String keyword) {
-    if (keyword.trim().isEmpty) return;
+    String trimmed = keyword.trim();
+    if (trimmed.isEmpty) return;
     
-    // If it's already the current keyword, do nothing
-    if (currentKeyword.value == keyword) return;
-
-    searchHistory.add(keyword);
-    fetchQuestions(keyword);
+    if (!keywordsList.any((k) => k.toLowerCase() == trimmed.toLowerCase())) {
+      keywordsList.add(trimmed);
+    }
+    selectedKeyword.value = trimmed;
+    fetchQuestions();
   }
 
   void handleBack() {
-    if (searchHistory.length > 1) {
-      searchHistory.removeLast();
-      fetchQuestions(searchHistory.last);
-    } else {
-      Get.back();
-    }
+    Get.back();
   }
 }

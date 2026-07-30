@@ -23,16 +23,28 @@ class KeywordSearchPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: _textDark, size: 20),
           onPressed: ctrl.handleBack,
         ),
-        title: Obx(() => Text(
-          ctrl.currentKeyword.value,
-          style: const TextStyle(color: _textDark, fontWeight: FontWeight.bold, fontSize: 18),
-        )),
+        title: Obx(() {
+          if (ctrl.keywordsList.isEmpty) {
+            return const Text("Keyword Search", style: TextStyle(color: _textDark, fontWeight: FontWeight.bold, fontSize: 16));
+          }
+          if (ctrl.selectedKeyword.value.isNotEmpty) {
+            return Text(ctrl.selectedKeyword.value, style: const TextStyle(color: _textDark, fontWeight: FontWeight.bold, fontSize: 16));
+          }
+          return Text(
+            ctrl.keywordsList.join(", "),
+            style: const TextStyle(color: _textDark, fontWeight: FontWeight.bold, fontSize: 16),
+            overflow: TextOverflow.ellipsis,
+          );
+        }),
         centerTitle: true,
       ),
       body: Column(
         children: [
           // ── Search bar to initiate new searches ──
           _searchBar(),
+
+          // ── Keyword Tiles for Multiple Keywords ──
+          _keywordTiles(),
           
           Expanded(
             child: Obx(() {
@@ -74,9 +86,9 @@ class KeywordSearchPage extends StatelessWidget {
   }
 
   Widget _searchBar() {
-    final TextEditingController _textCtrl = TextEditingController();
+    final TextEditingController textCtrl = TextEditingController();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Container(
         height: 50,
         decoration: BoxDecoration(
@@ -85,24 +97,173 @@ class KeywordSearchPage extends StatelessWidget {
           border: Border.all(color: _green1.withOpacity(0.12), width: 1.5),
         ),
         child: TextField(
-          controller: _textCtrl,
+          controller: textCtrl,
           textInputAction: TextInputAction.search,
           onSubmitted: (val) {
             if (val.trim().isNotEmpty) {
-              ctrl.onHashtagTap(val.trim());
-              _textCtrl.clear();
+              ctrl.processSearchQuery(val.trim());
+              textCtrl.clear();
             }
           },
           decoration: InputDecoration(
-            hintText: "Search for topics...",
-            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+            hintText: "Search topics (e.g. Kerala, PSC)...",
+            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
             prefixIcon: const Icon(Icons.search_rounded, color: _green1, size: 20),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.arrow_forward_rounded, color: _green1, size: 20),
+              onPressed: () {
+                if (textCtrl.text.trim().isNotEmpty) {
+                  ctrl.processSearchQuery(textCtrl.text.trim());
+                  textCtrl.clear();
+                }
+              },
+            ),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 14),
           ),
         ),
       ),
     );
+  }
+
+  Widget _keywordTiles() {
+    return Obx(() {
+      if (ctrl.keywordsList.isEmpty) {
+        return const SizedBox.shrink();
+      }
+
+      final showAllChip = ctrl.keywordsList.length > 1;
+      final isAllSelected = ctrl.selectedKeyword.value.isEmpty;
+      final totalItems = ctrl.keywordsList.length + (showAllChip ? 1 : 0);
+
+      return Container(
+        height: 40,
+        margin: const EdgeInsets.only(bottom: 8),
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          scrollDirection: Axis.horizontal,
+          itemCount: totalItems,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (context, index) {
+            if (showAllChip && index == 0) {
+              return GestureDetector(
+                onTap: () => ctrl.selectKeywordTile(""),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isAllSelected ? _green1 : _bg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isAllSelected ? _green1 : _green1.withOpacity(0.3),
+                      width: isAllSelected ? 1.5 : 1,
+                    ),
+                    boxShadow: isAllSelected
+                        ? [
+                            BoxShadow(
+                              color: _green1.withOpacity(0.25),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.done_all_rounded,
+                        size: 15,
+                        color: isAllSelected ? Colors.white : _green1,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "All Topics",
+                        style: TextStyle(
+                          color: isAllSelected ? Colors.white : _textDark,
+                          fontWeight: isAllSelected ? FontWeight.bold : FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            final kwIndex = showAllChip ? index - 1 : index;
+            final kw = ctrl.keywordsList[kwIndex];
+            final isSelected = kw.toLowerCase() == ctrl.selectedKeyword.value.toLowerCase();
+
+            return Container(
+              decoration: BoxDecoration(
+                color: isSelected ? _green1 : _green1.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected ? _green1 : _green1.withOpacity(0.3),
+                  width: isSelected ? 1.5 : 1,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: _green1.withOpacity(0.25),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ]
+                    : [],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () => ctrl.selectKeywordTile(kw),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isSelected ? Icons.check_circle_rounded : Icons.label_rounded,
+                            size: 14,
+                            color: isSelected ? Colors.white : _green1,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            kw,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : _textDark,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => ctrl.removeKeywordTile(kw),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 6, left: 2),
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.white.withOpacity(0.25) : Colors.red.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 12,
+                        color: isSelected ? Colors.white : Colors.red.shade400,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+    });
   }
 }
 

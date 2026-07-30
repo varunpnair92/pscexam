@@ -41,6 +41,8 @@ class TimelinePage extends StatelessWidget {
                       }
                     },
                     onClear: ctrl.clearSearch,
+                    onSubmitted: (query) => ctrl.onSearchSubmit(query),
+                    onSearchTap: () => ctrl.onSearchSubmit(ctrl.searchCtrl.text),
                   );
                 }),
 
