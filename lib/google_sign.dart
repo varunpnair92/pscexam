@@ -30,10 +30,27 @@ class LoginPage extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.school_rounded,
-                      size: 100,
-                      color: Colors.white,
+                    Container(
+                      width: 110,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(55),
+                        child: Image.asset(
+                          'assets/psc_logo.jpg',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                     SizedBox(height: 20),
                     Text(

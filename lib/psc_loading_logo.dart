@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 
 class PSCLoadingLogo extends StatefulWidget {
   final double size;
@@ -56,7 +55,6 @@ class _PSCLoadingLogoState extends State<PSCLoadingLogo>
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF1B8A4E); // Deep Green
-    const secondaryColor = Color(0xFF27AE60); // Mid Green
     final activeColor = widget.color ?? primaryColor;
 
     return Center(
@@ -127,39 +125,31 @@ class _PSCLoadingLogoState extends State<PSCLoadingLogo>
               ),
             ),
 
-            // Main Logo Text
+            // Main Emblem Image
             ScaleTransition(
               scale: _scaleAnimation,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'PSC',
-                    style: TextStyle(
-                      color: activeColor,
-                      fontSize: widget.size * 0.35,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2,
-                      height: 0.9,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.1),
-                          offset: const Offset(2, 2),
-                          blurRadius: 4,
-                        ),
-                      ],
+              child: Container(
+                width: widget.size * 0.85,
+                height: widget.size * 0.85,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 4),
                     ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(widget.size * 0.85),
+                  child: Image.asset(
+                    'assets/psc_logo.jpg',
+                    fit: BoxFit.cover,
                   ),
-                  Text(
-                    'ONLINE',
-                    style: TextStyle(
-                      color: secondaryColor,
-                      fontSize: widget.size * 0.12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 4,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ],

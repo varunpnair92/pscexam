@@ -235,6 +235,23 @@ class AppHomePage extends StatelessWidget {
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: Image.asset(
+                'assets/psc_logo.jpg',
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           const Text(
             'PSC Online',
             style: TextStyle(
