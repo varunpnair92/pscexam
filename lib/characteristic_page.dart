@@ -22,10 +22,18 @@ class CharacteristicPage extends StatelessWidget {
     // Initial fetch if keyword passed in arguments
     final args = Get.arguments ?? {};
     final String initialKeyword = args['title'] ?? (args['keywords'] != null && (args['keywords'] as List).isNotEmpty ? args['keywords'][0] : "");
+    final String targetCategory = args['category'] ?? "";
     
     if (initialKeyword.isNotEmpty && controller.currentKeyword.value != initialKeyword) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await controller.fetchCharacteristics(initialKeyword);
+        if (targetCategory.isNotEmpty && controller.characteristicMap.containsKey(targetCategory)) {
+          controller.selectCategory(targetCategory);
+        }
+      });
+    } else if (targetCategory.isNotEmpty && controller.characteristicMap.containsKey(targetCategory)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        controller.fetchCharacteristics(initialKeyword);
+        controller.selectCategory(targetCategory);
       });
     }
 

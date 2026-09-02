@@ -29,6 +29,15 @@ class KeywordDetailsPage extends StatelessWidget {
           style: const TextStyle(color: _textDark, fontWeight: FontWeight.bold, fontSize: 18),
         )),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.hub_rounded, color: _green1),
+            tooltip: "Graph View Visualizer",
+            onPressed: () {
+              Get.toNamed('/graphView');
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [

@@ -62,14 +62,33 @@ class KeywordDetailsController extends GetxController {
 
       if (res.statusCode == 200) {
         final List<dynamic> data = jsonDecode(utf8.decode(res.bodyBytes));
-        if (data.isNotEmpty) {
-          keywordData.value = data[0];
+        if (data.isNotEmpty && data[0] is Map) {
+          Map item = Map.from(data[0]);
+          final List chars = item["characteristics"] ?? [];
+          
+          // If keyword-full-details has no characteristics, fetch from qbkeywordcharacteristic API!
+          if (chars.isEmpty) {
+            final charRes = await http.get(Uri.parse("${AppConfig.characteristicByKeyword}$keyword"));
+            if (charRes.statusCode == 200) {
+              final Map<String, dynamic> charData = jsonDecode(utf8.decode(charRes.bodyBytes));
+              List fallbackChars = [];
+              charData.forEach((key, val) {
+                if (val is List) {
+                  fallbackChars.add({
+                    "characteristic_name": key,
+                    "questions": val,
+                  });
+                }
+              });
+              item["characteristics"] = fallbackChars;
+            }
+          }
+          keywordData.value = item;
         } else {
-          keywordData.clear();
+          await _fetchCharacteristicFallback(keyword);
         }
       } else {
-        keywordData.clear();
-        Get.snackbar("Error", "Failed to load results (${res.statusCode})");
+        await _fetchCharacteristicFallback(keyword);
       }
     } catch (e) {
       keywordData.clear();
@@ -77,6 +96,33 @@ class KeywordDetailsController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  Future<void> _fetchCharacteristicFallback(String keyword) async {
+    try {
+      final charRes = await http.get(Uri.parse("${AppConfig.characteristicByKeyword}$keyword"));
+      if (charRes.statusCode == 200) {
+        final Map<String, dynamic> charData = jsonDecode(utf8.decode(charRes.bodyBytes));
+        List fallbackChars = [];
+        charData.forEach((key, val) {
+          if (val is List) {
+            fallbackChars.add({
+              "characteristic_name": key,
+              "questions": val,
+            });
+          }
+        });
+        if (fallbackChars.isNotEmpty) {
+          keywordData.value = {
+            "keyword": keyword,
+            "characteristics": fallbackChars,
+            "all_mapped_questions": [],
+          };
+          return;
+        }
+      }
+    } catch (_) {}
+    keywordData.clear();
   }
 
   void onSearchSubmit(String keyword) {

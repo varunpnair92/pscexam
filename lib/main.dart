@@ -40,6 +40,7 @@ import 'keyword_summary_page.dart';
 import 'tree_service.dart'; // 🔥 Import TreeService
 import 'keyword_summary_capsule_page.dart';
 import 'timeline_page.dart';
+import 'graph_view_page.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -156,6 +157,9 @@ class MyApp extends StatelessWidget {
 
         // ⏳ TIMELINE
         GetPage(name: '/timeline', page: () => const TimelinePage()),
+
+        // 🕸️ GRAPH VIEW
+        GetPage(name: '/graphView', page: () => GraphViewPage()),
       ],
     );
   }

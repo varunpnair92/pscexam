@@ -37,6 +37,18 @@ class KeywordSearchPage extends StatelessWidget {
           );
         }),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.hub_rounded, color: _green1),
+            tooltip: "Open Graph View",
+            onPressed: () {
+              final kw = ctrl.selectedKeyword.value.isNotEmpty
+                  ? ctrl.selectedKeyword.value
+                  : (ctrl.keywordsList.isNotEmpty ? ctrl.keywordsList.first : "");
+              Get.toNamed('/graphView', arguments: {"keyword": kw});
+            },
+          )
+        ],
       ),
       body: Column(
         children: [
@@ -448,7 +460,10 @@ class _SearchResultCardState extends State<SearchResultCard> {
 
   Widget _hashtag(String kw) {
     return InkWell(
-      onTap: () => widget.onHashtagTap(kw),
+      onTap: () {
+        widget.onHashtagTap(kw);
+        Get.toNamed('/keywordDetails', arguments: {"keyword": kw});
+      },
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

@@ -890,6 +890,12 @@ class AppHomePage extends StatelessWidget {
   Widget _quickActions() {
     final actions = [
       {
+        'icon': Icons.hub_rounded,
+        'label': 'Mind Map',
+        'route': '/graphView',
+        'color': const Color(0xFF7F56D9),
+      },
+      {
         'icon': Icons.bar_chart_rounded,
         'label': 'Analysis',
         'route': '/globalAnalysis',
