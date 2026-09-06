@@ -85,6 +85,7 @@ class AppHomePage extends StatelessWidget {
                                 padding: const EdgeInsets.only(top: 4),
                                 child: DynamicStoryWidget(
                                   title: cat['title'] ?? '',
+                                  orientation: cat['orientation'] ?? 'horizontal',
                                   items: cat['items'] ?? [],
                                 ),
                               );
@@ -99,15 +100,10 @@ class AppHomePage extends StatelessWidget {
                             if (ctrl.attemptCategories.isNotEmpty)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 20),
-                                child: _boxedSection(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _sectionTitle(ctrl.attemptSectionName.value),
-                                      const SizedBox(height: 16),
-                                      _attemptCategoriesGrid(),
-                                    ],
-                                  ),
+                                child: DynamicStoryWidget(
+                                  title: ctrl.attemptSectionName.value,
+                                  orientation: ctrl.attemptOrientation.value,
+                                  items: ctrl.attemptCategories,
                                 ),
                               ),
 

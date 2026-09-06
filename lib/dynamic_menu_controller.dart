@@ -16,7 +16,9 @@ class DynamicMenuController extends GetxController {
   
   var navStack = <String>[];
   var slideStack = <bool>[].obs;
+  var orientationStack = <String>[].obs;
   var isSlideView = false.obs;
+  var orientation = "".obs;
   String currentNav = "";
   String currentUrl = "";
 
@@ -27,6 +29,7 @@ class DynamicMenuController extends GetxController {
     String title = args['title'] ?? "Menu";
     final initialItems = args['items'];
     currentNav = args['parentNavigation'] ?? "";
+    orientation.value = (args['orientation'] ?? "").toString().toLowerCase();
 
     navStack.clear();
     navStack.add(currentNav);
@@ -208,7 +211,9 @@ class DynamicMenuController extends GetxController {
     if (item["children"] != null && item["children"].isNotEmpty) {
       stack.add(items.toList());
       slideStack.add(isSlideView.value);
+      orientationStack.add(orientation.value);
       items.value = item["children"];
+      orientation.value = (item["orientation"] ?? "").toString().toLowerCase();
       keys.add(title);
       isSlideView.value = false;
       navStack.add(currentNav);
@@ -227,6 +232,7 @@ class DynamicMenuController extends GetxController {
     if (item["url"] != null && item["url"] != "") {
       stack.add(items.toList());
       keys.add(title);
+      orientationStack.add(orientation.value);
       navStack.add(currentNav);
       if (item["navigation"] != null && item["navigation"].toString().trim().isNotEmpty) {
         currentNav = item["navigation"].toString().trim();
@@ -313,6 +319,7 @@ class DynamicMenuController extends GetxController {
       items.value = stack.removeLast();
       keys.removeLast();
       if (slideStack.isNotEmpty) isSlideView.value = slideStack.removeLast();
+      if (orientationStack.isNotEmpty) orientation.value = orientationStack.removeLast();
       if (navStack.isNotEmpty) currentNav = navStack.removeLast();
     } else {
       Get.back();

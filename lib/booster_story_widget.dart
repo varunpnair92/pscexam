@@ -35,7 +35,7 @@ class _BoosterStoryWidgetState extends State<BoosterStoryWidget>
   Widget _buildStoryItem(List items, int index, BuildContext context) {
     if (ctrl.liveExamsNode.isNotEmpty && index == 0) {
       return GestureDetector(
-        onTap: () => ctrl.navigateAttemptCategory(ctrl.liveExamsNode.value),
+        onTap: () => ctrl.navigateAttemptCategory(ctrl.liveExamsNode),
         child: SizedBox(
           width: 76,
           child: Column(
@@ -218,15 +218,90 @@ class _BoosterStoryWidgetState extends State<BoosterStoryWidget>
     );
   }
 
+  Widget _buildFixedGrid(List items, BuildContext context) {
+    final totalCount = items.length + (ctrl.liveExamsNode.isNotEmpty ? 1 : 0);
+    final cardGradients = UIUtils.getPremiumGradients();
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.3,
+      ),
+      itemCount: totalCount,
+      itemBuilder: (_, i) {
+        if (ctrl.liveExamsNode.isNotEmpty && i == 0) {
+          return GestureDetector(
+            onTap: () => ctrl.navigateAttemptCategory(ctrl.liveExamsNode),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFE1306C), Color(0xFFF77737)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              padding: const EdgeInsets.all(14),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.stream_rounded, color: Colors.white, size: 24),
+                  Spacer(),
+                  Text("Live Exams", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                ],
+              ),
+            ),
+          );
+        }
+        final actualIndex = ctrl.liveExamsNode.isNotEmpty ? i - 1 : i;
+        final item = items[actualIndex];
+        final name = item['name'] ?? '';
+        final grad = cardGradients[i % cardGradients.length];
+        final icon = UIUtils.getIconForName(name);
+
+        return GestureDetector(
+          onTap: () => ctrl.navigateAttemptCategory(item),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: grad,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(icon, color: Colors.white, size: 20),
+                const Spacer(),
+                Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14), maxLines: 2, overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final items = ctrl.boosterTopics;
       if (items.isEmpty && ctrl.liveExamsNode.isEmpty) return const SizedBox.shrink();
 
+      final String orient = ctrl.boosterOrientation.value.toLowerCase().trim();
+      final bool isFixed = orient == 'fixed';
+      final bool isCollapse = orient == 'collapse';
+
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        padding: const EdgeInsets.only(top: 14, bottom: 2),
+        padding: EdgeInsets.only(top: 14, bottom: isCollapse ? 2 : 12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
@@ -248,28 +323,51 @@ class _BoosterStoryWidgetState extends State<BoosterStoryWidget>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _isExpanded
-                  ? _buildExpandedGrid(items, context)
-                  : _buildHorizontalList(items, context),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isExpanded = !_isExpanded;
-                  });
-                },
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Icon(
-                    _isExpanded
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
-                    color: Colors.grey.shade400,
-                    size: 24,
+              if (ctrl.boosterSectionName.value.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(left: 16, bottom: 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      ctrl.boosterSectionName.value.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1B8A4E),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              if (isFixed)
+                _buildFixedGrid(items, context)
+              else if (isCollapse) ...[
+                _isExpanded
+                    ? _buildExpandedGrid(items, context)
+                    : _buildHorizontalList(items, context),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isExpanded = !_isExpanded;
+                    });
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: Colors.grey.shade400,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ] else ...[
+                // 'horizontal' orientation: Horizontal scrolling list ONLY, no toggle arrow
+                _buildHorizontalList(items, context),
+              ],
             ],
           ),
         ),

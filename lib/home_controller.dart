@@ -15,11 +15,14 @@ class HomeController extends GetxController {
   // ─── Node tree data ───────────────────────────────────────────
   var examCategories = [].obs;
   var examSectionName = "Exam Categories".obs; // 🎯 Dynamic
+  var examOrientation = "fixed".obs;
   var attemptCategories = [].obs;
   var attemptSectionName = "Attempts".obs; // 🎯 Dynamic
+  var attemptOrientation = "fixed".obs;
   var studyTopics = [].obs;
   var boosterTopics = [].obs;
   var boosterSectionName = "Booster".obs; // 🎯 Dynamic
+  var boosterOrientation = "collapse".obs;
   var extraDynamicCategories = <Map<String, dynamic>>[].obs; // 🎯 For unknown nodes
   var isLoading = true.obs;
 
@@ -103,16 +106,20 @@ class HomeController extends GetxController {
 
           for (var child in children) {
             final String cName = (child['name'] ?? "").toString().toUpperCase();
+            final String orientation = (child['orientation'] ?? "").toString().trim().toLowerCase();
 
             if (cName.contains("EXAM")) {
               examCategories.value = List.from(child['children'] ?? []);
               examSectionName.value = child['name'] ?? "Exam Categories";
+              if (orientation.isNotEmpty) examOrientation.value = orientation;
             } else if (cName.contains("GUI1") || cName.contains("ATTEMPT")) {
               attemptCategories.value = List.from(child['children'] ?? []);
               attemptSectionName.value = child['name'] ?? "Attempts";
+              if (orientation.isNotEmpty) attemptOrientation.value = orientation;
             } else if (cName.contains("BOOSTER")) {
               boosterTopics.addAll(child['children'] ?? []);
               boosterSectionName.value = child['name'] ?? "Booster";
+              if (orientation.isNotEmpty) boosterOrientation.value = orientation;
             } else if (cName.contains("STUDY")) {
               studyTopics.value = List.from(child['children'] ?? []);
             } else if (cName.contains("NEWS") || cName.contains("NEWSFEEDER")) {
@@ -121,6 +128,7 @@ class HomeController extends GetxController {
               // 🎯 Add any unhandled node as its own dynamic category
               extraDynamicCategories.add({
                 'title': child['name'] ?? 'Extra',
+                'orientation': orientation.isNotEmpty ? orientation : 'horizontal',
                 'items': child['children'] ?? []
               });
             }
@@ -128,13 +136,25 @@ class HomeController extends GetxController {
         } else {
           // ─── FALLBACK TO GLOBAL SEARCH (PREVIOUS LOGIC) ───
           final examNode = data.firstWhereOrNull((e) => e['name'] == 'EXAM');
-          if (examNode != null) examCategories.value = List.from(examNode['children'] ?? []);
+          if (examNode != null) {
+            examCategories.value = List.from(examNode['children'] ?? []);
+            final orient = (examNode['orientation'] ?? "").toString().trim().toLowerCase();
+            if (orient.isNotEmpty) examOrientation.value = orient;
+          }
 
           final gui1Node = data.firstWhereOrNull((e) => e['name'] == 'GUI1');
-          if (gui1Node != null) attemptCategories.value = List.from(gui1Node['children'] ?? []);
+          if (gui1Node != null) {
+            attemptCategories.value = List.from(gui1Node['children'] ?? []);
+            final orient = (gui1Node['orientation'] ?? "").toString().trim().toLowerCase();
+            if (orient.isNotEmpty) attemptOrientation.value = orient;
+          }
 
           final boosterNode = findNodeByName('booster', data);
-          if (boosterNode != null) boosterTopics.addAll(boosterNode['children'] ?? []);
+          if (boosterNode != null) {
+            boosterTopics.addAll(boosterNode['children'] ?? []);
+            final orient = (boosterNode['orientation'] ?? "").toString().trim().toLowerCase();
+            if (orient.isNotEmpty) boosterOrientation.value = orient;
+          }
 
           final newsNode = findNodeByName('NEWS', data);
           if (newsNode != null) _handleNewsNode(newsNode);
@@ -145,6 +165,7 @@ class HomeController extends GetxController {
           // 🎯 Fallback: find any node that wasn't mapped and add it to extra dynamic categories
           for (var child in data) {
             final String cName = (child['name'] ?? "").toString().toUpperCase();
+            final String orientation = (child['orientation'] ?? "").toString().trim().toLowerCase();
             if (!cName.contains("EXAM") && 
                 !cName.contains("GUI1") && 
                 !cName.contains("ATTEMPT") && 
@@ -157,6 +178,7 @@ class HomeController extends GetxController {
                 cName != "LIVE EXAMS") {
               extraDynamicCategories.add({
                 'title': child['name'] ?? 'Extra',
+                'orientation': orientation.isNotEmpty ? orientation : 'horizontal',
                 'items': child['children'] ?? []
               });
             }

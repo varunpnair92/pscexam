@@ -6,6 +6,8 @@ import 'auth_controller.dart';
 import 'app_theme.dart'; // 🔥 Unified Theme
 import 'navigation_slide_view.dart';
 
+import 'dynamic_story_widget.dart';
+
 class DynamicMenuPage extends StatelessWidget {
   final DynamicMenuController ctrl = Get.put(DynamicMenuController());
 
@@ -61,6 +63,18 @@ class DynamicMenuPage extends StatelessWidget {
 
                   if (ctrl.items.isEmpty) {
                     return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
+                  }
+
+                  final String orient = ctrl.orientation.value.trim().toLowerCase();
+                  if (orient == 'horizontal' || orient == 'collapse') {
+                    return SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: DynamicStoryWidget(
+                        title: ctrl.keys.isNotEmpty ? ctrl.keys.last : '',
+                        orientation: orient,
+                        items: ctrl.items,
+                      ),
+                    );
                   }
 
                   return GridView.builder(

@@ -3,12 +3,14 @@ class ParentNavigationNode {
   final String name;
   final String? navigation;
   final List<String>? keywords;
+  final String? orientation;
 
   ParentNavigationNode({
     required this.id,
     required this.name,
     this.navigation,
     this.keywords,
+    this.orientation,
   });
 
   factory ParentNavigationNode.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class ParentNavigationNode {
       name: (json['name'] ?? json['keyword'] ?? "").toString().trim(),
       navigation: json['navigation']?.toString().trim(),
       keywords: json['keywords'] != null ? List<String>.from(json['keywords']) : null,
+      orientation: json['orientation']?.toString().trim(),
     );
   }
 

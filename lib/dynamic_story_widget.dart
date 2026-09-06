@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'home_controller.dart';
+import 'auth_controller.dart';
 import 'ui_utils.dart';
 import 'dart:math' as math;
 
 class DynamicStoryWidget extends StatefulWidget {
   final String title;
   final List items;
+  final String? orientation;
 
-  const DynamicStoryWidget({super.key, required this.title, required this.items});
+  const DynamicStoryWidget({
+    super.key,
+    required this.title,
+    required this.items,
+    this.orientation,
+  });
 
   @override
   State<DynamicStoryWidget> createState() => _DynamicStoryWidgetState();
@@ -143,13 +150,116 @@ class _DynamicStoryWidgetState extends State<DynamicStoryWidget>
     );
   }
 
+  Widget _buildFixedGrid(List items, BuildContext context) {
+    final cardGradients = UIUtils.getPremiumGradients();
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.3,
+      ),
+      itemCount: items.length,
+      itemBuilder: (_, i) {
+        final item = items[i];
+        final name = item['name'] ?? '';
+        final grad = cardGradients[i % cardGradients.length];
+        final icon = UIUtils.getIconForName(name);
+
+        return Obx(() {
+          final bool hasAccess = AuthController.instance.canAccess(item);
+
+          return GestureDetector(
+            onTap: () => ctrl.navigateAttemptCategory(item),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: grad,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: grad.first.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(14),
+              child: Stack(
+                children: [
+                  Opacity(
+                    opacity: hasAccess ? 1.0 : 0.6,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(icon, color: Colors.white, size: 16),
+                        ),
+                        const Spacer(),
+                        Expanded(
+                          child: Container(
+                            alignment: Alignment.bottomLeft,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                name,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!hasAccess)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.lock_rounded, color: Colors.white, size: 28),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        });
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.items.isEmpty) return const SizedBox.shrink();
 
+    final String orient = (widget.orientation ?? 'horizontal').toLowerCase().trim();
+    final bool isFixed = orient == 'fixed';
+    final bool isCollapse = orient == 'collapse';
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.only(top: 14, bottom: 2),
+      padding: EdgeInsets.only(top: 14, bottom: isCollapse ? 2 : 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -185,30 +295,40 @@ class _DynamicStoryWidgetState extends State<DynamicStoryWidget>
                   ),
                 ),
               ),
-                _isExpanded
-                    ? _buildExpandedGrid(widget.items, context)
-                    : _buildHorizontalList(widget.items, context),
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _isExpanded = !_isExpanded;
-                    });
-                  },
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Icon(
-                      _isExpanded
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
-                      color: Colors.grey.shade400,
-                      size: 24,
-                    ),
+            if (isFixed)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: _buildFixedGrid(widget.items, context),
+              )
+            else if (isCollapse) ...[
+              _isExpanded
+                  ? _buildExpandedGrid(widget.items, context)
+                  : _buildHorizontalList(widget.items, context),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Icon(
+                    _isExpanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: Colors.grey.shade400,
+                    size: 24,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ] else ...[
+              // 'horizontal' orientation: Horizontal scrolling list ONLY, no collapse arrow
+              _buildHorizontalList(widget.items, context),
+            ],
+          ],
+        ),
       ),
     );
   }
