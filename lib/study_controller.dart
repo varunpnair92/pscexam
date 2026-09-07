@@ -115,6 +115,23 @@ class StudyController extends GetxController {
     return pages;
   }
 
+  /// 🔍 RECURSIVE SEARCH FOR ANY NODE BY NAME
+  Map<String, dynamic>? _findNodeByName(String name, List list) {
+    for (var item in list) {
+      if (item is Map) {
+        String itemName = (item['name'] ?? "").toString().toUpperCase();
+        if (itemName == name.toUpperCase() || itemName.contains(name.toUpperCase())) {
+          return Map<String, dynamic>.from(item);
+        }
+        if (item['children'] != null && item['children'] is List) {
+          final found = _findNodeByName(name, item['children']);
+          if (found != null) return found;
+        }
+      }
+    }
+    return null;
+  }
+
   /// LOAD TREE
   Future<void> fetchTree({bool force = false}) async {
     await TreeService.instance.fetchTree(force: force);
@@ -139,43 +156,61 @@ class StudyController extends GetxController {
       );
     }
 
-    if (rootNode != null) {
-      // 🎯 3. LOOK FOR "STUDY" CHILD FIRST
-      var studyEntry = (rootNode["children"] as List?)?.firstWhereOrNull(
+    dynamic studyNode;
+
+    if (rootNode != null && rootNode["children"] != null) {
+      // 1. Look for "STUDY" child under selected course first
+      studyNode = (rootNode["children"] as List).firstWhereOrNull(
         (c) => (c["name"] ?? "").toString().toUpperCase().contains("STUDY"),
       );
-
-      final List<dynamic> children = List<dynamic>.from(
-        (studyEntry ?? rootNode)["children"] ?? [],
-      );
-
-      final parentAccess =
-          (studyEntry ?? rootNode)['access_type'] ??
-          (studyEntry ?? rootNode)['accessType'] ??
-          (studyEntry ?? rootNode)['access_level'] ??
-          (studyEntry ?? rootNode)['accessLevel'] ??
-          (studyEntry ?? rootNode)['access'];
-
-      // 🔥 Propagate access status to children if they don't have their own
-      if (parentAccess != null) {
-        for (var child in children) {
-          if (child is Map &&
-              child['access_type'] == null &&
-              child['accessType'] == null &&
-              child['access_level'] == null &&
-              child['accessLevel'] == null &&
-              child['access'] == null) {
-            child['access_type'] = parentAccess;
-          }
-        }
-      }
-      items.value = children;
-    } else {
-      items.value = [];
     }
 
+    // 2. Global search for any node containing "STUDY" if not found under rootNode
+    studyNode ??= _findNodeByName("STUDY", data);
+
+    List<dynamic> children = [];
+    String topTitle = selectedName;
+
+    if (studyNode != null && studyNode["children"] != null && (studyNode["children"] as List).isNotEmpty) {
+      children = List<dynamic>.from(studyNode["children"]);
+      topTitle = (studyNode["name"] ?? "Study").toString();
+    } else if (rootNode != null && rootNode["children"] != null) {
+      // 3. Fallback to rootNode children BUT filter out non-study feature nodes (EXAM, NEWS, BOOSTER, STORY, LIVEEXAM)
+      final allChildren = List<dynamic>.from(rootNode["children"]);
+      children = allChildren.where((c) {
+        final cName = (c["name"] ?? "").toString().toUpperCase();
+        return !cName.contains("EXAM") &&
+               !cName.contains("NEWS") &&
+               !cName.contains("BOOSTER") &&
+               !cName.contains("STORY") &&
+               !cName.contains("LIVE");
+      }).toList();
+      topTitle = rootNode["name"] ?? selectedName;
+    }
+
+    final parentAccess = (studyNode ?? rootNode)?['access_type'] ??
+        (studyNode ?? rootNode)?['accessType'] ??
+        (studyNode ?? rootNode)?['access_level'] ??
+        (studyNode ?? rootNode)?['accessLevel'] ??
+        (studyNode ?? rootNode)?['access'];
+
+    // 🔥 Propagate access status to children if they don't have their own
+    if (parentAccess != null) {
+      for (var child in children) {
+        if (child is Map &&
+            child['access_type'] == null &&
+            child['accessType'] == null &&
+            child['access_level'] == null &&
+            child['accessLevel'] == null &&
+            child['access'] == null) {
+          child['access_type'] = parentAccess;
+        }
+      }
+    }
+
+    items.value = children;
     keys.clear();
-    keys.add(rootNode?["name"] ?? "LDC");
+    keys.add(topTitle);
   }
 
   /// TILE CLICK
