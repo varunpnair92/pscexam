@@ -64,7 +64,7 @@ class SearchParentNavigationPage extends StatelessWidget {
                                                 top: -10,
                                                 child: Icon(
                                                   icon,
-                                                  color: Colors.white.withOpacity(0.12),
+                                                  color: Colors.white.withValues(alpha: 0.12),
                                                   size: 80,
                                                 ),
                                               ),
@@ -78,7 +78,7 @@ class SearchParentNavigationPage extends StatelessWidget {
                                                       padding: const EdgeInsets.all(8),
                                                       decoration: BoxDecoration(
                                                         color: Colors.white
-                                                            .withOpacity(0.2),
+                                                            .withValues(alpha: 0.2),
                                                         shape: BoxShape.circle,
                                                       ),
                                                       child: Icon(
@@ -116,50 +116,92 @@ class SearchParentNavigationPage extends StatelessWidget {
   Widget _buildSearchBar(
       SearchParentNavigationController ctrl, BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       child: Container(
         height: 52,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.25), width: 1.5),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppTheme.primary.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 12,
               offset: const Offset(0, 4),
             )
           ],
         ),
-        child: TextField(
-          controller: ctrl.searchInputController,
-          textInputAction: TextInputAction.search,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-          onSubmitted: (val) => ctrl.search(val),
-          decoration: InputDecoration(
-            hintText: "Search keyword (e.g. rain, മലയാളം)...",
-            hintStyle: TextStyle(
-              color: Colors.white.withOpacity(0.6),
-              fontSize: 14,
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.search_rounded,
+                  color: AppTheme.primary, size: 22),
+              onPressed: () {
+                if (ctrl.searchInputController.text.trim().isNotEmpty) {
+                  ctrl.search(ctrl.searchInputController.text);
+                }
+              },
             ),
-            prefixIcon:
-                const Icon(Icons.search_rounded, color: Colors.white, size: 22),
-            suffixIcon: ctrl.currentKeyword.value.isNotEmpty ||
-                    ctrl.searchInputController.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear_rounded,
-                        color: Colors.white, size: 20),
-                    onPressed: () => ctrl.clearSearch(),
-                  )
-                : IconButton(
-                    icon: const Icon(Icons.arrow_forward_rounded,
-                        color: Colors.white, size: 20),
-                    onPressed: () =>
-                        ctrl.search(ctrl.searchInputController.text),
+            Expanded(
+              child: TextField(
+                controller: ctrl.searchInputController,
+                textInputAction: TextInputAction.search,
+                style: const TextStyle(
+                  color: Color(0xFF1E293B),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+                onSubmitted: (val) => ctrl.search(val),
+                decoration: InputDecoration(
+                  hintText: "Search keyword (e.g. rain, മലയാളം)...",
+                  hintStyle: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 14,
+                    fontWeight: FontWeight.normal,
                   ),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 14),
-          ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+            if (ctrl.currentKeyword.value.isNotEmpty ||
+                ctrl.searchInputController.text.isNotEmpty)
+              IconButton(
+                icon: Icon(Icons.close_rounded,
+                    color: Colors.grey.shade600, size: 20),
+                onPressed: () => ctrl.clearSearch(),
+              ),
+            InkWell(
+              onTap: () {
+                if (ctrl.searchInputController.text.trim().isNotEmpty) {
+                  ctrl.search(ctrl.searchInputController.text);
+                }
+              },
+              borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(15),
+                bottomRight: Radius.circular(15),
+              ),
+              child: Container(
+                height: 52,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: const BoxDecoration(
+                  color: AppTheme.primary,
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(15),
+                    bottomRight: Radius.circular(15),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.arrow_forward_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -177,7 +219,8 @@ class SearchParentNavigationPage extends StatelessWidget {
         itemCount: ctrl.searchHistory.length,
         itemBuilder: (context, index) {
           final item = ctrl.searchHistory[index];
-          final isSelected = ctrl.currentKeyword.value.toLowerCase() == item.toLowerCase();
+          final isSelected =
+              ctrl.currentKeyword.value.toLowerCase() == item.toLowerCase();
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ActionChip(
@@ -185,18 +228,21 @@ class SearchParentNavigationPage extends StatelessWidget {
               label: Text(
                 item,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.white.withOpacity(0.9),
+                  color: isSelected ? Colors.white : const Color(0xFF1E293B),
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
               backgroundColor: isSelected
-                  ? AppTheme.primary.withOpacity(0.8)
-                  : Colors.white.withOpacity(0.15),
+                  ? AppTheme.primary
+                  : Colors.white.withValues(alpha: 0.85),
               side: BorderSide(
-                color: isSelected ? AppTheme.accent : Colors.white.withOpacity(0.2),
+                color: isSelected
+                    ? AppTheme.primary
+                    : Colors.grey.shade300,
               ),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape:
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               onPressed: () {
                 ctrl.searchInputController.text = item;
                 ctrl.search(item);
@@ -219,7 +265,7 @@ class SearchParentNavigationPage extends StatelessWidget {
             Icon(
               hasSearched ? Icons.search_off_rounded : Icons.search_rounded,
               size: 72,
-              color: Colors.white.withOpacity(0.4),
+              color: Colors.white.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(
@@ -228,7 +274,7 @@ class SearchParentNavigationPage extends StatelessWidget {
                   : "Search Parent Navigation",
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.95),
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -240,7 +286,7 @@ class SearchParentNavigationPage extends StatelessWidget {
                   : "Type a keyword in the search bar above to fetch topic nodes",
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.6),
+                color: Colors.white.withValues(alpha: 0.7),
                 fontSize: 14,
               ),
             ),

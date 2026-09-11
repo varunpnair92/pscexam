@@ -33,6 +33,10 @@ class SearchParentNavigationController extends GetxController {
           targetKw = args['keywords'].toString();
         }
       }
+      if (targetKw.isEmpty && args['title'] != null && args['title'].toString().isNotEmpty) {
+        targetKw = args['title'].toString();
+      }
+
       if (targetKw.isNotEmpty) {
         searchInputController.text = targetKw;
         currentKeyword.value = targetKw;
@@ -82,28 +86,44 @@ class SearchParentNavigationController extends GetxController {
       final res = await http.get(Uri.parse(url));
 
       if (res.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(res.bodyBytes));
-        if (data is Map && data["children"] != null) {
-          final List childrenList = data["children"];
-          List<ParentNavigationNode> newNodes = [];
+        dynamic data;
+        try {
+          data = jsonDecode(utf8.decode(res.bodyBytes));
+        } catch (_) {
+          data = jsonDecode(res.body);
+        }
 
-          if (childrenList.isNotEmpty) {
-            if (childrenList[0] is String) {
-              newNodes = childrenList.map((e) => ParentNavigationNode.fromString(e.toString())).toList();
-            } else {
-              newNodes = childrenList.map((e) => ParentNavigationNode.fromJson(e)).toList();
-            }
+        List childrenList = [];
+        if (data is Map) {
+          if (data["children"] != null && data["children"] is List) {
+            childrenList = data["children"];
+          } else if (data["data"] != null && data["data"] is List) {
+            childrenList = data["data"];
+          } else if (data["results"] != null && data["results"] is List) {
+            childrenList = data["results"];
+          } else if (data["nodes"] != null && data["nodes"] is List) {
+            childrenList = data["nodes"];
           }
-          nodes.assignAll(newNodes);
 
           if (data["parent"] != null && data["parent"].toString().isNotEmpty) {
             parentTitle.value = data["parent"].toString();
           } else {
             parentTitle.value = trimmed;
           }
-        } else {
-          nodes.clear();
+        } else if (data is List) {
+          childrenList = data;
+          parentTitle.value = trimmed;
         }
+
+        List<ParentNavigationNode> newNodes = [];
+        if (childrenList.isNotEmpty) {
+          if (childrenList[0] is String) {
+            newNodes = childrenList.map((e) => ParentNavigationNode.fromString(e.toString())).toList();
+          } else {
+            newNodes = childrenList.map((e) => ParentNavigationNode.fromJson(e)).toList();
+          }
+        }
+        nodes.assignAll(newNodes);
       } else {
         nodes.clear();
       }
