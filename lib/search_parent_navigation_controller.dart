@@ -1,40 +1,92 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'app_config.dart';
 import 'parent_navigation_model.dart';
 import 'study_controller.dart';
-import 'auth_controller.dart';
 
-class ParentNavigationController extends GetxController {
+class SearchParentNavigationController extends GetxController {
   var nodes = <ParentNavigationNode>[].obs;
   var isLoading = false.obs;
-  var parentTitle = "".obs;
+  var parentTitle = "Search Parent Navigation".obs;
+  var currentKeyword = "".obs;
+  var searchHistory = <String>[].obs;
+
+  final TextEditingController searchInputController = TextEditingController();
 
   @override
   void onInit() {
     super.onInit();
     final args = Get.arguments;
-    if (args != null && args['keyword'] != null) {
-      parentTitle.value = args['title'] ?? "Topics";
-      fetchChildren(args['keyword']);
+    if (args != null) {
+      if (args['title'] != null && args['title'].toString().isNotEmpty) {
+        parentTitle.value = args['title'].toString();
+      }
+      String targetKw = "";
+      if (args['keyword'] != null && args['keyword'].toString().isNotEmpty) {
+        targetKw = args['keyword'].toString();
+      } else if (args['keywords'] != null) {
+        if (args['keywords'] is List && (args['keywords'] as List).isNotEmpty) {
+          targetKw = (args['keywords'] as List).last.toString();
+        } else if (args['keywords'] is String) {
+          targetKw = args['keywords'].toString();
+        }
+      }
+      if (targetKw.isNotEmpty) {
+        searchInputController.text = targetKw;
+        currentKeyword.value = targetKw;
+        fetchChildren(targetKw);
+      }
     }
   }
 
+  @override
+  void onClose() {
+    searchInputController.dispose();
+    super.onClose();
+  }
+
+  void search(String query) {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return;
+    currentKeyword.value = trimmed;
+    fetchChildren(trimmed);
+  }
+
+  void clearSearch() {
+    searchInputController.clear();
+    currentKeyword.value = "";
+    nodes.clear();
+    parentTitle.value = "Search Parent Navigation";
+  }
+
   Future<void> fetchChildren(String keyword) async {
+    final trimmed = keyword.trim();
+    if (trimmed.isEmpty) {
+      nodes.clear();
+      return;
+    }
+
     isLoading.value = true;
     try {
-      // Use Uri.encodeComponent for safety with special characters/spaces
-      final encodedKeyword = Uri.encodeComponent(keyword.trim());
+      if (!searchHistory.contains(trimmed)) {
+        searchHistory.insert(0, trimmed);
+        if (searchHistory.length > 10) {
+          searchHistory.removeLast();
+        }
+      }
+
+      final encodedKeyword = Uri.encodeComponent(trimmed);
       final url = "${AppConfig.baseUrl}parent-keyword-with-child-description/?keyword=$encodedKeyword";
       final res = await http.get(Uri.parse(url));
-      
+
       if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
+        final data = jsonDecode(utf8.decode(res.bodyBytes));
         if (data is Map && data["children"] != null) {
           final List childrenList = data["children"];
           List<ParentNavigationNode> newNodes = [];
-          
+
           if (childrenList.isNotEmpty) {
             if (childrenList[0] is String) {
               newNodes = childrenList.map((e) => ParentNavigationNode.fromString(e.toString())).toList();
@@ -43,14 +95,21 @@ class ParentNavigationController extends GetxController {
             }
           }
           nodes.assignAll(newNodes);
-          
-          if (data["parent"] != null) {
+
+          if (data["parent"] != null && data["parent"].toString().isNotEmpty) {
             parentTitle.value = data["parent"].toString();
+          } else {
+            parentTitle.value = trimmed;
           }
+        } else {
+          nodes.clear();
         }
+      } else {
+        nodes.clear();
       }
     } catch (e) {
-      print("Error fetching parent navigation children: $e");
+      print("Error fetching search parent navigation children: $e");
+      nodes.clear();
     } finally {
       isLoading.value = false;
     }
@@ -75,7 +134,7 @@ class ParentNavigationController extends GetxController {
       Get.toNamed('/searchParentNavigation', arguments: {
         "keyword": (node.keywords != null && node.keywords!.isNotEmpty) ? node.keywords!.last : node.name,
         "title": node.name,
-      });
+      }, preventDuplicates: false);
       return;
     }
 
@@ -93,7 +152,6 @@ class ParentNavigationController extends GetxController {
       "id": node.id,
     };
 
-    // Use a fresh StudyController for the leaf node
     if (Get.isRegistered<StudyController>()) {
       Get.delete<StudyController>();
     }

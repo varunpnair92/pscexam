@@ -35,6 +35,7 @@ import 'push_notification_service.dart';
 import 'ad_controller.dart';
 import 'navigation_slide_page.dart';
 import 'parent_navigation_page.dart';
+import 'search_parent_navigation_page.dart';
 import 'keyword_details_page.dart';
 import 'keyword_summary_page.dart';
 import 'tree_service.dart'; // 🔥 Import TreeService
@@ -147,6 +148,8 @@ class MyApp extends StatelessWidget {
 
         // 🌳 PARENT NAVIGATION
         GetPage(name: '/parentNavigation', page: () => const ParentNavigationPage()),
+        GetPage(name: '/searchParentNavigation', page: () => const SearchParentNavigationPage()),
+        GetPage(name: '/searchparentnavigation', page: () => const SearchParentNavigationPage()),
 
         // 🔎 KEYWORD DETAILS
         GetPage(name: '/keywordDetails', page: () => KeywordDetailsPage()),

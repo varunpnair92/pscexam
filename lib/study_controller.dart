@@ -227,7 +227,15 @@ class StudyController extends GetxController {
     final String lastKeyword = kws.isNotEmpty ? kws.last : name;
     final String navigation = (item["navigation"] ?? "").toString().trim();
 
-    if (navigation == "parentNavigation") {
+    if (navigation.toLowerCase() == "searchparentnavigation") {
+      Get.toNamed("/searchParentNavigation", arguments: {
+        "keyword": lastKeyword,
+        "title": name,
+      });
+      return;
+    }
+
+    if (navigation.toLowerCase() == "parentnavigation") {
       Get.toNamed("/parentNavigation", arguments: {
         "keyword": lastKeyword,
         "title": name,

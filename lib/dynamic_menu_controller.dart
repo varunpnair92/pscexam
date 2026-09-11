@@ -153,7 +153,15 @@ class DynamicMenuController extends GetxController {
         return;
       }
 
-      if (navStr == 'parentNavigation') {
+      if (navStr == 'searchParentNavigation' || navStr.toLowerCase() == 'searchparentnavigation') {
+        Get.toNamed('/searchParentNavigation', arguments: {
+          'keyword': item["keywords"] != null && item["keywords"].isNotEmpty ? item["keywords"].last : (item["keyword"] ?? title),
+          'title': title,
+        });
+        return;
+      }
+
+      if (navStr == 'parentNavigation' || navStr.toLowerCase() == 'parentnavigation') {
         Get.toNamed('/parentNavigation', arguments: {
           'keyword': item["keywords"] != null && item["keywords"].isNotEmpty ? item["keywords"].last : (item["keyword"] ?? title),
           'title': title,
