@@ -170,7 +170,6 @@ class MyApp extends StatelessWidget {
 
         // 🎯 CREATE EXAM BY KEYWORD
         GetPage(name: '/examcreate', page: () => const ExamCreatePage()),
-        GetPage(name: 'examcreate', page: () => const ExamCreatePage()),
       ],
     );
   }
