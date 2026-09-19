@@ -2,13 +2,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:psc_exam/test_controller.dart';
 import 'app_config.dart';
 import 'auth_controller.dart';
 import 'study_controller.dart';
 import 'story_controller.dart';
 import 'exam_model.dart';
-import 'ui_utils.dart';
 
 class NavigationSlideController extends GetxController {
   var items = [].obs;
@@ -109,6 +107,19 @@ class NavigationSlideController extends GetxController {
     // 2. URL -> Push to a new view or list
     if (urlStr.isNotEmpty && (navStr == 'dynamicExamList' || navStr == 'examstorypage')) {
       Get.toNamed('/$navStr', arguments: {'endpoint': urlStr, 'title': title});
+      return;
+    }
+
+    if (navStr.toLowerCase() == 'examcreate' || navStr.toLowerCase() == '/examcreate') {
+      String kw = item["keyword"]?.toString() ?? "";
+      if (kw.isEmpty && item["keywords"] != null && (item["keywords"] as List).isNotEmpty) {
+        kw = (item["keywords"] as List).last.toString();
+      }
+      Get.toNamed('/examcreate', arguments: {
+        'endpoint': urlStr,
+        'keyword': kw,
+        'title': title,
+      });
       return;
     }
 

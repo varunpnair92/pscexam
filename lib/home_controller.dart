@@ -290,6 +290,22 @@ class HomeController extends GetxController {
       return;
     }
 
+    if (nav.toLowerCase() == 'examcreate' || nav.toLowerCase() == '/examcreate') {
+      List<String> keywords = [];
+      if (item["keywords"] != null) {
+        keywords = List<String>.from(item["keywords"]);
+      } else if (item["keyword"] != null) {
+        keywords = [item["keyword"].toString()];
+      }
+      String kw = keywords.isNotEmpty ? keywords.last.trim() : (item["name"] ?? "").toString().trim();
+      Get.toNamed('/examcreate', arguments: {
+        'endpoint': url,
+        'keyword': kw,
+        'title': name,
+      });
+      return;
+    }
+
     if (nav == 'navigationSlide' || nav == '/navigationSlide') {
       Get.toNamed('/navigationSlide', arguments: {
         'items': children,
@@ -376,7 +392,13 @@ class HomeController extends GetxController {
 
     final nav = item['navigation'] ?? '';
     final url = item['url'] ?? '';
-    if (nav == 'dynamicExamList' && url.isNotEmpty) {
+    if (nav.toLowerCase() == 'examcreate' || nav.toLowerCase() == '/examcreate') {
+      Get.toNamed('/examcreate', arguments: {
+        'endpoint': url,
+        'keyword': item['keyword'] ?? item['name'] ?? '',
+        'title': item['name'] ?? '',
+      });
+    } else if (nav == 'dynamicExamList' && url.isNotEmpty) {
       Get.toNamed('/dynamicExamList', arguments: {'endpoint': url});
     } else if (nav == 'examstorypage' && url.isNotEmpty) {
       Get.toNamed('/examstorypage', arguments: {'endpoint': url});

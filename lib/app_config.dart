@@ -71,4 +71,7 @@ static const String updateQualification = "${baseUrl}update-qualification/";
 
   // ================= KEYWORD TIMELINE =================
   static const String keywordTimeline = "${baseUrl}keywordtimeline/";
+
+  // ================= CREATE EXAM BY KEYWORD =================
+  static const String createExamByKeyword = "${baseUrl}create-exam-by-keyword/";
 }

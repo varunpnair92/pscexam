@@ -43,6 +43,7 @@ import 'keyword_summary_capsule_page.dart';
 import 'timeline_page.dart';
 import 'graph_view_page.dart';
 import 'study_search_page.dart';
+import 'exam_create_page.dart';
 
 
 @pragma('vm:entry-point')
@@ -77,8 +78,6 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final AuthController auth = Get.find();
-
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
 
@@ -168,6 +167,10 @@ class MyApp extends StatelessWidget {
 
         // 📚 STUDY SEARCH (Malayalam & English)
         GetPage(name: '/studySearch', page: () => StudySearchPage()),
+
+        // 🎯 CREATE EXAM BY KEYWORD
+        GetPage(name: '/examcreate', page: () => const ExamCreatePage()),
+        GetPage(name: 'examcreate', page: () => const ExamCreatePage()),
       ],
     );
   }

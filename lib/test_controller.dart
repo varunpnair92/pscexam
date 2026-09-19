@@ -100,6 +100,35 @@ var resumeTimeLeft = 0.obs;
     startTimer();
   }
 
+  // ================= SET PRELOADED QUESTIONS (GENERATED EXAM) =================
+
+  void setPreloadedQuestions(int id, String title, List<Question> qList, {Map<String, List<int>>? catMap}) {
+    resetController();
+    examId = id;
+    examTitle.value = title;
+    questions.value = qList;
+
+    if (catMap != null && catMap.isNotEmpty) {
+      categoryMapping.value = catMap;
+    } else {
+      Map<String, List<int>> mapping = {};
+      for (var q in qList) {
+        mapping.putIfAbsent(q.category, () => []).add(q.id);
+      }
+      categoryMapping.value = mapping;
+    }
+
+    selectedCategory.value = "All";
+
+    // Save total count in preferences
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setInt("exam_${id}_total", qList.length);
+    });
+
+    remainingSeconds.value = 0;
+    startTimer();
+  }
+
   // ================= LOAD QUESTIONS ONLY (RESUME) =================
 
   Future<void> loadQuestionsOnly(int id, {String? title}) async {

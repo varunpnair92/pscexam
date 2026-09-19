@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'app_config.dart';
 import 'parent_navigation_model.dart';
 import 'study_controller.dart';
-import 'auth_controller.dart';
 
 class ParentNavigationController extends GetxController {
   var nodes = <ParentNavigationNode>[].obs;
@@ -58,6 +57,21 @@ class ParentNavigationController extends GetxController {
 
   void onNodeTap(ParentNavigationNode node) {
     final nav = (node.navigation ?? "").toLowerCase().trim();
+
+    if (nav == 'examcreate' || nav == '/examcreate') {
+      String kw = "";
+      if (node.keywords != null && node.keywords!.isNotEmpty) {
+        kw = node.keywords!.last.trim();
+      } else {
+        kw = node.name.trim();
+      }
+      Get.toNamed('/examcreate', arguments: {
+        'endpoint': "",
+        'keyword': kw,
+        'title': node.name,
+      });
+      return;
+    }
 
     if (nav.contains('timeline')) {
       Map<String, dynamic> args = {'title': node.name};

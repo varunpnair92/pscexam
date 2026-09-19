@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'exam_model.dart';
 import 'test_controller.dart';
 import 'auth_controller.dart';
+import 'question_model.dart';
 
 
 class ExamSplashPage extends StatelessWidget {
@@ -13,6 +14,9 @@ class ExamSplashPage extends StatelessWidget {
     final Map<String, dynamic> args = Get.arguments ?? {};
     final Exam? exam = args['exam'];
     final bool isResume = args['isResume'] ?? false;
+    final List<Question>? preloadedQuestions = args['questions'] != null
+        ? List<Question>.from(args['questions'])
+        : null;
 
     if (exam == null) {
       return Scaffold(
@@ -21,10 +25,13 @@ class ExamSplashPage extends StatelessWidget {
       );
     }
 
+    final String examTitle = exam.specialization.trim().isNotEmpty
+        ? exam.specialization.trim()
+        : (exam.category.trim().isNotEmpty ? exam.category.trim() : "Exam");
+
     final TestController testController = Get.find<TestController>();
 
     const Color primaryColor = Color(0xFF1B8A4E);
-    const Color secondaryColor = Color(0xFF27AE60);
 
     final auth = AuthController.instance;
 
@@ -68,7 +75,7 @@ class ExamSplashPage extends StatelessWidget {
 
                 // ─── TITLE & CATEGORY ───
                 Text(
-                  exam.specialization,
+                  examTitle,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 24,
@@ -170,11 +177,13 @@ class ExamSplashPage extends StatelessWidget {
                               }
                             : () async {
                                 if (isResume) {
-                                  await testController.loadProgress(exam.id, title: exam.specialization);
+                                  await testController.loadProgress(exam.id, title: examTitle);
+                                } else if (preloadedQuestions != null && preloadedQuestions.isNotEmpty) {
+                                  testController.setPreloadedQuestions(exam.id, examTitle, preloadedQuestions);
                                 } else {
-                                  await testController.loadQuestions(exam.id, title: exam.specialization);
+                                  await testController.loadQuestions(exam.id, title: examTitle);
                                 }
-                                Get.offAndToNamed('/exam', arguments: {'id': exam.id, 'title': exam.specialization});
+                                Get.offAndToNamed('/exam', arguments: {'id': exam.id, 'title': examTitle});
                               }),
 
 
@@ -242,7 +251,7 @@ class ExamSplashPage extends StatelessWidget {
     if (hours > 0) {
       return "${hours}h ${minutes}m";
     } else {
-      return "${minutes} mins";
+      return "$minutes mins";
     }
   }
 }

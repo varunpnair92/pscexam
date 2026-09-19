@@ -22,21 +22,31 @@ class Exam {
   });
 
   factory Exam.fromJson(Map<String, dynamic> json) {
-    // Calculate total from qid list if available
+    // Calculate total from qid list or questions if available
     int total = 0;
     if (json['qid'] != null && json['qid'] is List) {
       total = (json['qid'] as List).length;
+    } else if (json['questions'] != null && json['questions'] is List) {
+      total = (json['questions'] as List).length;
+    } else if (json['question_count'] != null) {
+      total = int.tryParse(json['question_count'].toString()) ?? 0;
+    }
+
+    String categoryStr = (json['category'] ?? "Exam").toString();
+    String spec = (json['specialization'] ?? "").toString().trim();
+    if (spec.isEmpty) {
+      spec = categoryStr.isNotEmpty ? categoryStr : "Exam";
     }
 
     return Exam(
-      id: json['id'],
-      category: json['category'],
-      specialization: json['specialization'],
+      id: json['id'] ?? json['exam_id'] ?? 0,
+      category: categoryStr,
+      specialization: spec,
       locked: json['locked'] == true || json['locked'] == "true" || json['locked'] == 1,
       totalQuestions: total,
       accessType: (json['access_type'] ?? json['accessType'] ?? "free").toString().toLowerCase(),
-      instructions: json['instructions'],
-      description: json['description'],
+      instructions: json['instructions']?.toString(),
+      description: json['description']?.toString(),
       plans: json['plans'] ?? [],
     );
   }

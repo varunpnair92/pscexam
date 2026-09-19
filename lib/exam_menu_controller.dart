@@ -105,6 +105,19 @@ class ExamMenuController extends GetxController {
       return;
     }
 
+    if (nav.toLowerCase() == 'examcreate' || nav.toLowerCase() == '/examcreate') {
+      String kw = item["keyword"]?.toString() ?? "";
+      if (kw.isEmpty && item["keywords"] != null && (item["keywords"] as List).isNotEmpty) {
+        kw = (item["keywords"] as List).last.toString();
+      }
+      Get.toNamed('/examcreate', arguments: {
+        'endpoint': item["url"] ?? "",
+        'keyword': kw,
+        'title': name,
+      });
+      return;
+    }
+
     if (nav == 'examSplash' || nav == '/examSplash') {
       List<String> keywords = [];
       if (item["keywords"] != null) {
