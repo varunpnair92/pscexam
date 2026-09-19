@@ -122,6 +122,13 @@ class ExamCreateController extends GetxController {
         url = "${AppConfig.baseUrl}$url";
       }
 
+      // Ensure URL path ends with trailing slash to satisfy Django APPEND_SLASH requirements on POST
+      Uri uri = Uri.parse(url);
+      if (!uri.path.endsWith('/')) {
+        uri = uri.replace(path: '${uri.path}/');
+      }
+      url = uri.toString();
+
       final payload = jsonEncode({
         "keyword": keyword,
         "count": selectedCount.value,
@@ -135,7 +142,13 @@ class ExamCreateController extends GetxController {
           )
           .timeout(const Duration(seconds: 25));
 
-      final Map<String, dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+      Map<String, dynamic> data = {};
+      try {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        if (decoded is Map<String, dynamic>) {
+          data = decoded;
+        }
+      } catch (_) {}
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final examMap = (data['exam'] is Map<String, dynamic>)
@@ -175,7 +188,7 @@ class ExamCreateController extends GetxController {
           'questions': questions,
         });
       } else {
-        final errorMsg = data['error'] ?? data['message'] ?? "No questions found matching '$keyword'";
+        final errorMsg = data['error'] ?? data['message'] ?? "Request failed with status ${response.statusCode}";
         errorMessage.value = errorMsg.toString();
         Get.snackbar(
           "Notice",
