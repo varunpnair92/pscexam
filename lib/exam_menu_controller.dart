@@ -82,6 +82,11 @@ class ExamMenuController extends GetxController {
     final String navStr = (item['navigation'] ?? '').toString().trim();
     final String nav = navStr;
 
+    if (nav.toLowerCase() == 'exambattle' || nav.toLowerCase() == '/exambattle') {
+      Get.toNamed('/exambattle');
+      return;
+    }
+
     if (navStr.toLowerCase().contains('timeline')) {
       String? kw = item["keyword"]?.toString();
       if (item["keywords"] != null && (item["keywords"] as List).isNotEmpty) {

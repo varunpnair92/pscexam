@@ -138,6 +138,11 @@ class SearchParentNavigationController extends GetxController {
   void onNodeTap(ParentNavigationNode node) {
     final nav = (node.navigation ?? "").toLowerCase().trim();
 
+    if (nav == 'exambattle' || nav == '/exambattle') {
+      Get.toNamed('/exambattle');
+      return;
+    }
+
     if (nav.contains('timeline')) {
       Map<String, dynamic> args = {'title': node.name};
       if (node.keywords != null && node.keywords!.isNotEmpty) {

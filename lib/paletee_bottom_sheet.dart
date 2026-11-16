@@ -265,13 +265,16 @@ class PaletteBottomSheet extends StatelessWidget {
 
                                 controller.timer?.cancel();
 
+                                final bool wasBattle = controller.isBattle.value;
                                 await controller.submitResult();
 
                                 await controller.clearProgress(
                                   controller.examId,
                                 );
 
-                                Get.offAllNamed('/analysis');
+                                if (!wasBattle) {
+                                  Get.offAllNamed('/analysis');
+                                }
                               },
                               child: const Text("Final Submit"),
                             ),

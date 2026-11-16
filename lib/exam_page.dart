@@ -84,16 +84,17 @@ class _ExamPageState extends State<ExamPage> {
   @override
   Widget build(BuildContext context) {
     final args = Get.arguments;
-    bool isLocalExam = args is List;
 
     // 🔹 STUDY EXAM MODE (questions passed directly)
     if (args is List) {
-      isLocalExam = true;
       controller.loadLocalQuestions(args);
     }
     // 🔹 REAL EXAM MODE (exam id)
     else if (args is Map && args.containsKey('id')) {
       final int examId = args['id'];
+      if (args['isBattle'] == true) {
+        controller.isBattle.value = true;
+      }
       
       // 🔥 ALWAYS RELOAD IF ID MISMATCH OR EMPTY
       if (controller.examId != examId || controller.questions.isEmpty) {
@@ -105,7 +106,13 @@ class _ExamPageState extends State<ExamPage> {
       return const Scaffold(body: Center(child: Text("Loading Exam...")));
     }
 
-    return Scaffold(
+    return PopScope(
+      canPop: !controller.isBattle.value,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _confirmExitBattle(context);
+      },
+      child: Scaffold(
       backgroundColor: Colors.grey.shade50,
       // 🧠 TOP BAR
       appBar: AppBar(
@@ -149,6 +156,16 @@ class _ExamPageState extends State<ExamPage> {
               );
             }),
           ),
+          Obx(() {
+            if (controller.isBattle.value) {
+              return IconButton(
+                icon: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 22),
+                tooltip: "Submit & Exit",
+                onPressed: () => _confirmExitBattle(context),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
         ],
       ),
 
@@ -399,6 +416,7 @@ class _ExamPageState extends State<ExamPage> {
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -572,6 +590,42 @@ class _ExamPageState extends State<ExamPage> {
             errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
           ),
         ),
+      ),
+    );
+  }
+
+  void _confirmExitBattle(BuildContext context) {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 26),
+            SizedBox(width: 8),
+            Text("Exit Battle Exam?", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          "In Battle Exams, there is NO option to resume later.\n\nIf you exit now, your current answers will be submitted.",
+          style: TextStyle(fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text("Continue Exam", style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Get.back();
+              await controller.submitResult();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text("Submit & Exit", style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }

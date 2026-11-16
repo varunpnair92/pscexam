@@ -74,4 +74,8 @@ static const String updateQualification = "${baseUrl}update-qualification/";
 
   // ================= CREATE EXAM BY KEYWORD =================
   static const String createExamByKeyword = "${baseUrl}create-exam-by-keyword/";
+
+  // ================= EXAM BATTLE =================
+  static const String battleExams = "${baseUrl}battle-exams/";
+  static const String publishExamResult = "${baseUrl}publish-exam-result/";
 }

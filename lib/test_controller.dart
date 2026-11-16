@@ -20,6 +20,7 @@ var resumeExamId = 0.obs;
 var resumeAnswered = 0.obs;
 var resumeTotal = 0.obs;
 var resumeTimeLeft = 0.obs;
+var isBattle = false.obs; // 🔥 Exam Battle mode (no resume, only submit & exit)
 
   int attempt = 1;   // 🔥 NEW
 
@@ -353,6 +354,117 @@ var resumeTimeLeft = 0.obs;
       await clearProgress(examId);
     }
 
+    // 🏆 If Exam Battle mode, show only marks and do not navigate to analysis or review
+    if (isBattle.value) {
+      timer?.cancel();
+      final int userScore = correct;
+      final int totalQ = questions.length;
+      isBattle.value = false;
+
+      Get.dialog(
+        PopScope(
+          canPop: false,
+          child: Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1B8A4E).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.military_tech_rounded,
+                      color: Color(0xFF1B8A4E),
+                      size: 48,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Battle Completed!",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0D3320),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          "YOUR SCORE",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          "$userScore / $totalQ",
+                          style: const TextStyle(
+                            fontSize: 34,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1B8A4E),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    "Marks submitted successfully. Rankings and position will be displayed in Battle Results when published.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.offAllNamed('/exambattle');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1B8A4E),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        "Go to Battle Arena",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        barrierDismissible: false,
+      );
+      return;
+    }
+
     Get.offAllNamed('/review');
   }
 
@@ -397,7 +509,7 @@ var resumeTimeLeft = 0.obs;
   // ================= SAVE PROGRESS (PER EXAM) =================
 
   Future<void> saveProgress() async {
-    if (isLocalExam) return;
+    if (isLocalExam || isBattle.value) return;
     final prefs = await SharedPreferences.getInstance();
 
     prefs.setInt("exam_${examId}_current", current.value);

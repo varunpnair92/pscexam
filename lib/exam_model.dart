@@ -8,6 +8,9 @@ class Exam {
   final String? instructions;
   final String? description;
   final List<dynamic> plans; // 💎 Subscription Plans
+  final String type;
+  final DateTime? startTime;
+  final bool resultPublished;
 
   Exam({
     required this.id,
@@ -19,6 +22,9 @@ class Exam {
     this.instructions,
     this.description,
     this.plans = const [],
+    this.type = "mock",
+    this.startTime,
+    this.resultPublished = false,
   });
 
   factory Exam.fromJson(Map<String, dynamic> json) {
@@ -38,6 +44,17 @@ class Exam {
       spec = categoryStr.isNotEmpty ? categoryStr : "Exam";
     }
 
+    DateTime? parsedStartTime;
+    if (json['start_time'] != null && json['start_time'].toString().isNotEmpty) {
+      try {
+        parsedStartTime = DateTime.parse(json['start_time'].toString());
+      } catch (_) {}
+    } else if (json['startTime'] != null && json['startTime'].toString().isNotEmpty) {
+      try {
+        parsedStartTime = DateTime.parse(json['startTime'].toString());
+      } catch (_) {}
+    }
+
     return Exam(
       id: json['id'] ?? json['exam_id'] ?? 0,
       category: categoryStr,
@@ -48,6 +65,9 @@ class Exam {
       instructions: json['instructions']?.toString(),
       description: json['description']?.toString(),
       plans: json['plans'] ?? [],
+      type: (json['type'] ?? 'mock').toString(),
+      startTime: parsedStartTime,
+      resultPublished: json['result_published'] == true || json['result_published'] == "true" || json['result_published'] == 1,
     );
   }
 }

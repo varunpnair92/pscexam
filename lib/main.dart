@@ -44,6 +44,7 @@ import 'timeline_page.dart';
 import 'graph_view_page.dart';
 import 'study_search_page.dart';
 import 'exam_create_page.dart';
+import 'exam_battle_page.dart';
 
 
 @pragma('vm:entry-point')
@@ -170,6 +171,9 @@ class MyApp extends StatelessWidget {
 
         // 🎯 CREATE EXAM BY KEYWORD
         GetPage(name: '/examcreate', page: () => const ExamCreatePage()),
+
+        // ⚔️ EXAM BATTLE
+        GetPage(name: '/exambattle', page: () => const ExamBattlePage()),
       ],
     );
   }

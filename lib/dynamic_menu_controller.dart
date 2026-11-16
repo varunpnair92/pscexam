@@ -169,6 +169,11 @@ class DynamicMenuController extends GetxController {
         return;
       }
 
+      if (navStr.toLowerCase() == 'exambattle' || navStr.toLowerCase() == '/exambattle') {
+        Get.toNamed('/exambattle');
+        return;
+      }
+
       if ((navStr == 'dynamicExamList' || navStr == 'examstorypage') && urlStr.isNotEmpty) {
         Get.toNamed('/$navStr', arguments: {'endpoint': urlStr});
         return;

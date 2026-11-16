@@ -105,6 +105,11 @@ class NavigationSlideController extends GetxController {
     }
 
     // 2. URL -> Push to a new view or list
+    if (navStr.toLowerCase() == 'exambattle' || navStr.toLowerCase() == '/exambattle') {
+      Get.toNamed('/exambattle');
+      return;
+    }
+
     if (urlStr.isNotEmpty && (navStr == 'dynamicExamList' || navStr == 'examstorypage')) {
       Get.toNamed('/$navStr', arguments: {'endpoint': urlStr, 'title': title});
       return;

@@ -58,6 +58,11 @@ class ParentNavigationController extends GetxController {
   void onNodeTap(ParentNavigationNode node) {
     final nav = (node.navigation ?? "").toLowerCase().trim();
 
+    if (nav == 'exambattle' || nav == '/exambattle') {
+      Get.toNamed('/exambattle');
+      return;
+    }
+
     if (nav == 'examcreate' || nav == '/examcreate') {
       String kw = "";
       if (node.keywords != null && node.keywords!.isNotEmpty) {

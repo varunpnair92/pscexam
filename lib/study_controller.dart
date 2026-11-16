@@ -227,6 +227,11 @@ class StudyController extends GetxController {
     final String lastKeyword = kws.isNotEmpty ? kws.last : name;
     final String navigation = (item["navigation"] ?? "").toString().trim();
 
+    if (navigation.toLowerCase() == "exambattle" || navigation.toLowerCase() == "/exambattle") {
+      Get.toNamed("/exambattle");
+      return;
+    }
+
     if (navigation.toLowerCase() == "examcreate" || navigation.toLowerCase() == "/examcreate") {
       Get.toNamed("/examcreate", arguments: {
         "endpoint": item["url"] ?? "",

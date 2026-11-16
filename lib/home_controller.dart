@@ -272,6 +272,11 @@ class HomeController extends GetxController {
     final name = (item['name'] ?? 'Browse').toString();
 
     // 0. EXPLICIT NAVIGATION TARGETS (Priority)
+    if (nav.toLowerCase() == 'exambattle' || nav.toLowerCase() == '/exambattle') {
+      Get.toNamed('/exambattle');
+      return;
+    }
+
     if (nav.toLowerCase().contains('timeline') || url.toLowerCase().contains('keywordtimeline')) {
       List<String> keywords = [];
       if (item["keywords"] != null) {
@@ -392,7 +397,9 @@ class HomeController extends GetxController {
 
     final nav = item['navigation'] ?? '';
     final url = item['url'] ?? '';
-    if (nav.toLowerCase() == 'examcreate' || nav.toLowerCase() == '/examcreate') {
+    if (nav.toLowerCase() == 'exambattle' || nav.toLowerCase() == '/exambattle') {
+      Get.toNamed('/exambattle');
+    } else if (nav.toLowerCase() == 'examcreate' || nav.toLowerCase() == '/examcreate') {
       Get.toNamed('/examcreate', arguments: {
         'endpoint': url,
         'keyword': item['keyword'] ?? item['name'] ?? '',
