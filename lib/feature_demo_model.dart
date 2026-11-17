@@ -11,6 +11,10 @@ class FeatureDemoModel {
   final bool isDemo;
   final int demoOrder;
   final String demoDescription;
+  final String? previewQuery;
+  final List<String> previewPoints;
+  final String? previewCategory;
+  final List<String> previewStats;
 
   FeatureDemoModel({
     required this.id,
@@ -23,6 +27,10 @@ class FeatureDemoModel {
     required this.isDemo,
     required this.demoOrder,
     required this.demoDescription,
+    this.previewQuery,
+    this.previewPoints = const [],
+    this.previewCategory,
+    this.previewStats = const [],
   });
 
   factory FeatureDemoModel.fromJson(Map<String, dynamic> json) {
@@ -30,6 +38,18 @@ class FeatureDemoModel {
     List<String> parsedKeywords = [];
     if (rawKeywords is List) {
       parsedKeywords = rawKeywords.map((e) => e.toString()).toList();
+    }
+
+    var rawPoints = json['preview_points'];
+    List<String> parsedPoints = [];
+    if (rawPoints is List) {
+      parsedPoints = rawPoints.map((e) => e.toString()).toList();
+    }
+
+    var rawStats = json['preview_stats'];
+    List<String> parsedStats = [];
+    if (rawStats is List) {
+      parsedStats = rawStats.map((e) => e.toString()).toList();
     }
 
     return FeatureDemoModel(
@@ -45,6 +65,10 @@ class FeatureDemoModel {
           ? json['demo_order']
           : int.tryParse(json['demo_order']?.toString() ?? '0') ?? 0,
       demoDescription: json['demo_description']?.toString() ?? '',
+      previewQuery: json['preview_query']?.toString(),
+      previewPoints: parsedPoints,
+      previewCategory: json['preview_category']?.toString(),
+      previewStats: parsedStats,
     );
   }
 
@@ -146,7 +170,12 @@ class FeatureDemoModel {
   }
 
   String get demoQuery {
-    if (keywords.isNotEmpty) return keywords.first;
+    if (previewQuery != null && previewQuery!.trim().isNotEmpty) {
+      return previewQuery!.trim();
+    }
+    if (keywords.isNotEmpty && keywords.first.trim().isNotEmpty) {
+      return keywords.first.trim();
+    }
     final n = name.trim();
     if (n.isNotEmpty && n != 'Node') return n;
     final nav = navigation.toLowerCase();
@@ -165,63 +194,100 @@ class FeatureDemoModel {
   }
 
   List<String> get sampleHighlightedPoints {
-    final nav = navigation.toLowerCase();
+    // 1. If backend returned real preview points for this specific node
+    if (previewPoints.isNotEmpty) {
+      return previewPoints;
+    }
+
+    // 2. If node has custom demo description entered in Node Manager
+    if (demoDescription.trim().isNotEmpty) {
+      final lines = demoDescription
+          .split('\n')
+          .map((e) => e.trim().replaceAll(RegExp(r'^[-•*0-9.]+\s*'), ''))
+          .where((e) => e.length > 3)
+          .toList();
+      if (lines.length >= 2) return lines.take(3).toList();
+      final sentences = demoDescription
+          .split('.')
+          .map((e) => e.trim())
+          .where((e) => e.length > 8)
+          .toList();
+      if (sentences.length >= 2) return sentences.take(3).toList();
+    }
+
+    // 3. If node has multiple keywords attached, use those real keywords!
+    if (keywords.length >= 2) {
+      return keywords.take(3).map((kw) => "$kw — പ്രധാന സിലബസ് വിവരങ്ങളും ചോദ്യങ്ങളും").toList();
+    }
+
+    // 4. Tailor points to the specific query of THIS node
     final q = demoQuery;
-    if (q.contains('മുഖ്യമന്ത്രി') || nav.contains('search')) {
+    if (q.contains('മുഖ്യമന്ത്രി')) {
       return [
         "ആദ്യത്തെ മുഖ്യമന്ത്രി — ഇ.എം.എസ്. നമ്പൂതിരിപ്പാട് (1957)",
         "ഏറ്റവും കൂടുതൽ കാലം മുഖ്യമന്ത്രി — സി. അച്യുതമേനോൻ (1970-77)",
         "ഏറ്റവും കുറഞ്ഞ കാലം — സി.എച്ച്. മുഹമ്മദ്കോയ (1979)",
       ];
     }
-    if (nav.contains('summary') || q.contains('നവോത്ഥാനം')) {
+    if (q.contains('നവോത്ഥാനം') || q.contains('ഗുരു')) {
       return [
         "ശ്രീനാരായണഗുരു — അരുവിപ്പുറം പ്രതിഷ്ഠ (1888), SNDP രൂപീകരണം (1903)",
         "അയ്യങ്കാളി — വില്ലുവണ്ടി സമരം (1893), സാധുജന പരിപാലന സംഘം",
         "ചട്ടമ്പിസ്വാമികൾ — പ്രാചീന മലയാളം, വേദാധികാര നിരൂപണം",
       ];
     }
-    if (nav.contains('timeline') || q.contains('സ്വാതന്ത്ര്യ')) {
+    if (q.contains('സ്വാതന്ത്ര്യ') || q.contains('ഗാന്ധി') || q.contains('കോൺഗ്രസ്')) {
       return [
         "1857 — ഒന്നാം സ്വാതന്ത്ര്യ സമരം (സിപായി ലഹള)",
         "1885 — ഇന്ത്യൻ നാഷണൽ കോൺഗ്രസ്സ് രൂപീകരണം (A.O. ഹ്യൂം)",
         "1947 — ഇന്ത്യ സ്വാതന്ത്ര്യം നേടി, ത്രിവർണ്ണ പതാക ഉയർന്നു",
       ];
     }
-    if (nav.contains('battle')) {
+    if (q.contains('ഭരണഘടന') || q.contains('നിയമം')) {
+      return [
+        "ആമുഖം — ഇന്ത്യൻ ഭരണഘടനയുടെ താക്കോൽ (ജവഹർലാൽ നെഹ്റു)",
+        "മൗലികാവകാശങ്ങൾ — ഭാഗം 3 (ആർട്ടിക്കിൾ 12-35)",
+        "നിർദ്ദേശക തത്വങ്ങൾ — ഭാഗം 4 (അയർലണ്ടിൽ നിന്നും കടമെടുത്തു)",
+      ];
+    }
+    if (navigation.toLowerCase().contains('battle') || q.contains('battle') || q.contains('Battle')) {
       return [
         "1,450+ ഉദ്യോഗാർത്ഥികളുമായി ലൈവ് റാങ്ക് മത്സരം",
         "ഓരോ ചോദ്യത്തിനും തൽക്ഷണ നെഗറ്റീവ് മാർക്ക് കണക്കാക്കൽ",
         "പരീക്ഷ പൂർത്തിയാകുമ്പോൾ തന്നെ ലൈവ് റാങ്ക് ലിസ്റ്റും സൊല്യൂഷനും",
       ];
     }
+
+    // Node-specific facts using this node's actual name
+    final nodeName = name.trim().isNotEmpty ? name.trim() : demoQuery;
     return [
-      "സിലബസ് അടിസ്ഥാനമാക്കിയുള്ള സമഗ്രമായ ചോദ്യങ്ങളും ഉത്തരങ്ങളും",
-      "മുൻവർഷ ചോദ്യപേപ്പറുകളുടെ സമഗ്രമായ വിശകലനം",
-      "ക്വിക്ക് റിവിഷൻ കുറിപ്പുകളും പ്രധാന വസ്തുതകളും",
+      "$nodeName — സിലബസ് അടിസ്ഥാനമാക്കിയുള്ള സമഗ്ര വസ്തുതകൾ",
+      "$nodeName — മുൻവർഷ ചോദ്യപേപ്പറുകളുടെ സമഗ്ര വിശകലനം",
+      "$nodeName — പ്രധാന പരീക്ഷാ കുറിപ്പുകളും വസ്തുതകളും",
     ];
   }
 
   List<String> get sampleStats {
+    if (previewStats.isNotEmpty) {
+      return previewStats;
+    }
+    final kwCount = keywords.isNotEmpty ? keywords.length : 1;
     final nav = navigation.toLowerCase();
-    if (nav.contains('summary') || demoQuery.contains('മുഖ്യമന്ത്രി')) {
-      return ["# ID: #1602", "4 Categories", "58 Points"];
-    }
-    if (nav.contains('timeline')) {
-      return ["# 1857-1947", "3 Eras", "32 Events"];
-    }
     if (nav.contains('battle')) {
       return ["# Live Rank", "100 Marks", "1,450+ Users"];
     }
-    return ["# Verified", "PSC Syllabus", "Daily Updated"];
+    return ["# ID: #$id", "$kwCount Keywords", "PSC Syllabus"];
   }
 
   String get categoryTitle {
-    final nav = navigation.toLowerCase();
+    if (previewCategory != null && previewCategory!.trim().isNotEmpty) {
+      return previewCategory!.trim();
+    }
+    if (name.trim().isNotEmpty && name != 'Node') {
+      return name.trim();
+    }
     if (demoQuery.contains('മുഖ്യമന്ത്രി')) return "ആദ്യം / അവസാനം (10 Facts)";
-    if (nav.contains('summary')) return "പ്രധാന സംഭവങ്ങളും വ്യക്തികളും";
-    if (nav.contains('timeline')) return "പ്രധാന നാഴികക്കല്ലുകൾ (Timeline)";
-    if (nav.contains('battle')) return "തത്സമയ ചോദ്യോത്തരങ്ങൾ (Live Questions)";
-    return "പ്രധാന വിഷയ വിവരങ്ങൾ (Key Highlights)";
+    if (demoQuery.contains('നവോത്ഥാനം')) return "പ്രധാന സംഭവങ്ങളും വ്യക്തികളും";
+    return "പ്രധാന സിലബസ് വിവരങ്ങൾ (Key Points)";
   }
 }

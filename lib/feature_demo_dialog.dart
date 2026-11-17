@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'app_config.dart';
 import 'feature_demo_model.dart';
 import 'feature_demo_controller.dart';
 
@@ -43,6 +46,10 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
   bool _isPointerPressed = false;
   bool _isAutoPlaying = true;
   double _stepProgress = 0.0;
+
+  // Live data caching per query
+  final Map<String, List<String>> _livePointsCache = {};
+  final Map<String, List<String>> _liveStatsCache = {};
 
   // Timers & Controllers
   Timer? _typingTimer;
@@ -116,6 +123,69 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
 
   FeatureDemoModel get _currentItem => widget.demoItems[_currentIndex];
 
+  Future<void> _fetchLivePoints(String query, int nodeId) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty || _livePointsCache.containsKey(trimmed)) return;
+
+    try {
+      final url = "${AppConfig.keywordSearchSummary}?keyword=${Uri.encodeComponent(trimmed)}";
+      final res = await http
+          .get(Uri.parse(url), headers: {"Content-Type": "application/json"})
+          .timeout(const Duration(seconds: 4));
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(res.bodyBytes));
+        if (decoded is Map) {
+          List<String> lines = [];
+
+          if (decoded['summary_lines'] is List && (decoded['summary_lines'] as List).isNotEmpty) {
+            lines = (decoded['summary_lines'] as List)
+                .map((e) => e.toString().trim().replaceAll(RegExp(r'^[-•*0-9.]+\s*'), ''))
+                .where((e) => e.isNotEmpty && e.length > 3)
+                .take(3)
+                .toList();
+          } else if (decoded['summary'] != null && decoded['summary'].toString().trim().isNotEmpty) {
+            lines = decoded['summary']
+                .toString()
+                .split('\n')
+                .map((e) => e.trim().replaceAll(RegExp(r'^[-•*0-9.]+\s*'), ''))
+                .where((e) => e.isNotEmpty && e.length > 3)
+                .take(3)
+                .toList();
+          } else if (decoded['children'] is List && (decoded['children'] as List).isNotEmpty) {
+            lines = (decoded['children'] as List)
+                .map((e) => "${(e is Map ? e['name'] ?? e['keyword'] : e)} — പ്രധാന സിലബസ് വിവരങ്ങൾ")
+                .take(3)
+                .toList();
+          } else if (decoded['description'] != null && decoded['description'].toString().trim().isNotEmpty) {
+            lines = decoded['description']
+                .toString()
+                .split('.')
+                .map((e) => e.trim())
+                .where((e) => e.length > 10)
+                .take(3)
+                .toList();
+          }
+
+          if (lines.isNotEmpty) {
+            _livePointsCache[trimmed] = lines;
+            int childCount = (decoded['children'] is List) ? (decoded['children'] as List).length : 0;
+            _liveStatsCache[trimmed] = [
+              "# ID: #${decoded['keyword_id'] ?? nodeId}",
+              "${childCount > 0 ? childCount : lines.length} Topics",
+              "Verified",
+            ];
+            if (mounted && _currentItem.demoQuery == trimmed) {
+              setState(() {});
+            }
+          }
+        }
+      }
+    } catch (_) {
+      // Silently ignore, fallback will be used
+    }
+  }
+
   void _startItemSimulation() {
     _cancelAllTimers();
     if (!mounted) return;
@@ -128,6 +198,9 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
       _stepProgress = 0.0;
     });
     _pointerAnimCtrl.reset();
+
+    // Fetch live search data for this specific node in background
+    _fetchLivePoints(_currentItem.demoQuery, _currentItem.id);
 
     // Restart blinking cursor
     _cursorTimer = Timer.periodic(const Duration(milliseconds: 450), (_) {
@@ -707,8 +780,15 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
   }
 
   Widget _buildSpotlightDataCard(FeatureDemoModel item, List<Color> gradient) {
-    final points = item.sampleHighlightedPoints;
-    final stats = item.sampleStats;
+    final cachedPoints = _livePointsCache[item.demoQuery];
+    final cachedStats = _liveStatsCache[item.demoQuery];
+
+    final points = (cachedPoints != null && cachedPoints.isNotEmpty)
+        ? cachedPoints
+        : item.sampleHighlightedPoints;
+    final stats = (cachedStats != null && cachedStats.isNotEmpty)
+        ? cachedStats
+        : item.sampleStats;
 
     return AnimatedBuilder(
       animation: _pulseScaleAnim,
