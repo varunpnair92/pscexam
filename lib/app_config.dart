@@ -78,4 +78,7 @@ static const String updateQualification = "${baseUrl}update-qualification/";
   // ================= EXAM BATTLE =================
   static const String battleExams = "${baseUrl}battle-exams/";
   static const String publishExamResult = "${baseUrl}publish-exam-result/";
+
+  // ================= FEATURE DEMO NODES =================
+  static const String demoNodes = "${baseUrl}demo-nodes/";
 }

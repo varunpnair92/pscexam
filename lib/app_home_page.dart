@@ -10,15 +10,13 @@ import 'study_controller.dart';
 import 'image_slider_controller.dart';
 import 'notification_controller.dart';
 import 'notification_overlay.dart';
-import 'notification_overlay.dart';
 import 'knowledge_capsule_overlay.dart';
 import 'news_ticker_widget.dart';
 import 'booster_story_widget.dart';
 import 'dynamic_story_widget.dart';
 import 'psc_loading_logo.dart'; // 🔥 Import Logo
 import 'ui_utils.dart';
-import 'exam_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'feature_demo_controller.dart';
 
 class AppHomePage extends StatelessWidget {
   final HomeController ctrl = Get.put(HomeController());
@@ -288,6 +286,15 @@ class AppHomePage extends StatelessWidget {
         ],
       ),
       actions: [
+        IconButton(
+          tooltip: 'App Feature Demo',
+          icon: const Icon(Icons.auto_awesome, color: Colors.amberAccent),
+          onPressed: () {
+            if (Get.isRegistered<FeatureDemoController>()) {
+              Get.find<FeatureDemoController>().checkAndShowDemo(force: true);
+            }
+          },
+        ),
         IconButton(
           icon: const Icon(Icons.refresh, color: Colors.white),
           onPressed: () async {

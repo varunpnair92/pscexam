@@ -12,6 +12,7 @@ import 'package:psc_exam/story_menu_controller.dart';
 import 'package:psc_exam/study_controller.dart';
 import 'package:psc_exam/theme_controller.dart';
 import 'package:psc_exam/ad_controller.dart';
+import 'package:psc_exam/feature_demo_controller.dart';
 
 class HomePage extends StatelessWidget {
   final index = 0.obs;
@@ -48,6 +49,13 @@ class HomePage extends StatelessWidget {
       _lastLoadedCourseForTab.clear();
       _refreshActiveTab(force: true);
     });
+
+    // 🌟 CHECK AND SHOW IN-APP FEATURE DEMO ON START
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.isRegistered<FeatureDemoController>()) {
+        Get.find<FeatureDemoController>().checkAndShowDemo();
+      }
+    });
   }
 
   void _refreshActiveTab({bool force = false}) {
@@ -65,6 +73,7 @@ class HomePage extends StatelessWidget {
       case 0:
         if (Get.isRegistered<HomeController>()) Get.find<HomeController>().fetchHomeData(force: force);
         if (Get.isRegistered<AdController>()) Get.find<AdController>().fetchAndShowAd(force: true);
+        if (Get.isRegistered<FeatureDemoController>()) Get.find<FeatureDemoController>().checkAndShowDemo();
         break;
       case 1:
         if (Get.isRegistered<ExamMenuController>()) Get.find<ExamMenuController>().fetchTree(force: force);

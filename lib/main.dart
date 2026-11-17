@@ -45,6 +45,7 @@ import 'graph_view_page.dart';
 import 'study_search_page.dart';
 import 'exam_create_page.dart';
 import 'exam_battle_page.dart';
+import 'feature_demo_controller.dart';
 
 
 @pragma('vm:entry-point')
@@ -72,6 +73,7 @@ void main() async {
   Get.put(TestController(), permanent: true);
   Get.put(NewsController(), permanent: true);
   Get.put(AdController(), permanent: true);
+  Get.put(FeatureDemoController(), permanent: true);
 
   runApp(MyApp());
 }
