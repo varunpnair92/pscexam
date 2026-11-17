@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'app_config.dart';
-import 'summary_card_model.dart';
 
 class KeywordHistoryEntry {
   final String keyword;
@@ -33,6 +32,20 @@ class KeywordChildItem {
   String toString() => name;
 }
 
+class SummaryCapsuleItem {
+  final String title;
+  final String content;
+  final int index;
+  final int total;
+
+  SummaryCapsuleItem({
+    required this.title,
+    required this.content,
+    required this.index,
+    required this.total,
+  });
+}
+
 class KeywordSummaryController extends GetxController {
   var isLoading = false.obs;
 
@@ -41,9 +54,9 @@ class KeywordSummaryController extends GetxController {
   var currentKid = Rxn<int>();
   var responseType = "unknown".obs; // 'parent', 'child', 'both', 'empty', or 'error'
   var childrenList = <KeywordChildItem>[].obs;
+  var capsuleCards = <SummaryCapsuleItem>[].obs;
   var summaryData = <String>[].obs;
-  var summaryCards = <SummaryCardModel>[].obs;
-  var activeTab = 0.obs; // 0: Summary, 1: Sub-topics
+  var activeTab = 0.obs; // 0: Capsule Cards, 1: Sub-topics
   var errorMessage = "".obs;
 
   // ─── History Management ───
@@ -120,7 +133,7 @@ class KeywordSummaryController extends GetxController {
         }
         childrenList.value = parsedChildren;
 
-        // 2. Parse summary
+        // 2. Parse summary text and lines
         String rawSummaryText = "";
         List<String> lines = [];
 
@@ -147,22 +160,64 @@ class KeywordSummaryController extends GetxController {
         }
         summaryData.value = lines;
 
-        // 3. Parse cards
-        var parsedCards = SummaryCardModel.parse(
-          rawSummaryText,
-          rawLines: decoded['summary_lines'] is List ? decoded['summary_lines'] : null,
-        );
-        summaryCards.value = parsedCards;
+        // 3. Parse Capsule Cards (swiping cards matching Knowledge Capsule UI)
+        List<SummaryCapsuleItem> generatedCards = [];
+
+        if (rawSummaryText.contains('#')) {
+          final parts = rawSummaryText.split('#');
+          List<Map<String, String>> blockList = [];
+          for (final part in parts) {
+            final blockLines = part
+                .split('\n')
+                .map((l) => l.trim())
+                .where((l) => l.isNotEmpty && l != '#')
+                .toList();
+            if (blockLines.isEmpty) continue;
+
+            final title = blockLines.first;
+            final content = blockLines.length > 1
+                ? blockLines.sublist(1).join('\n\n')
+                : blockLines.first;
+            blockList.add({'title': title, 'content': content});
+          }
+
+          for (int i = 0; i < blockList.length; i++) {
+            generatedCards.add(SummaryCapsuleItem(
+              title: blockList[i]['title']!,
+              content: blockList[i]['content']!,
+              index: i + 1,
+              total: blockList.length,
+            ));
+          }
+        }
+
+        if (generatedCards.isEmpty && rawSummaryText.trim().isNotEmpty) {
+          generatedCards.add(SummaryCapsuleItem(
+            title: currentKeyword.value.isNotEmpty ? currentKeyword.value : "Summary",
+            content: rawSummaryText.trim(),
+            index: 1,
+            total: 1,
+          ));
+        } else if (generatedCards.isEmpty && lines.isNotEmpty) {
+          generatedCards.add(SummaryCapsuleItem(
+            title: currentKeyword.value.isNotEmpty ? currentKeyword.value : "Summary",
+            content: lines.join('\n\n'),
+            index: 1,
+            total: 1,
+          ));
+        }
+
+        capsuleCards.value = generatedCards;
 
         // 4. Determine response type & active tab
         bool hasChildren = childrenList.isNotEmpty;
-        bool hasSummary = summaryCards.isNotEmpty || summaryData.isNotEmpty;
+        bool hasSummary = capsuleCards.isNotEmpty;
 
         String detectedType = (decoded['type'] ?? '').toString();
 
         if (detectedType == 'both' || (hasChildren && hasSummary)) {
           responseType.value = 'both';
-          activeTab.value = 0; // Default to summary tab
+          activeTab.value = 0; // Default to Capsule Cards
         } else if (detectedType == 'parent' || (hasChildren && !hasSummary)) {
           responseType.value = 'parent';
           activeTab.value = 1;
@@ -198,6 +253,7 @@ class KeywordSummaryController extends GetxController {
     if (currentKeyword.value == keyword && (kid == null || currentKid.value == kid)) return;
 
     searchHistory.add(KeywordHistoryEntry(keyword: keyword, kid: kid));
+    activeTab.value = 0; // Switch to card view on keyword tap
     fetchSummary(keyword, kid: kid);
   }
 
@@ -206,6 +262,7 @@ class KeywordSummaryController extends GetxController {
     if (currentKeyword.value == keyword) return;
 
     searchHistory.add(KeywordHistoryEntry(keyword: keyword));
+    activeTab.value = 0;
     fetchSummary(keyword);
   }
 
@@ -213,6 +270,7 @@ class KeywordSummaryController extends GetxController {
     if (searchHistory.length > 1) {
       searchHistory.removeLast();
       final prev = searchHistory.last;
+      activeTab.value = 0;
       fetchSummary(prev.keyword, kid: prev.kid);
     } else {
       Get.back();
