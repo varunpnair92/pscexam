@@ -106,16 +106,6 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
           centerTitle: true,
           actions: [
             Obx(() {
-              if (ctrl.currentKeyword.value.isEmpty) return const SizedBox.shrink();
-              return IconButton(
-                icon: const Icon(Icons.info_outline_rounded, color: _green1, size: 22),
-                tooltip: "Show Details",
-                onPressed: () {
-                  Get.toNamed('/keywordDetails', arguments: {"keyword": ctrl.currentKeyword.value});
-                },
-              );
-            }),
-            Obx(() {
               final hasContent = ctrl.description.value.isNotEmpty ||
                   ctrl.summaryLines.isNotEmpty ||
                   ctrl.summary.value.isNotEmpty;
@@ -377,18 +367,6 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                   bg: _green1.withValues(alpha: 0.1),
                   textColor: _green1,
                 ),
-              InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () {
-                  Get.toNamed('/keywordDetails', arguments: {"keyword": ctrl.currentKeyword.value});
-                },
-                child: _chipWidget(
-                  label: "Show Details",
-                  icon: Icons.menu_book_rounded,
-                  bg: _green1,
-                  textColor: Colors.white,
-                ),
-              ),
             ],
           ),
         ],
@@ -760,20 +738,17 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
               physics: const NeverScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               itemCount: card.items.length,
-              separatorBuilder: (context, index) => Divider(
-                height: 12,
-                thickness: 0.6,
-                color: Colors.grey.shade100,
-              ),
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, idx) {
                 final item = card.items[idx];
+
                 return InkWell(
                   borderRadius: BorderRadius.circular(8),
                   onTap: () {
                     _showItemDetailSheet(context, card, item, idx + 1);
                   },
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -811,7 +786,7 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                                         ),
                                       ),
                                       const TextSpan(
-                                        text: "  —  ",
+                                        text: " — ",
                                         style: TextStyle(
                                           color: _textMid,
                                           fontSize: 14,
@@ -839,12 +814,6 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                                     height: 1.45,
                                   ),
                                 ),
-                        ),
-                        const SizedBox(width: 6),
-                        Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 13,
-                          color: Colors.grey.shade400,
                         ),
                       ],
                     ),
@@ -1128,6 +1097,9 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
       targetKeyword = targetKeyword.substring(0, targetKeyword.indexOf('(')).trim();
     }
 
+    final bool canNavigate = targetKeyword.isNotEmpty &&
+        targetKeyword != ctrl.currentKeyword.value;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1203,24 +1175,47 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Get.back();
-                      Get.toNamed('/keywordDetails', arguments: {"keyword": targetKeyword});
-                    },
-                    icon: const Icon(Icons.menu_book_rounded, size: 18),
-                    label: Text("Show Details: $targetKeyword"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _green1,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                if (canNavigate) ...[
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Get.back();
+                        _textCtrl.text = targetKeyword;
+                        ctrl.onKeywordTap(targetKeyword);
+                      },
+                      icon: const Icon(Icons.auto_stories_rounded, size: 18),
+                      label: Text("Show Summary & Description: $targetKeyword"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _green1,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Get.back();
+                        Get.toNamed('/keywordDetails', arguments: {"keyword": targetKeyword});
+                      },
+                      icon: const Icon(Icons.account_tree_rounded, size: 18, color: _green1),
+                      label: Text(
+                        "Show Details: $targetKeyword",
+                        style: const TextStyle(color: _green1, fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: _green1),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1269,9 +1264,9 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                 ),
                 const SizedBox(height: 20),
                 ListTile(
-                  leading: const Icon(Icons.article_rounded, color: _green1),
-                  title: const Text("View Summary", style: TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: const Text("Bullet points & quick facts"),
+                  leading: const Icon(Icons.auto_stories_rounded, color: _green1),
+                  title: const Text("Show Summary & Description", style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text("Bullet points, quick facts & overview"),
                   trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
