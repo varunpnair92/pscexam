@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'app_config.dart';
+import 'summary_card_model.dart';
 
 class KeywordSummaryCapsule {
   final int kid;
@@ -114,7 +115,7 @@ class KeywordSummaryKnowledgeCapsulePage extends StatelessWidget {
                 border: Border.all(color: Colors.white, width: 2),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 20,
                     spreadRadius: 2,
                     offset: const Offset(0, 10),
@@ -138,16 +139,125 @@ class KeywordSummaryKnowledgeCapsulePage extends StatelessWidget {
                   Expanded(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
-                      child: Text(
-                        capsule.summary != null && capsule.summary!.isNotEmpty
-                            ? capsule.summary!
-                            : "No summary available.",
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.black87,
-                          height: 1.7,
-                          fontWeight: FontWeight.w600, // bolder for readability
-                        ),
+                      child: Builder(
+                        builder: (context) {
+                          final summaryText = capsule.summary ?? "";
+                          if (summaryText.isEmpty) {
+                            return const Text(
+                              "No summary available.",
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.black87,
+                                height: 1.7,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            );
+                          }
+                          final cards = SummaryCardModel.parse(summaryText);
+                          if (cards.isNotEmpty) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: cards.map((card) {
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: card.accentColor.withValues(alpha: 0.25),
+                                      width: 1.2,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: card.accentColor.withValues(alpha: 0.06),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color: card.accentColor.withValues(alpha: 0.12),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(card.icon, color: card.accentColor, size: 16),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              card.cleanTitle,
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.indigo.shade900,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      ...card.items.map((item) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(bottom: 8),
+                                          child: item.hasValue
+                                              ? RichText(
+                                                  text: TextSpan(
+                                                    children: [
+                                                      TextSpan(
+                                                        text: "${item.label}  —  ",
+                                                        style: const TextStyle(
+                                                          fontSize: 14.5,
+                                                          color: Colors.black87,
+                                                          fontWeight: FontWeight.w600,
+                                                          height: 1.5,
+                                                        ),
+                                                      ),
+                                                      TextSpan(
+                                                        text: item.value,
+                                                        style: TextStyle(
+                                                          fontSize: 14.5,
+                                                          color: card.accentColor,
+                                                          fontWeight: FontWeight.bold,
+                                                          height: 1.5,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                              : Text(
+                                                  item.rawText,
+                                                  style: const TextStyle(
+                                                    fontSize: 14.5,
+                                                    color: Colors.black87,
+                                                    fontWeight: FontWeight.w500,
+                                                    height: 1.5,
+                                                  ),
+                                                ),
+                                        );
+                                      }),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          }
+                          return Text(
+                            summaryText,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              color: Colors.black87,
+                              height: 1.7,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),

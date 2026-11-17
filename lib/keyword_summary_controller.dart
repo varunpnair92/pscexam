@@ -2,15 +2,24 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'app_config.dart';
+import 'summary_card_model.dart';
 
 class KeywordSummaryController extends GetxController {
   var isLoading = false.obs;
+  var errorMessage = "".obs;
 
   // ─── Data State ───
+  var keywordId = 0.obs;
   var currentKeyword = "".obs;
-  var responseType = "unknown".obs; // 'parent', 'child', or 'error'
-  var childrenList = <String>[].obs;
+  var description = "".obs;
+  var summary = "".obs;
+  var summaryLines = <String>[].obs;
+  var summaryCards = <SummaryCardModel>[].obs;
+
+  // Backwards-compatible observables
   var summaryData = <String>[].obs;
+  var responseType = "unknown".obs; // 'success', 'parent', 'empty', 'error', 'unknown'
+  var childrenList = <String>[].obs;
 
   // ─── History Management ───
   var searchHistory = <String>[].obs;
@@ -19,81 +28,135 @@ class KeywordSummaryController extends GetxController {
   void onInit() {
     super.onInit();
     final args = Get.arguments;
-    if (args != null && args["keyword"] != null) {
-      String kw = args["keyword"].toString();
-      searchHistory.add(kw);
-      currentKeyword.value = kw;
-      fetchSummary(kw);
+    if (args != null) {
+      if (args is Map) {
+        String? kw = args["keyword"]?.toString();
+        int? kid = args["kid"] != null ? int.tryParse(args["kid"].toString()) : null;
+        if (kw != null && kw.trim().isNotEmpty) {
+          searchHistory.add(kw.trim());
+          currentKeyword.value = kw.trim();
+          fetchSummary(kw.trim(), kid: kid);
+        } else if (kid != null) {
+          fetchSummary("", kid: kid);
+        }
+      } else if (args is String && args.trim().isNotEmpty) {
+        searchHistory.add(args.trim());
+        currentKeyword.value = args.trim();
+        fetchSummary(args.trim());
+      }
     }
   }
 
-  Future<void> fetchSummary(String keyword) async {
+  Future<void> fetchSummary(String keyword, {int? kid}) async {
+    final trimmed = keyword.trim();
+    if (trimmed.isEmpty && kid == null) return;
+
     isLoading.value = true;
-    currentKeyword.value = keyword;
+    errorMessage.value = "";
+    if (trimmed.isNotEmpty) {
+      currentKeyword.value = trimmed;
+    }
 
     try {
-      final baseUri = Uri.parse(AppConfig.keywordSearchSummary);
-      final uri = baseUri.replace(queryParameters: {'keyword': keyword.trim()});
+      final String url;
+      if (kid != null && kid > 0) {
+        url = "${AppConfig.keywordSearchSummary}?kid=$kid";
+      } else {
+        url = "${AppConfig.keywordSearchSummary}?keyword=${Uri.encodeComponent(trimmed)}";
+      }
 
       final res = await http.get(
-        uri,
+        Uri.parse(url),
         headers: {"Content-Type": "application/json"},
       ).timeout(const Duration(seconds: 12));
 
       if (res.statusCode == 200) {
         final decoded = jsonDecode(utf8.decode(res.bodyBytes));
 
-        if (decoded is! Map) {
-          responseType.value = 'error';
-          return;
-        }
+        if (decoded is Map) {
+          if (decoded.containsKey('error')) {
+            errorMessage.value = decoded['error'].toString();
+            responseType.value = 'error';
+            return;
+          }
 
-        if (decoded['keyword'] != null && decoded['keyword'].toString().trim().isNotEmpty) {
-          currentKeyword.value = decoded['keyword'].toString().trim();
-        }
+          keywordId.value = (decoded['id'] is int)
+              ? decoded['id']
+              : int.tryParse(decoded['id']?.toString() ?? '0') ?? 0;
 
-        // Parse children if present
-        var rawChildren = decoded['children'] ?? (decoded['type'] == 'parent' ? decoded['data'] : null);
-        if (rawChildren is List) {
-          childrenList.value = List<dynamic>.from(rawChildren).map((e) => _extractName(e)).toList();
+          if (decoded['keyword'] != null && decoded['keyword'].toString().trim().isNotEmpty) {
+            currentKeyword.value = decoded['keyword'].toString().trim();
+          }
+
+          description.value = (decoded['description'] ?? "").toString().trim();
+          summary.value = (decoded['summary'] ?? "").toString().trim();
+
+          final rawLines = (decoded['summary_lines'] != null && decoded['summary_lines'] is List)
+              ? (decoded['summary_lines'] as List)
+              : (decoded['summary'] != null && decoded['summary'] is List ? (decoded['summary'] as List) : null);
+
+          // Parse into separate card entries if enclosed in # to #
+          final parsedCards = SummaryCardModel.parse(summary.value, rawLines: rawLines);
+          summaryCards.value = parsedCards;
+
+          List<String> parsedLines = [];
+          if (parsedCards.isNotEmpty) {
+            // Flatten all clean items across all cards without any '#' markers
+            parsedLines = parsedCards.expand((c) => c.items.map((i) => i.rawText)).toList();
+          } else if (rawLines != null) {
+            parsedLines = List<dynamic>.from(rawLines)
+                .map((e) => e.toString().trim())
+                .where((e) => e.isNotEmpty && e != '#')
+                .toList();
+          } else if (summary.value.isNotEmpty) {
+            parsedLines = summary.value
+                .split('\n')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty && e != '#')
+                .toList();
+          }
+
+          summaryLines.value = parsedLines;
+          summaryData.value = parsedLines;
+
+          // Legacy parent check fallback (if ever returned)
+          if (decoded['type'] == 'parent' ||
+              (decoded.containsKey('children') &&
+                  decoded['children'] is List &&
+                  (decoded['children'] as List).isNotEmpty)) {
+            responseType.value = 'parent';
+            var rawChildren = decoded['children'] ?? decoded['data'] ?? [];
+            childrenList.value = List<dynamic>.from(rawChildren).map((e) => _extractName(e)).toList();
+          } else {
+            childrenList.clear();
+            if (description.value.isEmpty && summaryLines.isEmpty && summaryCards.isEmpty && summary.value.isEmpty) {
+              responseType.value = 'empty';
+            } else {
+              responseType.value = 'success';
+            }
+          }
         } else {
-          childrenList.clear();
+          responseType.value = 'empty';
         }
-
-        // Parse summary lines
-        List<String> lines = [];
-        if (decoded['summary_lines'] is List) {
-          lines = List<dynamic>.from(decoded['summary_lines'])
-              .map((e) => e.toString().trim())
-              .where((s) => s.isNotEmpty && s != '#')
-              .toList();
-        } else if (decoded['summary'] is String) {
-          lines = (decoded['summary'] as String)
-              .split('\n')
-              .map((e) => e.trim())
-              .where((s) => s.isNotEmpty && s != '#')
-              .toList();
-        } else if (decoded['data'] is List && decoded['type'] != 'parent') {
-          lines = List<dynamic>.from(decoded['data'])
-              .map((e) => e.toString().trim())
-              .where((s) => s.isNotEmpty && s != '#')
-              .toList();
+      } else if (res.statusCode == 404) {
+        try {
+          final decoded = jsonDecode(utf8.decode(res.bodyBytes));
+          errorMessage.value = decoded['error'] ?? "Keyword not found";
+        } catch (_) {
+          errorMessage.value = "Keyword not found";
         }
-        summaryData.value = lines;
-
-        // Determine view state
-        String detectedType = decoded['type'] ?? '';
-        if (summaryData.isNotEmpty) {
-          responseType.value = 'child';
-        } else if (detectedType == 'parent' || childrenList.isNotEmpty) {
-          responseType.value = 'parent';
-        } else {
-          responseType.value = 'child';
-        }
+        responseType.value = 'error';
       } else {
+        try {
+          final decoded = jsonDecode(utf8.decode(res.bodyBytes));
+          errorMessage.value = decoded['error'] ?? "Failed to load summary (${res.statusCode})";
+        } catch (_) {
+          errorMessage.value = "Failed to load summary (${res.statusCode})";
+        }
         responseType.value = 'error';
       }
     } catch (e) {
+      errorMessage.value = "Network error: Unable to fetch summary. Please check your connection.";
       responseType.value = 'error';
     } finally {
       isLoading.value = false;
@@ -108,19 +171,25 @@ class KeywordSummaryController extends GetxController {
   }
 
   void onKeywordTap(String keyword) {
-    if (keyword.trim().isEmpty) return;
-    if (currentKeyword.value == keyword) return;
+    final trimmed = keyword.trim();
+    if (trimmed.isEmpty) return;
+    if (currentKeyword.value == trimmed && responseType.value != 'error') return;
 
-    searchHistory.add(keyword);
-    fetchSummary(keyword);
+    if (searchHistory.isEmpty || searchHistory.last != trimmed) {
+      searchHistory.add(trimmed);
+    }
+    fetchSummary(trimmed);
   }
 
   void onSearchSubmit(String keyword) {
-    if (keyword.trim().isEmpty) return;
-    if (currentKeyword.value == keyword) return;
+    final trimmed = keyword.trim();
+    if (trimmed.isEmpty) return;
+    if (currentKeyword.value == trimmed && responseType.value != 'error') return;
 
-    searchHistory.add(keyword);
-    fetchSummary(keyword);
+    if (searchHistory.isEmpty || searchHistory.last != trimmed) {
+      searchHistory.add(trimmed);
+    }
+    fetchSummary(trimmed);
   }
 
   void handleBack() {
