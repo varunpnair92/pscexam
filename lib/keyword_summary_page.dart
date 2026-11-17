@@ -106,6 +106,16 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
           centerTitle: true,
           actions: [
             Obx(() {
+              if (ctrl.currentKeyword.value.isEmpty) return const SizedBox.shrink();
+              return IconButton(
+                icon: const Icon(Icons.info_outline_rounded, color: _green1, size: 22),
+                tooltip: "Show Details",
+                onPressed: () {
+                  Get.toNamed('/keywordDetails', arguments: {"keyword": ctrl.currentKeyword.value});
+                },
+              );
+            }),
+            Obx(() {
               final hasContent = ctrl.description.value.isNotEmpty ||
                   ctrl.summaryLines.isNotEmpty ||
                   ctrl.summary.value.isNotEmpty;
@@ -367,6 +377,18 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                   bg: _green1.withValues(alpha: 0.1),
                   textColor: _green1,
                 ),
+              InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () {
+                  Get.toNamed('/keywordDetails', arguments: {"keyword": ctrl.currentKeyword.value});
+                },
+                child: _chipWidget(
+                  label: "Show Details",
+                  icon: Icons.menu_book_rounded,
+                  bg: _green1,
+                  textColor: Colors.white,
+                ),
+              ),
             ],
           ),
         ],
@@ -745,75 +767,87 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
               ),
               itemBuilder: (context, idx) {
                 final item = card.items[idx];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 22,
-                        height: 22,
-                        alignment: Alignment.center,
-                        margin: const EdgeInsets.only(top: 2),
-                        decoration: BoxDecoration(
-                          color: accentColor.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          "${idx + 1}",
-                          style: TextStyle(
-                            color: accentColor,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                return InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () {
+                    _showItemDetailSheet(context, card, item, idx + 1);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 22,
+                          height: 22,
+                          alignment: Alignment.center,
+                          margin: const EdgeInsets.only(top: 2),
+                          decoration: BoxDecoration(
+                            color: accentColor.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            "${idx + 1}",
+                            style: TextStyle(
+                              color: accentColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: item.hasValue
-                            ? SelectableText.rich(
-                                TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: item.label,
-                                      style: const TextStyle(
-                                        color: _textDark,
-                                        fontSize: 14.5,
-                                        fontWeight: FontWeight.w600,
-                                        height: 1.45,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: item.hasValue
+                              ? Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: item.label,
+                                        style: const TextStyle(
+                                          color: _textDark,
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w600,
+                                          height: 1.45,
+                                        ),
                                       ),
-                                    ),
-                                    const TextSpan(
-                                      text: "  —  ",
-                                      style: TextStyle(
-                                        color: _textMid,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
+                                      const TextSpan(
+                                        text: "  —  ",
+                                        style: TextStyle(
+                                          color: _textMid,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
-                                    TextSpan(
-                                      text: item.value,
-                                      style: TextStyle(
-                                        color: accentColor,
-                                        fontSize: 14.5,
-                                        fontWeight: FontWeight.w800,
-                                        height: 1.45,
+                                      TextSpan(
+                                        text: item.value,
+                                        style: TextStyle(
+                                          color: accentColor,
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w800,
+                                          height: 1.45,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
+                                )
+                              : Text(
+                                  item.rawText,
+                                  style: const TextStyle(
+                                    color: _textDark,
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.45,
+                                  ),
                                 ),
-                              )
-                            : SelectableText(
-                                item.rawText,
-                                style: const TextStyle(
-                                  color: _textDark,
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.45,
-                                ),
-                              ),
-                      ),
-                    ],
+                        ),
+                        const SizedBox(width: 6),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 13,
+                          color: Colors.grey.shade400,
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -966,13 +1000,19 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Related Topics",
-          style: TextStyle(
-            color: _textDark,
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          children: [
+            const Icon(Icons.account_tree_rounded, color: _green1, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              "Related Topics (${ctrl.childrenList.length})",
+              style: const TextStyle(
+                color: _textDark,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
         Wrap(
@@ -991,8 +1031,7 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                 style: const TextStyle(color: _textDark, fontWeight: FontWeight.w600),
               ),
               onPressed: () {
-                _textCtrl.text = childName;
-                ctrl.onKeywordTap(childName);
+                _showTopicActionSheet(context, childName);
               },
             );
           }).toList(),
@@ -1031,7 +1070,7 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                 ctrl.onKeywordTap(childName);
               },
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 child: Row(
                   children: [
                     Container(
@@ -1053,10 +1092,213 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                         ),
                       ),
                     ),
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        foregroundColor: _green1,
+                      ),
+                      icon: const Icon(Icons.menu_book_rounded, size: 15),
+                      label: const Text("Details", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      onPressed: () {
+                        Get.toNamed('/keywordDetails', arguments: {"keyword": childName});
+                      },
+                    ),
+                    const SizedBox(width: 6),
                     Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey.shade400, size: 16),
                   ],
                 ),
               ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showItemDetailSheet(
+    BuildContext context,
+    SummaryCardModel card,
+    SummaryItem item,
+    int index,
+  ) {
+    String targetKeyword = item.hasValue ? item.value! : item.label;
+    if (targetKeyword.contains('(')) {
+      targetKeyword = targetKeyword.substring(0, targetKeyword.indexOf('(')).trim();
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: card.accentColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        "${card.cleanTitle} • Point #$index",
+                        style: TextStyle(
+                          color: card.accentColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.copy_rounded, size: 18),
+                      color: _green1,
+                      onPressed: () {
+                        _copyToClipboard(
+                          customText: item.hasValue ? "${item.label} — ${item.value}" : item.rawText,
+                          customMessage: "Point copied to clipboard",
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  item.label,
+                  style: const TextStyle(
+                    color: _textDark,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+                if (item.hasValue) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: card.accentColor.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: card.accentColor.withValues(alpha: 0.2)),
+                    ),
+                    child: Text(
+                      item.value!,
+                      style: TextStyle(
+                        color: card.accentColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Get.back();
+                      Get.toNamed('/keywordDetails', arguments: {"keyword": targetKeyword});
+                    },
+                    icon: const Icon(Icons.menu_book_rounded, size: 18),
+                    label: Text("Show Details: $targetKeyword"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _green1,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showTopicActionSheet(BuildContext context, String topic) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _green1.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.account_tree_rounded, color: _green1, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        topic,
+                        style: const TextStyle(
+                          color: _textDark,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ListTile(
+                  leading: const Icon(Icons.article_rounded, color: _green1),
+                  title: const Text("View Summary", style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text("Bullet points & quick facts"),
+                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  onTap: () {
+                    Get.back();
+                    _textCtrl.text = topic;
+                    ctrl.onKeywordTap(topic);
+                  },
+                ),
+                const SizedBox(height: 10),
+                ListTile(
+                  leading: const Icon(Icons.menu_book_rounded, color: _green1),
+                  title: const Text("Show Details", style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text("Characteristics, full theory & graph view"),
+                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  onTap: () {
+                    Get.back();
+                    Get.toNamed('/keywordDetails', arguments: {"keyword": topic});
+                  },
+                ),
+              ],
             ),
           ),
         );

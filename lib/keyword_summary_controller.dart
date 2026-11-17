@@ -119,21 +119,25 @@ class KeywordSummaryController extends GetxController {
           summaryLines.value = parsedLines;
           summaryData.value = parsedLines;
 
-          // Legacy parent check fallback (if ever returned)
-          if (decoded['type'] == 'parent' ||
-              (decoded.containsKey('children') &&
-                  decoded['children'] is List &&
-                  (decoded['children'] as List).isNotEmpty)) {
-            responseType.value = 'parent';
-            var rawChildren = decoded['children'] ?? decoded['data'] ?? [];
+          // Parse children if present in response
+          var rawChildren = decoded['children'] ?? (decoded['type'] == 'parent' ? decoded['data'] : null);
+          if (rawChildren is List && rawChildren.isNotEmpty) {
             childrenList.value = List<dynamic>.from(rawChildren).map((e) => _extractName(e)).toList();
           } else {
             childrenList.clear();
-            if (description.value.isEmpty && summaryLines.isEmpty && summaryCards.isEmpty && summary.value.isEmpty) {
-              responseType.value = 'empty';
-            } else {
-              responseType.value = 'success';
-            }
+          }
+
+          final hasSummaryContent = description.value.isNotEmpty ||
+              summaryLines.isNotEmpty ||
+              summaryCards.isNotEmpty ||
+              summary.value.isNotEmpty;
+
+          if (hasSummaryContent) {
+            responseType.value = 'success';
+          } else if (childrenList.isNotEmpty) {
+            responseType.value = 'parent';
+          } else {
+            responseType.value = 'empty';
           }
         } else {
           responseType.value = 'empty';
