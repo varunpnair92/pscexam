@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'app_config.dart';
 import 'keyword_summary_controller.dart';
 import 'summary_card_model.dart';
 
@@ -309,67 +312,75 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
   }
 
   Widget _buildTopicHeaderCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _bg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _green1.withValues(alpha: 0.12), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _green1.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () {
+        if (ctrl.currentKeyword.value.isNotEmpty) {
+          _showNoteSheet(context, ctrl.currentKeyword.value);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _bg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _green1.withValues(alpha: 0.12), width: 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _green1.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.bookmark_rounded, color: _green1, size: 18),
                 ),
-                child: const Icon(Icons.bookmark_rounded, color: _green1, size: 18),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  ctrl.currentKeyword.value,
-                  style: const TextStyle(
-                    color: _textDark,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    ctrl.currentKeyword.value,
+                    style: const TextStyle(
+                      color: _textDark,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              if (ctrl.keywordId.value > 0)
-                _chipWidget(
-                  label: "ID: #${ctrl.keywordId.value}",
-                  icon: Icons.tag_rounded,
-                  bg: Colors.white,
-                ),
-              if (ctrl.summaryCards.isNotEmpty)
-                _chipWidget(
-                  label: "${ctrl.summaryCards.length} Categories",
-                  icon: Icons.dashboard_outlined,
-                  bg: _green1.withValues(alpha: 0.1),
-                  textColor: _green1,
-                ),
-              if (ctrl.summaryLines.isNotEmpty)
-                _chipWidget(
-                  label: "${ctrl.summaryLines.length} Total Points",
-                  icon: Icons.checklist_rounded,
-                  bg: _green1.withValues(alpha: 0.1),
-                  textColor: _green1,
-                ),
-            ],
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                if (ctrl.keywordId.value > 0)
+                  _chipWidget(
+                    label: "ID: #${ctrl.keywordId.value}",
+                    icon: Icons.tag_rounded,
+                    bg: Colors.white,
+                  ),
+                if (ctrl.summaryCards.isNotEmpty)
+                  _chipWidget(
+                    label: "${ctrl.summaryCards.length} Categories",
+                    icon: Icons.dashboard_outlined,
+                    bg: _green1.withValues(alpha: 0.1),
+                    textColor: _green1,
+                  ),
+                if (ctrl.summaryLines.isNotEmpty)
+                  _chipWidget(
+                    label: "${ctrl.summaryLines.length} Total Points",
+                    icon: Icons.checklist_rounded,
+                    bg: _green1.withValues(alpha: 0.1),
+                    textColor: _green1,
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -745,7 +756,14 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                 return InkWell(
                   borderRadius: BorderRadius.circular(8),
                   onTap: () {
-                    _showItemDetailSheet(context, card, item, idx + 1);
+                    final targetKeyword = item.hasValue ? item.value! : item.label;
+                    _showNoteSheet(
+                      context,
+                      targetKeyword,
+                      fallbackItem: item,
+                      categoryTitle: card.cleanTitle,
+                      pointIndex: idx + 1,
+                    );
                   },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
@@ -1000,7 +1018,7 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                 style: const TextStyle(color: _textDark, fontWeight: FontWeight.w600),
               ),
               onPressed: () {
-                _showTopicActionSheet(context, childName);
+                _showNoteSheet(context, childName);
               },
             );
           }).toList(),
@@ -1035,8 +1053,7 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
               onTap: () {
-                _textCtrl.text = childName;
-                ctrl.onKeywordTap(childName);
+                _showNoteSheet(context, childName);
               },
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -1086,216 +1103,38 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
     );
   }
 
-  void _showItemDetailSheet(
+  void _showNoteSheet(
     BuildContext context,
-    SummaryCardModel card,
-    SummaryItem item,
-    int index,
-  ) {
-    String targetKeyword = item.hasValue ? item.value! : item.label;
-    if (targetKeyword.contains('(')) {
-      targetKeyword = targetKeyword.substring(0, targetKeyword.indexOf('(')).trim();
+    String keyword, {
+    SummaryItem? fallbackItem,
+    String? categoryTitle,
+    int? pointIndex,
+  }) {
+    String cleanKeyword = keyword.trim();
+    if (cleanKeyword.contains('(')) {
+      cleanKeyword = cleanKeyword.substring(0, cleanKeyword.indexOf('(')).trim();
     }
-
-    final bool canNavigate = targetKeyword.isNotEmpty &&
-        targetKeyword != ctrl.currentKeyword.value;
+    if (cleanKeyword.isEmpty) return;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: card.accentColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        "${card.cleanTitle} • Point #$index",
-                        style: TextStyle(
-                          color: card.accentColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.copy_rounded, size: 18),
-                      color: _green1,
-                      onPressed: () {
-                        _copyToClipboard(
-                          customText: item.hasValue ? "${item.label} — ${item.value}" : item.rawText,
-                          customMessage: "Point copied to clipboard",
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  item.label,
-                  style: const TextStyle(
-                    color: _textDark,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    height: 1.4,
-                  ),
-                ),
-                if (item.hasValue) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: card.accentColor.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: card.accentColor.withValues(alpha: 0.2)),
-                    ),
-                    child: Text(
-                      item.value!,
-                      style: TextStyle(
-                        color: card.accentColor,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-                if (canNavigate) ...[
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Get.back();
-                        _textCtrl.text = targetKeyword;
-                        ctrl.onKeywordTap(targetKeyword);
-                      },
-                      icon: const Icon(Icons.auto_stories_rounded, size: 18),
-                      label: Text("Show Summary & Description: $targetKeyword"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _green1,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Get.back();
-                        Get.toNamed('/keywordDetails', arguments: {"keyword": targetKeyword});
-                      },
-                      icon: const Icon(Icons.account_tree_rounded, size: 18, color: _green1),
-                      label: Text(
-                        "Show Details: $targetKeyword",
-                        style: const TextStyle(color: _green1, fontWeight: FontWeight.w600),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: _green1),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return _StudyNoteSheetWidget(
+          keyword: cleanKeyword,
+          fallbackItem: fallbackItem,
+          categoryTitle: categoryTitle,
+          pointIndex: pointIndex,
+          onCopy: (text) => _copyToClipboard(
+            customText: text,
+            customMessage: "Note copied to clipboard",
           ),
-        );
-      },
-    );
-  }
-
-  void _showTopicActionSheet(BuildContext context, String topic) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: _green1.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.account_tree_rounded, color: _green1, size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        topic,
-                        style: const TextStyle(
-                          color: _textDark,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                ListTile(
-                  leading: const Icon(Icons.auto_stories_rounded, color: _green1),
-                  title: const Text("Show Summary & Description", style: TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: const Text("Bullet points, quick facts & overview"),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: Colors.grey.shade200),
-                  ),
-                  onTap: () {
-                    Get.back();
-                    _textCtrl.text = topic;
-                    ctrl.onKeywordTap(topic);
-                  },
-                ),
-                const SizedBox(height: 10),
-                ListTile(
-                  leading: const Icon(Icons.menu_book_rounded, color: _green1),
-                  title: const Text("Show Details", style: TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: const Text("Characteristics, full theory & graph view"),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: Colors.grey.shade200),
-                  ),
-                  onTap: () {
-                    Get.back();
-                    Get.toNamed('/keywordDetails', arguments: {"keyword": topic});
-                  },
-                ),
-              ],
-            ),
-          ),
+          onOpenAsMain: (kw) {
+            Navigator.pop(ctx);
+            _textCtrl.text = kw;
+            ctrl.onKeywordTap(kw);
+          },
         );
       },
     );
@@ -1356,6 +1195,630 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _StudyNoteSheetWidget extends StatefulWidget {
+  final String keyword;
+  final SummaryItem? fallbackItem;
+  final String? categoryTitle;
+  final int? pointIndex;
+  final void Function(String text) onCopy;
+  final void Function(String keyword) onOpenAsMain;
+
+  const _StudyNoteSheetWidget({
+    required this.keyword,
+    this.fallbackItem,
+    this.categoryTitle,
+    this.pointIndex,
+    required this.onCopy,
+    required this.onOpenAsMain,
+  });
+
+  @override
+  State<_StudyNoteSheetWidget> createState() => _StudyNoteSheetWidgetState();
+}
+
+class _StudyNoteSheetWidgetState extends State<_StudyNoteSheetWidget> {
+  final KeywordSummaryController ctrl = Get.find<KeywordSummaryController>();
+  bool isLoading = true;
+  String description = "";
+  String summary = "";
+  List<String> summaryLines = [];
+  List<SummaryCardModel> summaryCards = [];
+  int keywordId = 0;
+  String? errorMessage;
+
+  static const _bg = Color(0xFFF4FBF4);
+  static const _green1 = Color(0xFF1B8A4E);
+  static const _textDark = Color(0xFF0D3320);
+  static const _textMid = Color(0xFF4D7A5E);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNoteData();
+  }
+
+  Future<void> _loadNoteData() async {
+    if (ctrl.currentKeyword.value == widget.keyword) {
+      setState(() {
+        description = ctrl.description.value;
+        summary = ctrl.summary.value;
+        summaryLines = List<String>.from(ctrl.summaryLines);
+        summaryCards = List<SummaryCardModel>.from(ctrl.summaryCards);
+        keywordId = ctrl.keywordId.value;
+        isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final res = await http.get(
+        Uri.parse("${AppConfig.keywordSearchSummary}?keyword=${Uri.encodeComponent(widget.keyword)}"),
+      ).timeout(const Duration(seconds: 8));
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(res.bodyBytes));
+        if (decoded is Map<String, dynamic>) {
+          description = decoded['description'] ?? '';
+          summary = decoded['summary'] ?? '';
+          keywordId = decoded['id'] ?? 0;
+
+          if (decoded['summary_lines'] is List) {
+            summaryLines = List<dynamic>.from(decoded['summary_lines'])
+                .map((e) => e.toString().trim())
+                .where((e) => e.isNotEmpty)
+                .toList();
+          }
+
+          if (summary.contains('#')) {
+            summaryCards = SummaryCardModel.parse(summary);
+          }
+        }
+      } else {
+        errorMessage = "Note details not found";
+      }
+    } catch (e) {
+      errorMessage = "Could not load note";
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _copyFullNote() {
+    String noteText = "${widget.keyword} — PSC Study Note\n";
+    if (widget.fallbackItem != null) {
+      noteText += "\n[ക്വിക്ക് പോയിന്റ് (Key Fact)]\n";
+      noteText += widget.fallbackItem!.hasValue
+          ? "• ${widget.fallbackItem!.label} — ${widget.fallbackItem!.value}\n"
+          : "• ${widget.fallbackItem!.rawText}\n";
+    }
+    if (description.isNotEmpty) {
+      noteText += "\n[വിവരണം (Description)]\n$description\n";
+    }
+    if (summaryCards.isNotEmpty) {
+      noteText += "\n[സംഗ്രഹം (Summary)]\n";
+      for (final card in summaryCards) {
+        noteText += "# ${card.cleanTitle}\n";
+        for (final it in card.items) {
+          noteText += it.hasValue ? "• ${it.label} — ${it.value}\n" : "• ${it.rawText}\n";
+        }
+      }
+    } else if (summaryLines.isNotEmpty) {
+      noteText += "\n[സംഗ്രഹം (Summary)]\n";
+      for (final line in summaryLines) {
+        noteText += "• $line\n";
+      }
+    } else if (summary.isNotEmpty) {
+      noteText += "\n[സംഗ്രഹം (Summary)]\n$summary\n";
+    }
+
+    widget.onCopy(noteText.trim());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.78,
+      minChildSize: 0.45,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollCtrl) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // ── Drag Handle ──
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4.5,
+                  margin: const EdgeInsets.only(top: 10, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+
+              // ── Note Header ──
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 4, 12, 10),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(9),
+                      decoration: BoxDecoration(
+                        color: _green1.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.menu_book_rounded, color: _green1, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.keyword,
+                            style: const TextStyle(
+                              color: _textDark,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: _green1.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Text(
+                                  "കുറിപ്പ് • Study Note",
+                                  style: TextStyle(
+                                    color: _green1,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              if (keywordId > 0)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    "# ID: #$keywordId",
+                                    style: TextStyle(
+                                      color: Colors.grey.shade700,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              if (widget.categoryTitle != null)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    "${widget.categoryTitle} • #${widget.pointIndex ?? 1}",
+                                    style: TextStyle(
+                                      color: Colors.grey.shade700,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy_rounded, color: _green1, size: 20),
+                      tooltip: "Copy Note",
+                      onPressed: _copyFullNote,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Colors.grey, size: 20),
+                      tooltip: "Close",
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Divider(height: 1, thickness: 0.8),
+
+              // ── Note Content (Both Description & Summary Together) ──
+              Expanded(
+                child: isLoading
+                    ? const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(color: _green1),
+                            SizedBox(height: 14),
+                            Text(
+                              "കുറിപ്പ് ലോഡ് ചെയ്യുന്നു (Loading Note)...",
+                              style: TextStyle(color: _textMid, fontSize: 13.5),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView(
+                        controller: scrollCtrl,
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
+                        children: [
+                          // 1. Fallback / Current Fact (if opened from a list point)
+                          if (widget.fallbackItem != null) ...[
+                            _buildFactBadgeCard(),
+                            const SizedBox(height: 14),
+                          ],
+
+                          // 2. വിവരണ കുറിപ്പ് (Description)
+                          if (description.isNotEmpty) ...[
+                            _buildNoteSectionHeader(
+                              icon: Icons.auto_stories_rounded,
+                              title: "വിവരണം (Description)",
+                              color: _green1,
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: _bg,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: _green1.withValues(alpha: 0.18)),
+                              ),
+                              child: SelectableText(
+                                description,
+                                style: const TextStyle(
+                                  color: _textDark,
+                                  fontSize: 14.5,
+                                  height: 1.6,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+
+                          // 3. സംഗ്രഹ കുറിപ്പ് (Summary)
+                          if (summaryCards.isNotEmpty || summaryLines.isNotEmpty || summary.isNotEmpty) ...[
+                            _buildNoteSectionHeader(
+                              icon: Icons.notes_rounded,
+                              title: "സംഗ്രഹം (Summary / Key Points)",
+                              color: _green1,
+                              badgeText: summaryLines.isNotEmpty
+                                  ? "${summaryLines.length} points"
+                                  : null,
+                            ),
+                            const SizedBox(height: 8),
+                            _buildSummaryContentInNote(),
+                            const SizedBox(height: 20),
+                          ],
+
+                          // If neither description nor summary found
+                          if (description.isEmpty &&
+                              summaryLines.isEmpty &&
+                              summary.isEmpty &&
+                              summaryCards.isEmpty) ...[
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.shade50,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: Colors.amber.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.info_outline_rounded, color: Colors.amber.shade800, size: 20),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      "ഈ വിഷയത്തെക്കുറിച്ചുള്ള വിശദമായ കുറിപ്പ് ലഭ്യമല്ല. പ്രധാന പോയിന്റ് മുകളിൽ നൽകിയിട്ടുണ്ട്.",
+                                      style: TextStyle(
+                                        color: Colors.amber.shade900,
+                                        fontSize: 13.5,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+
+                          // ── Action Buttons ──
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    Get.toNamed('/keywordDetails', arguments: {"keyword": widget.keyword});
+                                  },
+                                  icon: const Icon(Icons.account_tree_rounded, size: 17, color: _green1),
+                                  label: const Text(
+                                    "Show Details",
+                                    style: TextStyle(color: _green1, fontWeight: FontWeight.bold),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: _green1),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () => widget.onOpenAsMain(widget.keyword),
+                                  icon: const Icon(Icons.open_in_new_rounded, size: 17),
+                                  label: const Text(
+                                    "Open Full View",
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: _green1,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFactBadgeCard() {
+    final it = widget.fallbackItem!;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _green1.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _green1.withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            margin: const EdgeInsets.only(top: 2),
+            decoration: BoxDecoration(
+              color: _green1.withValues(alpha: 0.14),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.check_rounded, color: _green1, size: 14),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: it.hasValue
+                ? Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: "${it.label}  —  ",
+                          style: const TextStyle(
+                            color: _textDark,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        TextSpan(
+                          text: it.value,
+                          style: const TextStyle(
+                            color: _green1,
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Text(
+                    it.rawText,
+                    style: const TextStyle(
+                      color: _textDark,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoteSectionHeader({
+    required IconData icon,
+    required String title,
+    required Color color,
+    String? badgeText,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 17),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            color: _textDark,
+            fontSize: 14.5,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        if (badgeText != null) ...[
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              badgeText,
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSummaryContentInNote() {
+    if (summaryCards.isNotEmpty) {
+      return Column(
+        children: summaryCards.map((card) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: card.accentColor.withValues(alpha: 0.2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(card.icon, color: card.accentColor, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      card.cleanTitle,
+                      style: TextStyle(
+                        color: card.accentColor,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ...card.items.map((it) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("• ", style: TextStyle(color: card.accentColor, fontWeight: FontWeight.bold)),
+                          Expanded(
+                            child: it.hasValue
+                                ? Text.rich(
+                                    TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: "${it.label} — ",
+                                          style: const TextStyle(color: _textDark, fontSize: 13.5),
+                                        ),
+                                        TextSpan(
+                                          text: it.value,
+                                          style: TextStyle(
+                                            color: card.accentColor,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : Text(it.rawText, style: const TextStyle(color: _textDark, fontSize: 13.5)),
+                          ),
+                        ],
+                      ),
+                    )),
+              ],
+            ),
+          );
+        }).toList(),
+      );
+    }
+
+    if (summaryLines.isNotEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: _bg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _green1.withValues(alpha: 0.18)),
+        ),
+        child: Column(
+          children: summaryLines.map((line) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2),
+                    child: Icon(Icons.circle, size: 6, color: _green1),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SelectableText(
+                      line,
+                      style: const TextStyle(
+                        color: _textDark,
+                        fontSize: 14,
+                        height: 1.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _bg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _green1.withValues(alpha: 0.18)),
+      ),
+      child: SelectableText(
+        summary,
+        style: const TextStyle(color: _textDark, fontSize: 14.5, height: 1.55),
       ),
     );
   }
