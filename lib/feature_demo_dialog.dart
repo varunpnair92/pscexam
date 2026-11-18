@@ -316,6 +316,14 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
     // Fetch live search data for this specific node in background
     _fetchLivePoints(_currentItem.demoQuery, _currentItem.id);
 
+    // Special handling for Exam Battle: No search typing needed!
+    if (_currentItem.isBattle) {
+      _phaseTimer = Timer(const Duration(milliseconds: 650), () {
+        _runClickPhase();
+      });
+      return;
+    }
+
     // Restart blinking cursor
     _cursorTimer = Timer.periodic(const Duration(milliseconds: 450), (_) {
       if (mounted) {
@@ -477,7 +485,7 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
         color: Colors.transparent,
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          constraints: const BoxConstraints(maxWidth: 420, maxHeight: 660),
+          constraints: const BoxConstraints(maxWidth: 420, maxHeight: 690),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(30),
@@ -638,70 +646,146 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // ── Phase Status Banner ──
-          _buildPhaseStatusBadge(gradient),
+          _buildPhaseStatusBadge(item, gradient),
           const SizedBox(height: 12),
 
-          // ── Simulated Interactive Search Bar with Hand Pointer ──
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              _buildSimulatedSearchBar(item, gradient),
-              // Floating animated pointer / hand cursor
-              if (_currentPhase == DemoPhase.clicking)
-                Positioned(
-                  right: 14,
-                  bottom: -16,
-                  child: SlideTransition(
-                    position: _pointerOffsetAnim,
-                    child: _buildHandPointer(gradient),
+          // If Exam Battle -> Build authentic Exam Battle UI
+          if (item.isBattle) ...[
+            _buildBattleSimulation(item, gradient),
+          ] else ...[
+            // Simulated Interactive Search Bar with Hand Pointer
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                _buildSimulatedSearchBar(item, gradient),
+                // Floating animated pointer / hand cursor
+                if (_currentPhase == DemoPhase.clicking)
+                  Positioned(
+                    right: 14,
+                    bottom: -16,
+                    child: SlideTransition(
+                      position: _pointerOffsetAnim,
+                      child: _buildHandPointer(gradient),
+                    ),
                   ),
-                ),
-            ],
-          ),
+              ],
+            ),
 
-          const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
-          // ── Highlighted Data Area ──
-          if (_currentPhase == DemoPhase.dataHighlighted ||
-              _currentPhase == DemoPhase.completed)
-            _buildSpotlightDataCard(item, gradient)
-          else
-            _buildWaitingPlaceholder(item, gradient),
+            // Highlighted Data Area
+            if (_currentPhase == DemoPhase.dataHighlighted ||
+                _currentPhase == DemoPhase.completed)
+              _buildSpotlightDataCard(item, gradient)
+            else
+              _buildWaitingPlaceholder(item, gradient),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildPhaseStatusBadge(List<Color> gradient) {
+  Widget _buildPhaseStatusBadge(FeatureDemoModel item, List<Color> gradient) {
     String label;
     IconData icon;
     Color color;
 
-    switch (_currentPhase) {
-      case DemoPhase.typing:
-        label = "1. വിഷയം ഓട്ടോ-ഫിൽ ചെയ്യുന്നു (Auto-Typing...)";
-        icon = Icons.keyboard_rounded;
-        color = const Color(0xFF1976D2);
-        break;
-      case DemoPhase.clicking:
-        label = "2. സെർച്ച് ഓട്ടോ-ക്ലിക്ക് ചെയ്യുന്നു (Auto-Clicking...)";
-        icon = Icons.touch_app_rounded;
-        color = const Color(0xFFE65100);
-        break;
-      case DemoPhase.dataHighlighted:
-        label = "3. ഹൈലൈറ്റ് ചെയ്ത ഡാറ്റ തത്സമയം കാണുന്നു (Live Data)";
-        icon = Icons.auto_awesome_rounded;
-        color = _green1;
-        break;
-      case DemoPhase.completed:
-        label = "പൂർത്തിയായി! ഇനി സ്വയം പരീക്ഷിക്കാം (Ready!)";
-        icon = Icons.check_circle_rounded;
-        color = _green1;
-        break;
+    if (item.isBattle) {
+      switch (_currentPhase) {
+        case DemoPhase.typing:
+          label = "1. ലൈവ് എക്സാം പരിശോധിക്കുന്നു (Live Arena)...";
+          icon = Icons.military_tech_rounded;
+          color = const Color(0xFF1976D2);
+          break;
+        case DemoPhase.clicking:
+          label = "2. 'Attend Exam Now' ഓട്ടോ-ക്ലിക്ക് ചെയ്യുന്നു...";
+          icon = Icons.touch_app_rounded;
+          color = const Color(0xFFE65100);
+          break;
+        case DemoPhase.dataHighlighted:
+          label = "3. ലൈവ് പരീക്ഷ ആരംഭിച്ചു — റാങ്ക് മത്സരം സജീവം!";
+          icon = Icons.check_circle_rounded;
+          color = _green1;
+          break;
+        case DemoPhase.completed:
+          label = "പൂർത്തിയായി! ഇനി നേരിട്ട് പങ്കെടുക്കാം (Ready!)";
+          icon = Icons.check_circle_rounded;
+          color = _green1;
+          break;
+      }
+    } else if (item.isSummary) {
+      switch (_currentPhase) {
+        case DemoPhase.typing:
+          label = "1. '${item.demoQuery}' ഓട്ടോ-ടൈപ്പ് ചെയ്യുന്നു (Auto-Typing)...";
+          icon = Icons.keyboard_rounded;
+          color = const Color(0xFF1976D2);
+          break;
+        case DemoPhase.clicking:
+          label = "2. സെർച്ച് ഓട്ടോ-ക്ലിക്ക് ചെയ്യുന്നു (Auto-Clicking)...";
+          icon = Icons.touch_app_rounded;
+          color = const Color(0xFFE65100);
+          break;
+        case DemoPhase.dataHighlighted:
+          label = "3. സംഗ്രഹവും കുറിപ്പുകളും തത്സമയം കാണുന്നു (Summary View)";
+          icon = Icons.auto_stories_rounded;
+          color = _green1;
+          break;
+        case DemoPhase.completed:
+          label = "പൂർത്തിയായി! ഇനി സ്വയം പരീക്ഷിക്കാം (Ready!)";
+          icon = Icons.check_circle_rounded;
+          color = _green1;
+          break;
+      }
+    } else if (item.isTimeline) {
+      switch (_currentPhase) {
+        case DemoPhase.typing:
+          label = "1. '${item.demoQuery}' ഓട്ടോ-ടൈപ്പ് ചെയ്യുന്നു...";
+          icon = Icons.keyboard_rounded;
+          color = const Color(0xFF1976D2);
+          break;
+        case DemoPhase.clicking:
+          label = "2. ടൈംലൈൻ ഓട്ടോ-ക്ലിക്ക് ചെയ്യുന്നു...";
+          icon = Icons.touch_app_rounded;
+          color = const Color(0xFFE65100);
+          break;
+        case DemoPhase.dataHighlighted:
+          label = "3. വർഷക്രമത്തിലുള്ള ടൈംലൈൻ കാണുന്നു (Timeline Stream)";
+          icon = Icons.timeline_rounded;
+          color = _green1;
+          break;
+        case DemoPhase.completed:
+          label = "പൂർത്തിയായി! ഇനി സ്വയം പരീക്ഷിക്കാം (Ready!)";
+          icon = Icons.check_circle_rounded;
+          color = _green1;
+          break;
+      }
+    } else {
+      switch (_currentPhase) {
+        case DemoPhase.typing:
+          label = "1. '${item.demoQuery}' ഓട്ടോ-ടൈപ്പ് ചെയ്യുന്നു...";
+          icon = Icons.keyboard_rounded;
+          color = const Color(0xFF1976D2);
+          break;
+        case DemoPhase.clicking:
+          label = "2. സെർച്ച് ഓട്ടോ-ക്ലിക്ക് ചെയ്യുന്നു...";
+          icon = Icons.touch_app_rounded;
+          color = const Color(0xFFE65100);
+          break;
+        case DemoPhase.dataHighlighted:
+          label = "3. ഉപവിഷയങ്ങൾ തത്സമയം കണ്ടെത്തുന്നു (Search Results)";
+          icon = Icons.grid_view_rounded;
+          color = _green1;
+          break;
+        case DemoPhase.completed:
+          label = "പൂർത്തിയായി! ഇനി സ്വയം പരീക്ഷിക്കാം (Ready!)";
+          icon = Icons.check_circle_rounded;
+          color = _green1;
+          break;
+      }
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6.5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
@@ -783,13 +867,11 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
               ],
             ),
           ),
-          // Clear icon when text present
           if (_typedText.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(right: 6),
               child: Icon(Icons.close_rounded, size: 16, color: Colors.grey.shade400),
             ),
-          // Search / Action Button with Click Feedback
           AnimatedScale(
             scale: _isPointerPressed ? 0.88 : 1.0,
             duration: const Duration(milliseconds: 180),
@@ -893,299 +975,1131 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
     );
   }
 
-  Widget _buildSpotlightDataCard(FeatureDemoModel item, List<Color> gradient) {
-    final cachedPoints = _livePointsCache[item.demoQuery];
-    final cachedStats = _liveStatsCache[item.demoQuery];
+  // ════════════════════════════════════════════════════════
+  // ─── 1. AUTHENTIC EXAM BATTLE SIMULATION CARD ───
+  // ════════════════════════════════════════════════════════
+  Widget _buildBattleSimulation(FeatureDemoModel item, List<Color> gradient) {
+    final bool isClicking = _currentPhase == DemoPhase.clicking;
+    final bool isHighlighted = _currentPhase == DemoPhase.dataHighlighted || _currentPhase == DemoPhase.completed;
 
-    final isTimelineCard = item.isTimeline ||
-        item.navigation.toLowerCase().contains('timeline') ||
-        item.url.toLowerCase().contains('timeline') ||
-        item.demoQuery.contains('സമര');
-
-    final points = (cachedPoints != null && cachedPoints.isNotEmpty)
-        ? cachedPoints
-        : item.sampleHighlightedPoints;
-    final stats = (cachedStats != null && cachedStats.isNotEmpty)
-        ? cachedStats
-        : item.sampleStats;
-
-    return AnimatedBuilder(
-      animation: _pulseScaleAnim,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _pulseScaleAnim.value,
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFF4FBF4),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: gradient.first.withValues(alpha: 0.55), width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: gradient.first.withValues(alpha: 0.22),
-                  blurRadius: 22,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: child,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Top Tab Bar (from ExamBattlePage)
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey.shade300),
           ),
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Card Title & Header Chips ──
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   decoration: BoxDecoration(
-                    color: gradient.first.withValues(alpha: 0.14),
+                    color: _green1,
                     borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    isTimelineCard ? Icons.timeline_rounded : Icons.bookmark_rounded,
-                    color: gradient.first,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.demoQuery,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: _textDark,
-                          letterSpacing: 0.2,
-                        ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _green1.withValues(alpha: 0.25),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
-                      const SizedBox(height: 2),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.military_tech_rounded, size: 16, color: Colors.white),
+                      SizedBox(width: 5),
                       Text(
-                        item.categoryTitle,
+                        "Battles (1)",
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade700,
-                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.5,
                         ),
                       ),
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: gradient.first,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    "LIVE",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.8,
-                    ),
+              ),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.leaderboard_rounded, size: 16, color: Colors.grey.shade600),
+                      SizedBox(width: 5),
+                      Text(
+                        "Results & Ranks",
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // ── Pill Badges (# ID, Categories, Points) ──
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: stats.map((st) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _green2.withValues(alpha: 0.3)),
-                  ),
-                  child: Text(
-                    st,
-                    style: TextStyle(
-                      color: gradient.first,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 14),
-
-            // ── Highlighted Points (Timeline or Standard List) ──
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: gradient.first.withValues(alpha: 0.18)),
               ),
-              child: Column(
-                children: List.generate(points.length, (idx) {
-                  final pt = points[idx];
-                  final isLastPt = idx == points.length - 1;
+            ],
+          ),
+        ),
 
-                  // Parse timeline year & description if formatted as YYYY — Title
-                  String yearText = "";
-                  String eventTitle = pt;
-                  String eventDesc = "";
+        const SizedBox(height: 12),
 
-                  if (isTimelineCard && pt.contains('—')) {
-                    final parts = pt.split('—');
-                    yearText = parts[0].trim();
-                    final rest = parts.sublist(1).join('—').trim();
-                    if (rest.contains(':')) {
-                      final subParts = rest.split(':');
-                      eventTitle = subParts[0].trim();
-                      eventDesc = subParts.sublist(1).join(':').trim();
-                    } else if (rest.contains('(') && rest.endsWith(')')) {
-                      final openIdx = rest.indexOf('(');
-                      eventTitle = rest.substring(0, openIdx).trim();
-                      eventDesc = rest.substring(openIdx + 1, rest.length - 1).trim();
-                    } else {
-                      eventTitle = rest;
-                    }
-                  }
+        // Authentic Live Battle Exam Card (from ExamBattlePage)
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isHighlighted ? _green1 : gradient.first.withValues(alpha: 0.4),
+              width: isHighlighted ? 2.0 : 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: (isHighlighted ? _green1 : gradient.first).withValues(alpha: 0.14),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Bar of Battle Card
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                decoration: BoxDecoration(
+                  color: (isHighlighted ? _green1 : gradient.first).withValues(alpha: 0.08),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(19)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                      decoration: BoxDecoration(
+                        color: _textDark.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        "KERALA PSC • LIVE BATTLE",
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          color: _textDark,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            "LIVE NOW",
+                            style: TextStyle(
+                              color: Colors.red.shade700,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-                  return Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (yearText.isNotEmpty) ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
-                                decoration: BoxDecoration(
-                                  color: gradient.first,
-                                  borderRadius: BorderRadius.circular(8),
+              // Card Body
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "LDC 2026 Mega Mock Exam Battle",
+                      style: TextStyle(
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w800,
+                        color: _textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "തത്സമയ ലൈവ് റാങ്ക് മത്സരം (Statewide Live Rank)",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Info Chips
+                    Row(
+                      children: [
+                        _buildBattleChip(Icons.quiz_outlined, "100 Questions"),
+                        const SizedBox(width: 8),
+                        _buildBattleChip(Icons.timer_outlined, "75 Mins"),
+                        const SizedBox(width: 8),
+                        _buildBattleChip(Icons.people_outline_rounded, "1,450+ Users"),
+                      ],
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // Live Status Banner
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6.5),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade50,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.amber.shade300),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.bolt_rounded, size: 16, color: Colors.amber.shade900),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              "ബാറ്റിൽ ഇപ്പോൾ സജീവമാണ് • ഇന്ന് രാത്രി 9:00 വരെ",
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.amber.shade900,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // Action Button with Pointer Click Simulation
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        AnimatedScale(
+                          scale: (_isPointerPressed && isClicking) ? 0.94 : 1.0,
+                          duration: const Duration(milliseconds: 150),
+                          child: Container(
+                            width: double.infinity,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: isHighlighted
+                                    ? [const Color(0xFF0D3320), const Color(0xFF1B8A4E)]
+                                    : [_green1, _green2],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _green1.withValues(alpha: isClicking ? 0.6 : 0.28),
+                                  blurRadius: isClicking ? 14 : 8,
+                                  offset: const Offset(0, 3),
                                 ),
-                                child: Text(
-                                  yearText,
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  isHighlighted
+                                      ? Icons.check_circle_rounded
+                                      : Icons.play_arrow_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  isHighlighted
+                                      ? "✓ Attending Live Battle Now..."
+                                      : "Attend Exam Now",
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.3,
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      eventTitle,
-                                      style: const TextStyle(
-                                        fontSize: 13.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: _textDark,
-                                      ),
-                                    ),
-                                    if (eventDesc.isNotEmpty) ...[
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        eventDesc,
-                                        style: TextStyle(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.grey.shade700,
-                                          height: 1.35,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ] else ...[
-                              Container(
-                                width: 22,
-                                height: 22,
-                                margin: const EdgeInsets.only(top: 1),
-                                decoration: BoxDecoration(
-                                  color: gradient.first.withValues(alpha: 0.12),
-                                  shape: BoxShape.circle,
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  "${idx + 1}",
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Hand pointer landing on Attend Exam Now button
+                        if (isClicking)
+                          Positioned(
+                            right: 40,
+                            bottom: -18,
+                            child: SlideTransition(
+                              position: _pointerOffsetAnim,
+                              child: _buildHandPointer(gradient),
+                            ),
+                          ),
+                      ],
+                    ),
+
+                    // When Highlighted / Attending: Show live battle rules & standing
+                    if (isHighlighted) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF4FBF4),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: _green1.withValues(alpha: 0.25)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.flash_on_rounded, size: 16, color: _green1),
+                                const SizedBox(width: 6),
+                                const Text(
+                                  "തത്സമയ മത്സരം ആരംഭിച്ചു!",
                                   style: TextStyle(
-                                    color: gradient.first,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  pt,
-                                  style: const TextStyle(
-                                    fontSize: 13.2,
-                                    fontWeight: FontWeight.w600,
                                     color: _textDark,
-                                    height: 1.4,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            _buildBattleRuleItem("ഓരോ ശരിയുത്തരത്തിനും: +1 മാർക്ക്"),
+                            _buildBattleRuleItem("തെറ്റായ ഉത്തരങ്ങൾക്ക്: -0.33 മാർക്ക്"),
+                            _buildBattleRuleItem("പരീക്ഷ പൂർത്തിയാകുമ്പോൾ തത്സമയ റാങ്ക് ലിസ്റ്റ്"),
                           ],
                         ),
                       ),
-                      if (!isLastPt)
-                        Divider(
-                          height: 1,
-                          thickness: 0.6,
-                          color: Colors.grey.shade200,
-                        ),
                     ],
-                  );
-                }),
+                  ],
+                ),
               ),
-            ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
-            const SizedBox(height: 10),
-            // Highlight Tip Callout
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              decoration: BoxDecoration(
-                color: Colors.amber.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.amber.shade300),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.tips_and_updates_rounded, color: Colors.amber.shade900, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      isTimelineCard
-                          ? "✨ ചരിത്ര സംഭവങ്ങൾ കാലക്രമത്തിൽ മനഃപാഠമാക്കാം!"
-                          : "✨ ഒറ്റ ക്ലിക്കിൽ മുഴുവൻ വിവരങ്ങളും സംഗ്രഹവും പഠിക്കാം!",
-                      style: TextStyle(
-                        color: Colors.amber.shade900,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
+  Widget _buildBattleChip(IconData icon, String label) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 13, color: _green1),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  color: _textDark,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBattleRuleItem(String rule) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.5),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle_outline_rounded, size: 14, color: _green1),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              rule,
+              style: TextStyle(
+                fontSize: 11.5,
+                color: Colors.grey.shade800,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ════════════════════════════════════════════════════════
+  // ─── 2. AUTHENTIC SUMMARY PAGE SPOTLIGHT CARD ───
+  // ════════════════════════════════════════════════════════
+  Widget _buildSummarySpotlightCard(FeatureDemoModel item, List<Color> gradient) {
+    final desc = item.sampleSummaryDescription;
+    final categories = item.sampleSummaryCategories;
+    final cards = item.sampleSummaryCards;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4FBF4),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _green1.withValues(alpha: 0.45), width: 1.8),
+        boxShadow: [
+          BoxShadow(
+            color: _green1.withValues(alpha: 0.18),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Topic Header Card (matches KeywordSummaryPage)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _green1.withValues(alpha: 0.18)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: _green1.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.bookmark_rounded, color: _green1, size: 18),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        item.demoQuery,
+                        style: const TextStyle(
+                          color: _textDark,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                      decoration: BoxDecoration(
+                        color: _green1,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        "SUMMARY",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    _buildSummaryChip(Icons.tag_rounded, "ID: #154"),
+                    _buildSummaryChip(Icons.water_drop_rounded, "44 Rivers"),
+                    _buildSummaryChip(Icons.dashboard_outlined, "${categories.length} Categories"),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Description Card (matches KeywordSummaryPage _buildDescriptionCard)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFFE8F5E9).withValues(alpha: 0.8),
+                  Colors.white,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _green1.withValues(alpha: 0.25), width: 1.1),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: _green1,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(Icons.auto_stories_rounded, color: Colors.white, size: 14),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      "വിവരണം (Description)",
+                      style: TextStyle(
+                        color: _textDark,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  desc,
+                  style: const TextStyle(
+                    color: _textDark,
+                    fontSize: 12.2,
+                    height: 1.45,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Category Filter Chips Bar
+          Row(
+            children: [
+              const Icon(Icons.category_rounded, size: 14, color: _green1),
+              const SizedBox(width: 5),
+              Text(
+                "വിഭാഗങ്ങൾ (${categories.length})",
+                style: const TextStyle(
+                  color: _textDark,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            height: 28,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: categories.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 6),
+              itemBuilder: (context, idx) {
+                final isFirst = idx == 0;
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isFirst ? _green1 : Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isFirst ? _green1 : Colors.grey.shade300,
+                    ),
+                  ),
+                  child: Text(
+                    categories[idx],
+                    style: TextStyle(
+                      color: isFirst ? Colors.white : _textDark,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Summary Fact Cards
+          Column(
+            children: cards.map((c) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _green1.withValues(alpha: 0.15)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: _green1.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.water_drop_rounded, size: 16, color: _green1),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                c['title'] ?? '',
+                                style: const TextStyle(
+                                  color: _textDark,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: _green1.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  c['value'] ?? '',
+                                  style: const TextStyle(
+                                    color: _green1,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            c['desc'] ?? '',
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 6),
+          // Tip Callout
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade50,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.amber.shade300),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.tips_and_updates_rounded, color: Colors.amber.shade900, size: 15),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    "✨ വിവരണം, വിഭാഗങ്ങൾ, സംഗ്രഹം എന്നിവ ഒരിടത്ത് പഠിക്കാം!",
+                    style: TextStyle(
+                      color: Colors.amber.shade900,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+      decoration: BoxDecoration(
+        color: _green1.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _green1.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: _green1),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: _textDark,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ════════════════════════════════════════════════════════
+  // ─── 3. AUTHENTIC SEARCH GRID SPOTLIGHT CARD ───
+  // ════════════════════════════════════════════════════════
+  Widget _buildSearchGridSpotlightCard(FeatureDemoModel item, List<Color> gradient) {
+    final gridItems = item.sampleSearchGridItems;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4FBF4),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: gradient.first.withValues(alpha: 0.45), width: 1.8),
+        boxShadow: [
+          BoxShadow(
+            color: gradient.first.withValues(alpha: 0.15),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: gradient.first.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.grid_view_rounded, size: 18, color: gradient.first),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "${item.demoQuery} — ഉപവിഷയങ്ങൾ",
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: _textDark,
+                      ),
+                    ),
+                    Text(
+                      "Search Results (${gridItems.length} Sub-Topics)",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                decoration: BoxDecoration(
+                  color: gradient.first,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  "SEARCH",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // 2-Column Grid (matches SearchParentNavigationPage layout)
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: gridItems.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 1.5,
+            ),
+            itemBuilder: (context, idx) {
+              final g = gridItems[idx];
+              final List<Color> itemGrad = g['gradient'] as List<Color>? ?? gradient;
+              final IconData icon = g['icon'] as IconData? ?? Icons.topic_rounded;
+
+              return Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      itemGrad.first,
+                      itemGrad.last,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: itemGrad.first.withValues(alpha: 0.28),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Stack(
+                    children: [
+                      // Watermark Icon
+                      Positioned(
+                        right: -10,
+                        top: -10,
+                        child: Icon(
+                          icon,
+                          color: Colors.white.withValues(alpha: 0.16),
+                          size: 55,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.22),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(icon, color: Colors.white, size: 14),
+                            ),
+                            const Spacer(),
+                            Text(
+                              g['name'] ?? '',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              g['detail'] ?? '',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.85),
+                                fontSize: 10,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+
+          const SizedBox(height: 10),
+
+          // Footer info
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.search_rounded, color: Colors.blue.shade800, size: 15),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    "✨ 44 ഉപവിഷയങ്ങളും സിലബസ് വിവരങ്ങളും കണ്ടെത്തി!",
+                    style: TextStyle(
+                      color: Colors.blue.shade800,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ════════════════════════════════════════════════════════
+  // ─── 4. AUTHENTIC TIMELINE STREAM SPOTLIGHT CARD ───
+  // ════════════════════════════════════════════════════════
+  Widget _buildTimelineSpotlightCard(FeatureDemoModel item, List<Color> gradient) {
+    final points = item.sampleHighlightedPoints;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4FBF4),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: gradient.first.withValues(alpha: 0.45), width: 1.8),
+        boxShadow: [
+          BoxShadow(
+            color: gradient.first.withValues(alpha: 0.15),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: gradient.first.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.timeline_rounded, size: 18, color: gradient.first),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.demoQuery,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: _textDark,
+                      ),
+                    ),
+                    const Text(
+                      "ചരിത്ര സംഭവങ്ങൾ • വർഷക്രമത്തിൽ",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                decoration: BoxDecoration(
+                  color: gradient.first,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  "TIMELINE",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Timeline Stream Items
+          Column(
+            children: List.generate(points.length, (idx) {
+              final pt = points[idx];
+              String yearText = "";
+              String eventTitle = pt;
+              String eventDesc = "";
+
+              if (pt.contains('—')) {
+                final parts = pt.split('—');
+                yearText = parts[0].trim();
+                final rest = parts.sublist(1).join('—').trim();
+                if (rest.contains(':')) {
+                  final sub = rest.split(':');
+                  eventTitle = sub[0].trim();
+                  eventDesc = sub.sublist(1).join(':').trim();
+                } else if (rest.contains('(') && rest.endsWith(')')) {
+                  final openIdx = rest.indexOf('(');
+                  eventTitle = rest.substring(0, openIdx).trim();
+                  eventDesc = rest.substring(openIdx + 1, rest.length - 1).trim();
+                } else {
+                  eventTitle = rest;
+                }
+              }
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: gradient.first.withValues(alpha: 0.16)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                      decoration: BoxDecoration(
+                        color: gradient.first,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        yearText.isNotEmpty ? yearText : "${1720 + idx * 20}",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            eventTitle,
+                            style: const TextStyle(
+                              color: _textDark,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (eventDesc.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              eventDesc,
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
+
+          const SizedBox(height: 6),
+          // Tip Callout
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade50,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.amber.shade300),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.tips_and_updates_rounded, color: Colors.amber.shade900, size: 15),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    "✨ ചരിത്ര സംഭവങ്ങൾ വർഷക്രമത്തിൽ ഓർത്തു വെക്കാം!",
+                    style: TextStyle(
+                      color: Colors.amber.shade900,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpotlightDataCard(FeatureDemoModel item, List<Color> gradient) {
+    if (item.isBattle) {
+      return const SizedBox.shrink();
+    }
+    Widget content;
+    if (item.isSummary) {
+      content = _buildSummarySpotlightCard(item, gradient);
+    } else if (item.isTimeline) {
+      content = _buildTimelineSpotlightCard(item, gradient);
+    } else {
+      content = _buildSearchGridSpotlightCard(item, gradient);
+    }
+
+    return ScaleTransition(
+      scale: _pulseScaleAnim,
+      child: content,
     );
   }
 
