@@ -181,6 +181,43 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
       } catch (_) {}
     }
 
+    // ── Exam Battle live fetch via battleExams API ──
+    final isBattle = _currentItem.isBattle ||
+        _currentItem.navigation.toLowerCase().contains('battle') ||
+        _currentItem.url.toLowerCase().contains('battle') ||
+        trimmed.contains('ബാറ്റിൽ');
+
+    if (isBattle) {
+      try {
+        final res = await http.get(Uri.parse(AppConfig.battleExams)).timeout(const Duration(seconds: 4));
+        if (res.statusCode == 200) {
+          final decoded = jsonDecode(utf8.decode(res.bodyBytes));
+          List bList = [];
+          if (decoded is Map && decoded['battles'] is List) {
+            bList = decoded['battles'];
+          } else if (decoded is List) {
+            bList = decoded;
+          }
+
+          if (bList.isNotEmpty) {
+            final firstB = bList[0];
+            final bName = firstB['category'] ?? firstB['name'] ?? 'LDC Mock Exam';
+            final totalQ = firstB['total_questions'] ?? firstB['questions_count'] ?? 20;
+            _livePointsCache[trimmed] = [
+              "$bName — 1,450+ ഉദ്യോഗാർത്ഥികളുമായി തത്സമയ ലൈവ് റാങ്ക് മത്സരം",
+              "ആകെ ചോദ്യങ്ങൾ: $totalQ എണ്ണം (നെഗറ്റീവ് മാർക്കിംഗ് ബാധകം)",
+              "പരീക്ഷ പൂർത്തിയാകുമ്പോൾ തത്സമയ റാങ്ക് ലിസ്റ്റും സൊല്യൂഷനും",
+            ];
+            _liveStatsCache[trimmed] = ["# Live Battle", "$totalQ Questions", "1,450+ Users"];
+            if (mounted && _currentItem.demoQuery == trimmed) {
+              setState(() {});
+            }
+            return;
+          }
+        }
+      } catch (_) {}
+    }
+
     try {
       final url = "${AppConfig.keywordSearchSummary}?keyword=${Uri.encodeComponent(trimmed)}";
       final res = await http
@@ -192,32 +229,55 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
         if (decoded is Map) {
           List<String> lines = [];
 
+          // 1. Try summary_lines
           if (decoded['summary_lines'] is List && (decoded['summary_lines'] as List).isNotEmpty) {
             lines = (decoded['summary_lines'] as List)
-                .map((e) => e.toString().trim().replaceAll(RegExp(r'^[-•*0-9.]+\s*'), ''))
-                .where((e) => e.isNotEmpty && e.length > 3)
-                .take(3)
+                .map((e) => e.toString().trim().replaceAll(RegExp(r'^[-•*#0-9.]+\s*'), ''))
+                .where((e) => e.isNotEmpty && e.length > 3 && e != '#' && !e.startsWith('http'))
+                .take(4)
                 .toList();
-          } else if (decoded['summary'] != null && decoded['summary'].toString().trim().isNotEmpty) {
-            lines = decoded['summary']
+          }
+
+          // 2. Try raw summary
+          if (lines.length < 2 && decoded['summary'] != null && decoded['summary'].toString().trim().isNotEmpty) {
+            final sLines = decoded['summary']
                 .toString()
                 .split('\n')
-                .map((e) => e.trim().replaceAll(RegExp(r'^[-•*0-9.]+\s*'), ''))
-                .where((e) => e.isNotEmpty && e.length > 3)
-                .take(3)
+                .map((e) => e.trim().replaceAll(RegExp(r'^[-•*#0-9.]+\s*'), ''))
+                .where((e) => e.isNotEmpty && e.length > 3 && e != '#')
+                .take(4)
                 .toList();
-          } else if (decoded['children'] is List && (decoded['children'] as List).isNotEmpty) {
+            if (sLines.isNotEmpty) lines = sLines;
+          }
+
+          // 3. Try description lines or sentences
+          if (lines.length < 2 && decoded['description'] != null && decoded['description'].toString().trim().isNotEmpty) {
+            final rawDesc = decoded['description'].toString().trim();
+            final dLines = rawDesc
+                .split('\n')
+                .map((e) => e.trim().replaceAll(RegExp(r'^[-•*#0-9.]+\s*'), ''))
+                .where((e) => e.isNotEmpty && e.length > 6)
+                .take(4)
+                .toList();
+
+            if (dLines.length >= 2) {
+              lines = dLines;
+            } else {
+              final dSentences = rawDesc
+                  .split('.')
+                  .map((e) => e.trim().replaceAll(RegExp(r'^[-•*#0-9.]+\s*'), ''))
+                  .where((e) => e.isNotEmpty && e.length > 8)
+                  .take(4)
+                  .toList();
+              if (dSentences.isNotEmpty) lines = dSentences;
+            }
+          }
+
+          // 4. Try children topics
+          if (lines.length < 2 && decoded['children'] is List && (decoded['children'] as List).isNotEmpty) {
             lines = (decoded['children'] as List)
                 .map((e) => "${(e is Map ? e['name'] ?? e['keyword'] : e)} — പ്രധാന സിലബസ് വിവരങ്ങൾ")
-                .take(3)
-                .toList();
-          } else if (decoded['description'] != null && decoded['description'].toString().trim().isNotEmpty) {
-            lines = decoded['description']
-                .toString()
-                .split('.')
-                .map((e) => e.trim())
-                .where((e) => e.length > 10)
-                .take(3)
+                .take(4)
                 .toList();
           }
 

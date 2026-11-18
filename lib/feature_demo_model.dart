@@ -17,6 +17,8 @@ class FeatureDemoModel {
   final List<String> previewStats;
   final bool isTimeline;
   final List<Map<String, dynamic>> timelineEvents;
+  final bool isSummary;
+  final bool isBattle;
 
   FeatureDemoModel({
     required this.id,
@@ -35,6 +37,8 @@ class FeatureDemoModel {
     this.previewStats = const [],
     this.isTimeline = false,
     this.timelineEvents = const [],
+    this.isSummary = false,
+    this.isBattle = false,
   });
 
   factory FeatureDemoModel.fromJson(Map<String, dynamic> json) {
@@ -74,6 +78,16 @@ class FeatureDemoModel {
         u.contains('timeline') ||
         n.contains('timeline') ||
         n.contains('ടൈംലൈൻ');
+    final bool isSummaryFlag = json['is_summary'] == true ||
+        nav.contains('summary') ||
+        u.contains('summary') ||
+        n.contains('summary') ||
+        n.contains('സംഗ്രഹം');
+    final bool isBattleFlag = json['is_battle'] == true ||
+        nav.contains('battle') ||
+        u.contains('battle') ||
+        n.contains('battle') ||
+        n.contains('ബാറ്റിൽ');
 
     return FeatureDemoModel(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
@@ -94,6 +108,8 @@ class FeatureDemoModel {
       previewStats: parsedStats,
       isTimeline: isTimelineFlag,
       timelineEvents: parsedEvents,
+      isSummary: isSummaryFlag,
+      isBattle: isBattleFlag,
     );
   }
 
