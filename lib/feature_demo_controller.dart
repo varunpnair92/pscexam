@@ -72,17 +72,24 @@ class FeatureDemoController extends GetxController {
     final nav = item.navigation.trim();
     final url = item.url.trim().toLowerCase();
     final title = item.name;
-    final kw = item.keywords.isNotEmpty ? item.keywords.last : item.name;
+    final kw = item.demoQuery.isNotEmpty ? item.demoQuery : (item.keywords.isNotEmpty ? item.keywords.last : item.name);
+
+    if (item.isTimeline || url.contains('keywordtimeline') || nav.toLowerCase().contains('timeline')) {
+      final tKw = item.demoQuery.isNotEmpty && !item.demoQuery.toLowerCase().contains('timeline')
+          ? item.demoQuery
+          : 'കേരള സമരങ്ങൾ';
+      Get.toNamed('/timeline', arguments: {
+        'title': item.categoryTitle.isNotEmpty ? item.categoryTitle : title,
+        'endpoint': item.url,
+        'keyword': tKw,
+      });
+      return;
+    }
 
     if (url.contains('keyword-search-summary') ||
         url.contains('keywordsummary') ||
         nav.toLowerCase().contains('keywordsummary')) {
       Get.toNamed('/keywordSummary', arguments: {'keyword': kw});
-      return;
-    }
-
-    if (url.contains('keywordtimeline') || nav.toLowerCase().contains('timeline')) {
-      Get.toNamed('/timeline', arguments: {'title': title, 'endpoint': item.url, 'keyword': kw});
       return;
     }
 

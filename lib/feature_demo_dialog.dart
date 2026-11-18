@@ -127,6 +127,60 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
     final trimmed = query.trim();
     if (trimmed.isEmpty || _livePointsCache.containsKey(trimmed)) return;
 
+    final isTimeline = _currentItem.isTimeline ||
+        _currentItem.navigation.toLowerCase().contains('timeline') ||
+        _currentItem.url.toLowerCase().contains('timeline') ||
+        trimmed.contains('സമര');
+
+    // ── Timeline live fetch via keywordTimeline API ──
+    if (isTimeline) {
+      try {
+        final tUrl = "${AppConfig.keywordTimeline}${Uri.encodeComponent(trimmed)}/";
+        final res = await http.get(Uri.parse(tUrl)).timeout(const Duration(seconds: 5));
+        if (res.statusCode == 200) {
+          final decoded = jsonDecode(utf8.decode(res.bodyBytes));
+          List rawTimeline = [];
+          if (decoded is List) {
+            rawTimeline = decoded;
+          } else if (decoded is Map && decoded['timeline'] is List) {
+            rawTimeline = decoded['timeline'];
+          } else if (decoded is Map && decoded['data'] is List) {
+            rawTimeline = decoded['data'];
+          }
+
+          if (rawTimeline.isNotEmpty) {
+            List<String> tLines = [];
+            for (var yearGroup in rawTimeline) {
+              final y = yearGroup['year']?.toString() ?? '';
+              final evList = yearGroup['events'];
+              if (evList is List && evList.isNotEmpty) {
+                final firstEv = evList[0];
+                final kw = firstEv['keyword']?.toString() ?? '';
+                String d = (firstEv['summary'] ?? firstEv['description'] ?? '').toString().split('\n')[0].trim();
+                if (d.length > 55) d = "${d.substring(0, 52)}...";
+                tLines.add(d.isNotEmpty ? "$y — $kw: $d" : "$y — $kw");
+              }
+            }
+
+            if (tLines.isNotEmpty) {
+              _livePointsCache[trimmed] = tLines.take(4).toList();
+              final firstY = rawTimeline.first['year']?.toString() ?? '1721';
+              final lastY = rawTimeline.last['year']?.toString() ?? '2007';
+              _liveStatsCache[trimmed] = [
+                "# $firstY-$lastY",
+                "${rawTimeline.length} Events",
+                "Chronological",
+              ];
+              if (mounted && _currentItem.demoQuery == trimmed) {
+                setState(() {});
+              }
+              return;
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
     try {
       final url = "${AppConfig.keywordSearchSummary}?keyword=${Uri.encodeComponent(trimmed)}";
       final res = await http
@@ -783,6 +837,11 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
     final cachedPoints = _livePointsCache[item.demoQuery];
     final cachedStats = _liveStatsCache[item.demoQuery];
 
+    final isTimelineCard = item.isTimeline ||
+        item.navigation.toLowerCase().contains('timeline') ||
+        item.url.toLowerCase().contains('timeline') ||
+        item.demoQuery.contains('സമര');
+
     final points = (cachedPoints != null && cachedPoints.isNotEmpty)
         ? cachedPoints
         : item.sampleHighlightedPoints;
@@ -799,10 +858,10 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
             decoration: BoxDecoration(
               color: const Color(0xFFF4FBF4),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: _green1.withValues(alpha: 0.55), width: 2),
+              border: Border.all(color: gradient.first.withValues(alpha: 0.55), width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: _green1.withValues(alpha: 0.22),
+                  color: gradient.first.withValues(alpha: 0.22),
                   blurRadius: 22,
                   spreadRadius: 2,
                   offset: const Offset(0, 6),
@@ -824,10 +883,14 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _green1.withValues(alpha: 0.14),
+                    color: gradient.first.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.bookmark_rounded, color: _green1, size: 20),
+                  child: Icon(
+                    isTimelineCard ? Icons.timeline_rounded : Icons.bookmark_rounded,
+                    color: gradient.first,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -858,7 +921,7 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _green1,
+                    color: gradient.first,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
@@ -889,8 +952,8 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
                   ),
                   child: Text(
                     st,
-                    style: const TextStyle(
-                      color: _green1,
+                    style: TextStyle(
+                      color: gradient.first,
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
                     ),
@@ -900,17 +963,40 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
             ),
             const SizedBox(height: 14),
 
-            // ── Highlighted Points matching user's design ──
+            // ── Highlighted Points (Timeline or Standard List) ──
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _green1.withValues(alpha: 0.18)),
+                border: Border.all(color: gradient.first.withValues(alpha: 0.18)),
               ),
               child: Column(
                 children: List.generate(points.length, (idx) {
                   final pt = points[idx];
                   final isLastPt = idx == points.length - 1;
+
+                  // Parse timeline year & description if formatted as YYYY — Title
+                  String yearText = "";
+                  String eventTitle = pt;
+                  String eventDesc = "";
+
+                  if (isTimelineCard && pt.contains('—')) {
+                    final parts = pt.split('—');
+                    yearText = parts[0].trim();
+                    final rest = parts.sublist(1).join('—').trim();
+                    if (rest.contains(':')) {
+                      final subParts = rest.split(':');
+                      eventTitle = subParts[0].trim();
+                      eventDesc = subParts.sublist(1).join(':').trim();
+                    } else if (rest.contains('(') && rest.endsWith(')')) {
+                      final openIdx = rest.indexOf('(');
+                      eventTitle = rest.substring(0, openIdx).trim();
+                      eventDesc = rest.substring(openIdx + 1, rest.length - 1).trim();
+                    } else {
+                      eventTitle = rest;
+                    }
+                  }
+
                   return Column(
                     children: [
                       Padding(
@@ -918,36 +1004,82 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: 22,
-                              height: 22,
-                              margin: const EdgeInsets.only(top: 1),
-                              decoration: BoxDecoration(
-                                color: _green1.withValues(alpha: 0.12),
-                                shape: BoxShape.circle,
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                "${idx + 1}",
-                                style: const TextStyle(
-                                  color: _green1,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
+                            if (yearText.isNotEmpty) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                                decoration: BoxDecoration(
+                                  color: gradient.first,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  yearText,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                pt,
-                                style: const TextStyle(
-                                  fontSize: 13.2,
-                                  fontWeight: FontWeight.w600,
-                                  color: _textDark,
-                                  height: 1.4,
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      eventTitle,
+                                      style: const TextStyle(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: _textDark,
+                                      ),
+                                    ),
+                                    if (eventDesc.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        eventDesc,
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.grey.shade700,
+                                          height: 1.35,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ),
-                            ),
+                            ] else ...[
+                              Container(
+                                width: 22,
+                                height: 22,
+                                margin: const EdgeInsets.only(top: 1),
+                                decoration: BoxDecoration(
+                                  color: gradient.first.withValues(alpha: 0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  "${idx + 1}",
+                                  style: TextStyle(
+                                    color: gradient.first,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  pt,
+                                  style: const TextStyle(
+                                    fontSize: 13.2,
+                                    fontWeight: FontWeight.w600,
+                                    color: _textDark,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -978,7 +1110,9 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      "✨ ഒറ്റ ക്ലിക്കിൽ മുഴുവൻ വിവരങ്ങളും സംഗ്രഹവും പഠിക്കാം!",
+                      isTimelineCard
+                          ? "✨ ചരിത്ര സംഭവങ്ങൾ കാലക്രമത്തിൽ മനഃപാഠമാക്കാം!"
+                          : "✨ ഒറ്റ ക്ലിക്കിൽ മുഴുവൻ വിവരങ്ങളും സംഗ്രഹവും പഠിക്കാം!",
                       style: TextStyle(
                         color: Colors.amber.shade900,
                         fontSize: 11.5,

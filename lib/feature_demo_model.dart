@@ -15,6 +15,8 @@ class FeatureDemoModel {
   final List<String> previewPoints;
   final String? previewCategory;
   final List<String> previewStats;
+  final bool isTimeline;
+  final List<Map<String, dynamic>> timelineEvents;
 
   FeatureDemoModel({
     required this.id,
@@ -31,6 +33,8 @@ class FeatureDemoModel {
     this.previewPoints = const [],
     this.previewCategory,
     this.previewStats = const [],
+    this.isTimeline = false,
+    this.timelineEvents = const [],
   });
 
   factory FeatureDemoModel.fromJson(Map<String, dynamic> json) {
@@ -52,6 +56,25 @@ class FeatureDemoModel {
       parsedStats = rawStats.map((e) => e.toString()).toList();
     }
 
+    var rawEvents = json['timeline_events'];
+    List<Map<String, dynamic>> parsedEvents = [];
+    if (rawEvents is List) {
+      for (var it in rawEvents) {
+        if (it is Map) {
+          parsedEvents.add(Map<String, dynamic>.from(it));
+        }
+      }
+    }
+
+    final nav = (json['navigation']?.toString() ?? '').toLowerCase();
+    final u = (json['url']?.toString() ?? '').toLowerCase();
+    final n = (json['name']?.toString() ?? '').toLowerCase();
+    final bool isTimelineFlag = json['is_timeline'] == true ||
+        nav.contains('timeline') ||
+        u.contains('timeline') ||
+        n.contains('timeline') ||
+        n.contains('ടൈംലൈൻ');
+
     return FeatureDemoModel(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       name: json['name']?.toString() ?? '',
@@ -69,6 +92,8 @@ class FeatureDemoModel {
       previewPoints: parsedPoints,
       previewCategory: json['preview_category']?.toString(),
       previewStats: parsedStats,
+      isTimeline: isTimelineFlag,
+      timelineEvents: parsedEvents,
     );
   }
 
@@ -170,6 +195,12 @@ class FeatureDemoModel {
   }
 
   String get demoQuery {
+    if (isTimeline || navigation.toLowerCase().contains('timeline') || url.toLowerCase().contains('timeline') || name.toLowerCase().contains('timeline') || name.contains('ടൈംലൈൻ')) {
+      if (previewQuery != null && previewQuery!.trim().isNotEmpty && !previewQuery!.toLowerCase().contains('timeline')) {
+        return previewQuery!.trim();
+      }
+      return "കേരള സമരങ്ങൾ";
+    }
     if (previewQuery != null && previewQuery!.trim().isNotEmpty) {
       return previewQuery!.trim();
     }
@@ -180,15 +211,16 @@ class FeatureDemoModel {
     if (n.isNotEmpty && n != 'Node') return n;
     final nav = navigation.toLowerCase();
     if (nav.contains('summary')) return "കേരള നവോത്ഥാനം";
-    if (nav.contains('timeline')) return "ഇന്ത്യൻ സ്വാതന്ത്ര്യ സമരം";
     if (nav.contains('battle')) return "LDC Mock Battle";
     return "കേരള മുഖ്യമന്ത്രിമാർ";
   }
 
   String get actionButtonLabel {
     final nav = navigation.toLowerCase();
+    if (isTimeline || nav.contains('timeline') || url.toLowerCase().contains('timeline')) {
+      return "ടൈംലൈൻ കാണുക";
+    }
     if (nav.contains('battle')) return "ബാറ്റിൽ തുടങ്ങുക";
-    if (nav.contains('timeline')) return "ടൈംലൈൻ കാണുക";
     if (nav.contains('summary')) return "സംഗ്രഹം";
     return "തിരയുക";
   }
@@ -199,7 +231,27 @@ class FeatureDemoModel {
       return previewPoints;
     }
 
-    // 2. If node has custom demo description entered in Node Manager
+    // 2. Timeline feature special handling for real Kerala Samarangal timeline events!
+    final q = demoQuery;
+    final nav = navigation.toLowerCase();
+    if (isTimeline || nav.contains('timeline') || url.toLowerCase().contains('timeline') || q.contains('സമര')) {
+      if (timelineEvents.isNotEmpty) {
+        return timelineEvents.map((e) {
+          final y = e['year'] ?? '';
+          final t = e['title'] ?? '';
+          final d = e['desc'] ?? '';
+          return d.toString().isNotEmpty ? "$y — $t: $d" : "$y — $t";
+        }).take(4).toList();
+      }
+      return [
+        "1721 — ആറ്റിങ്ങൽ കലാപം: ബ്രിട്ടീഷുകാർക്കെതിരായ ആദ്യ സംഘടിത പ്രക്ഷോഭം",
+        "1741 — കുളച്ചൽ യുദ്ധം: മാർത്താണ്ഡവർമ്മ ഡച്ച് സൈന്യത്തെ തോൽപ്പിച്ചു",
+        "1809 — കുണ്ടറ വിളംബരം: വേലുത്തമ്പി ദളവയുടെ ചരിത്രപ്രസിദ്ധമായ ആഹ്വാനം",
+        "1924 — വൈക്കം സത്യാഗ്രഹം: അയിത്തോച്ചാടന സമരം (ഗാന്ധിജിയുടെ സന്ദർശനം)",
+      ];
+    }
+
+    // 3. If node has custom demo description entered in Node Manager
     if (demoDescription.trim().isNotEmpty) {
       final lines = demoDescription
           .split('\n')
@@ -215,13 +267,12 @@ class FeatureDemoModel {
       if (sentences.length >= 2) return sentences.take(3).toList();
     }
 
-    // 3. If node has multiple keywords attached, use those real keywords!
+    // 4. If node has multiple keywords attached, use those real keywords!
     if (keywords.length >= 2) {
       return keywords.take(3).map((kw) => "$kw — പ്രധാന സിലബസ് വിവരങ്ങളും ചോദ്യങ്ങളും").toList();
     }
 
-    // 4. Tailor points to the specific query of THIS node
-    final q = demoQuery;
+    // 5. Tailor points to the specific query of THIS node
     if (q.contains('മുഖ്യമന്ത്രി')) {
       return [
         "ആദ്യത്തെ മുഖ്യമന്ത്രി — ഇ.എം.എസ്. നമ്പൂതിരിപ്പാട് (1957)",
@@ -271,8 +322,12 @@ class FeatureDemoModel {
     if (previewStats.isNotEmpty) {
       return previewStats;
     }
-    final kwCount = keywords.isNotEmpty ? keywords.length : 1;
+    final q = demoQuery;
     final nav = navigation.toLowerCase();
+    if (isTimeline || nav.contains('timeline') || q.contains('സമര')) {
+      return ["# 1721-2007", "30 Events", "Chronological"];
+    }
+    final kwCount = keywords.isNotEmpty ? keywords.length : 1;
     if (nav.contains('battle')) {
       return ["# Live Rank", "100 Marks", "1,450+ Users"];
     }
@@ -282,6 +337,11 @@ class FeatureDemoModel {
   String get categoryTitle {
     if (previewCategory != null && previewCategory!.trim().isNotEmpty) {
       return previewCategory!.trim();
+    }
+    final q = demoQuery;
+    final nav = navigation.toLowerCase();
+    if (isTimeline || nav.contains('timeline') || q.contains('സമര')) {
+      return "കേരള സമരങ്ങൾ • ചരിത്ര കാലക്രമം";
     }
     if (name.trim().isNotEmpty && name != 'Node') {
       return name.trim();
