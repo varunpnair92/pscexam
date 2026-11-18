@@ -316,8 +316,8 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
     // Fetch live search data for this specific node in background
     _fetchLivePoints(_currentItem.demoQuery, _currentItem.id);
 
-    // Special handling for Exam Battle: No search typing needed!
-    if (_currentItem.isBattle) {
+    // Special handling for Exam Battle & Exam Create: No search typing needed!
+    if (_currentItem.isBattle || _currentItem.isExamCreate) {
       _phaseTimer = Timer(const Duration(milliseconds: 650), () {
         _runClickPhase();
       });
@@ -652,6 +652,8 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
           // If Exam Battle -> Build authentic Exam Battle UI
           if (item.isBattle) ...[
             _buildBattleSimulation(item, gradient),
+          ] else if (item.isExamCreate) ...[
+            _buildExamCreateSimulation(item, gradient),
           ] else ...[
             // Simulated Interactive Search Bar with Hand Pointer
             Stack(
@@ -709,6 +711,52 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
           break;
         case DemoPhase.completed:
           label = "പൂർത്തിയായി! ഇനി നേരിട്ട് പങ്കെടുക്കാം (Ready!)";
+          icon = Icons.check_circle_rounded;
+          color = _green1;
+          break;
+      }
+    } else if (item.isExamCreate) {
+      switch (_currentPhase) {
+        case DemoPhase.typing:
+          label = "1. വിഷയം: '${item.demoQuery}', 20 ചോദ്യങ്ങൾ തിരഞ്ഞെടുക്കുന്നു...";
+          icon = Icons.tune_rounded;
+          color = const Color(0xFF1976D2);
+          break;
+        case DemoPhase.clicking:
+          label = "2. 'Generate Exam' ഓട്ടോ-ക്ലിക്ക് ചെയ്യുന്നു...";
+          icon = Icons.touch_app_rounded;
+          color = const Color(0xFFE65100);
+          break;
+        case DemoPhase.dataHighlighted:
+          label = "3. മോക്ക് എക്സാം തയ്യാറായി — പരീക്ഷ തുടങ്ങാം!";
+          icon = Icons.check_circle_rounded;
+          color = _green1;
+          break;
+        case DemoPhase.completed:
+          label = "പൂർത്തിയായി! ഇനി നേരിട്ട് പരീക്ഷ എഴുതാം (Ready!)";
+          icon = Icons.check_circle_rounded;
+          color = _green1;
+          break;
+      }
+    } else if (item.isStudySearch) {
+      switch (_currentPhase) {
+        case DemoPhase.typing:
+          label = "1. '${item.demoQuery}' ഓട്ടോ-ടൈപ്പ് ചെയ്യുന്നു...";
+          icon = Icons.keyboard_rounded;
+          color = const Color(0xFF1976D2);
+          break;
+        case DemoPhase.clicking:
+          label = "2. സെർച്ച് ഓട്ടോ-ക്ലിക്ക് ചെയ്യുന്നു...";
+          icon = Icons.touch_app_rounded;
+          color = const Color(0xFFE65100);
+          break;
+        case DemoPhase.dataHighlighted:
+          label = "3. വിശദീകരണവും ചോദ്യങ്ങളും പരീക്ഷയും (3-Tab Study View)";
+          icon = Icons.menu_book_rounded;
+          color = _green1;
+          break;
+        case DemoPhase.completed:
+          label = "പൂർത്തിയായി! ഇനി പഠനം ആരംഭിക്കാം (Ready!)";
           icon = Icons.check_circle_rounded;
           color = _green1;
           break;
@@ -1359,6 +1407,727 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
                 color: Colors.grey.shade800,
                 fontWeight: FontWeight.w500,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ════════════════════════════════════════════════════════
+  // ─── 1.5 AUTHENTIC EXAM CREATE SIMULATION (AI EXAM GENERATOR) ───
+  // ════════════════════════════════════════════════════════
+  Widget _buildExamCreateSimulation(FeatureDemoModel item, List<Color> gradient) {
+    final bool isClicking = _currentPhase == DemoPhase.clicking;
+    final bool isHighlighted =
+        _currentPhase == DemoPhase.dataHighlighted || _currentPhase == DemoPhase.completed;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ── 1. Hero Banner (from ExamCreatePage) ──
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [_green1, _green2],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: _green1.withValues(alpha: 0.25),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.auto_awesome, color: Colors.amberAccent, size: 12),
+                          SizedBox(width: 4),
+                          Text(
+                            "AI Exam Generator",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      "ഇഷ്ടമുള്ള പരീക്ഷ തയ്യാറാക്കാം",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      "ഏത് വിഷയത്തിലും ഇഷ്ടമുള്ള ചോദ്യങ്ങൾ തിരഞ്ഞെടുക്കാം",
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 10.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.quiz_rounded, color: Colors.white, size: 28),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        // ── 2. Topic Selection Card ──
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isHighlighted ? _green1.withValues(alpha: 0.35) : Colors.grey.shade300,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.edit_note_rounded, color: _green1, size: 18),
+                  SizedBox(width: 6),
+                  Text(
+                    "Topic or Keyword / വിഷയം:",
+                    style: TextStyle(
+                      color: _textDark,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Topic input simulated box
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF4FBF4),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _green1.withValues(alpha: 0.4), width: 1.2),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle_rounded, color: _green1, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      item.demoQuery,
+                      style: const TextStyle(
+                        color: _textDark,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: _green1,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        "Selected",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Suggested chips
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _buildExamCreateTopicChip(item.demoQuery, true),
+                  _buildExamCreateTopicChip("നവോത്ഥാനം", false),
+                  _buildExamCreateTopicChip("നദികൾ", false),
+                  _buildExamCreateTopicChip("ഭരണഘടന", false),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        // ── 3. Question Count Section ──
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isHighlighted ? _green1.withValues(alpha: 0.35) : Colors.grey.shade300,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.format_list_numbered_rounded, color: _green1, size: 18),
+                  const SizedBox(width: 6),
+                  const Text(
+                    "ചോദ്യങ്ങളുടെ എണ്ണം (Question Count):",
+                    style: TextStyle(
+                      color: _textDark,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.amber.shade300),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.timer_outlined, size: 12, color: Colors.amber.shade900),
+                        const SizedBox(width: 4),
+                        Text(
+                          "15 Mins",
+                          style: TextStyle(
+                            color: Colors.amber.shade900,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Preset chips: 10, 20 (selected), 30, 50
+              Row(
+                children: [
+                  _buildExamCreateCountChip("10 Qs", false),
+                  const SizedBox(width: 8),
+                  _buildExamCreateCountChip("20 Qs", true),
+                  const SizedBox(width: 8),
+                  _buildExamCreateCountChip("30 Qs", false),
+                  const SizedBox(width: 8),
+                  _buildExamCreateCountChip("50 Qs", false),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // ── 4. Generate Exam Button with Pointer Simulation ──
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            AnimatedScale(
+              scale: (_isPointerPressed && isClicking) ? 0.94 : 1.0,
+              duration: const Duration(milliseconds: 150),
+              child: Container(
+                width: double.infinity,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isHighlighted
+                        ? [const Color(0xFF0D3320), const Color(0xFF1B8A4E)]
+                        : [_green1, _green2],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _green1.withValues(alpha: isClicking ? 0.6 : 0.28),
+                      blurRadius: isClicking ? 14 : 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      isHighlighted
+                          ? Icons.check_circle_rounded
+                          : Icons.bolt_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isHighlighted
+                          ? "✓ 20 Questions Exam Generated!"
+                          : "⚡ Generate Exam / പരീക്ഷ തുടങ്ങുക",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Hand pointer landing on Generate Exam button
+            if (isClicking)
+              Positioned(
+                right: 40,
+                bottom: -18,
+                child: SlideTransition(
+                  position: _pointerOffsetAnim,
+                  child: _buildHandPointer(gradient),
+                ),
+              ),
+          ],
+        ),
+
+        // ── 5. When Highlighted: Show generated exam summary card ──
+        if (isHighlighted) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4FBF4),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _green1.withValues(alpha: 0.3)),
+              boxShadow: [
+                BoxShadow(
+                  color: _green1.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: const BoxDecoration(
+                        color: _green1,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.check_rounded, color: Colors.white, size: 14),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "മോക്ക് എക്സാം തയ്യാറായി! (${item.demoQuery})",
+                        style: const TextStyle(
+                          color: _textDark,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _green1.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        "READY",
+                        style: TextStyle(
+                          color: _green1,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  "• 20 ചോദ്യങ്ങൾ • സമയം: 15 മിനിറ്റ്\n• ഓരോ ചോദ്യത്തിനും 4 ഓപ്ഷനുകൾ & വിശദീകരണം\n• താഴെയുള്ള 'ഇപ്പോൾ കാണുക (Try Now)' അമർത്തി പരീക്ഷ എഴുതാം!",
+                  style: TextStyle(
+                    color: Color(0xFF2C5E40),
+                    fontSize: 11.5,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildExamCreateTopicChip(String label, bool isSelected) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: isSelected ? _green1 : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isSelected ? _green1 : Colors.grey.shade300,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isSelected) ...[
+            const Icon(Icons.check_rounded, color: Colors.white, size: 12),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.white : _textDark,
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExamCreateCountChip(String label, bool isSelected) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? _green1 : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? _green1 : Colors.grey.shade300,
+            width: isSelected ? 1.5 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: _green1.withValues(alpha: 0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (isSelected) ...[
+              const Icon(Icons.check_rounded, color: Colors.white, size: 12),
+              const SizedBox(width: 3),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : _textDark,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStudySearchSpotlightCard(FeatureDemoModel item, List<Color> gradient) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4FBF4),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: gradient.first.withValues(alpha: 0.45), width: 1.8),
+        boxShadow: [
+          BoxShadow(
+            color: gradient.first.withValues(alpha: 0.15),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with Study Badge
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: gradient.first.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.menu_book_rounded, size: 18, color: gradient.first),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.demoQuery,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: _textDark,
+                      ),
+                    ),
+                    const Text(
+                      "സ്റ്റഡി സെർച്ച് • വിശദീകരണങ്ങളും ചോദ്യങ്ങളും",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                decoration: BoxDecoration(
+                  color: gradient.first,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  "STUDY SEARCH",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // 3 Tabs bar matching StudySearchPage
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _green1,
+                      borderRadius: BorderRadius.circular(9),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _green1.withValues(alpha: 0.25),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      "Description",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    alignment: Alignment.center,
+                    child: Text(
+                      "Questions (24)",
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    alignment: Alignment.center,
+                    child: Text(
+                      "Mock Exam",
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Description Snippet Card
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.article_rounded, size: 14, color: _green1),
+                    const SizedBox(width: 5),
+                    Text(
+                      "${item.demoQuery} - സമഗ്ര കുറിപ്പുകൾ",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: _textDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  "കേരളത്തിലെ 44 നദികൾ, അവയുടെ ഉത്ഭവം, പതനം, നീളം, പ്രധാന അണക്കെട്ടുകൾ, പോഷകനദികൾ എന്നിവയെക്കുറിച്ചുള്ള പ്രധാന വിവരങ്ങൾ...",
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade800,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          // Sample Questions Preview Card
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.help_outline_rounded, size: 14, color: _green1),
+                    const SizedBox(width: 5),
+                    const Text(
+                      "പരീക്ഷാ ചോദ്യങ്ങൾ (Sample Question)",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: _textDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                const Text(
+                  "Q: കേരളത്തിലെ ഏറ്റവും നീളം കൂടിയ നദി ഏത്?\n✓ ഉത്തരം: പെരിയാർ (244 കി.മീ)",
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: _textDark,
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Tip Callout
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.search_rounded, color: Colors.blue.shade800, size: 15),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    "✨ 3 ടാബുകളിലായി വിവരണം, ചോദ്യങ്ങൾ, പരീക്ഷ ലഭ്യമാണ്!",
+                    style: TextStyle(
+                      color: Colors.blue.shade800,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -2085,11 +2854,13 @@ class _FeatureDemoDialogState extends State<FeatureDemoDialog>
   }
 
   Widget _buildSpotlightDataCard(FeatureDemoModel item, List<Color> gradient) {
-    if (item.isBattle) {
+    if (item.isBattle || item.isExamCreate) {
       return const SizedBox.shrink();
     }
     Widget content;
-    if (item.isSummary) {
+    if (item.isStudySearch) {
+      content = _buildStudySearchSpotlightCard(item, gradient);
+    } else if (item.isSummary) {
       content = _buildSummarySpotlightCard(item, gradient);
     } else if (item.isTimeline) {
       content = _buildTimelineSpotlightCard(item, gradient);

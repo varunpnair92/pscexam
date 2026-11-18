@@ -108,8 +108,20 @@ class FeatureDemoController extends GetxController {
       return;
     }
 
-    if (nav.toLowerCase() == 'examcreate' || nav.toLowerCase() == '/examcreate') {
+    if (nav.toLowerCase() == 'examcreate' ||
+        nav.toLowerCase() == '/examcreate' ||
+        item.isExamCreate ||
+        url.contains('create-exam') ||
+        (title.toLowerCase() == 'exam' && (url.contains('exam') || nav.contains('exam')))) {
       Get.toNamed('/examcreate', arguments: {'keyword': kw});
+      return;
+    }
+
+    if (nav.toLowerCase() == 'studysearch' ||
+        nav.toLowerCase() == '/studysearch' ||
+        item.isStudySearch ||
+        url.contains('studysearch')) {
+      Get.toNamed('/studySearch', arguments: {'keyword': kw, 'title': title});
       return;
     }
 

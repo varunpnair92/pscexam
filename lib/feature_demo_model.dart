@@ -19,6 +19,8 @@ class FeatureDemoModel {
   final List<Map<String, dynamic>> timelineEvents;
   final bool isSummary;
   final bool isBattle;
+  final bool isExamCreate;
+  final bool isStudySearch;
   final bool isImportantSearch;
   final String? summaryDescription;
   final List<String> summaryCategories;
@@ -44,6 +46,8 @@ class FeatureDemoModel {
     this.timelineEvents = const [],
     this.isSummary = false,
     this.isBattle = false,
+    this.isExamCreate = false,
+    this.isStudySearch = false,
     this.isImportantSearch = false,
     this.summaryDescription,
     this.summaryCategories = const [],
@@ -124,11 +128,20 @@ class FeatureDemoModel {
         u.contains('battle') ||
         n.contains('battle') ||
         n.contains('ബാറ്റിൽ');
+    final bool isExamCreateFlag = json['is_exam_create'] == true ||
+        nav.contains('examcreate') ||
+        u.contains('examcreate') ||
+        u.contains('create-exam') ||
+        (n == 'exam' && (nav.contains('create') || u.contains('create') || nav.contains('exam') || u.contains('exam')));
+    final bool isStudySearchFlag = json['is_study_search'] == true ||
+        nav.contains('studysearch') ||
+        u.contains('studysearch') ||
+        (n == 'search' && (nav.contains('study') || u.contains('study')));
     final bool isSearchFlag = nav.contains('search') ||
         nav.contains('parentnavigation') ||
         n.contains('search') ||
         n.contains('തിരയുക') ||
-        (!isTimelineFlag && !isSummaryFlag && !isBattleFlag);
+        (!isTimelineFlag && !isSummaryFlag && !isBattleFlag && !isExamCreateFlag);
 
     return FeatureDemoModel(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
@@ -151,6 +164,8 @@ class FeatureDemoModel {
       timelineEvents: parsedEvents,
       isSummary: isSummaryFlag,
       isBattle: isBattleFlag,
+      isExamCreate: isExamCreateFlag,
+      isStudySearch: isStudySearchFlag,
       isImportantSearch: isSearchFlag,
       summaryDescription: json['summary_description']?.toString(),
       summaryCategories: parsedSumCats,
@@ -257,6 +272,12 @@ class FeatureDemoModel {
   }
 
   String get demoQuery {
+    if (isExamCreate) {
+      if (previewQuery != null && previewQuery!.trim().isNotEmpty && previewQuery!.toLowerCase() != 'exam') {
+        return previewQuery!.trim();
+      }
+      return "കേരള ചരിത്രം";
+    }
     if (isTimeline || navigation.toLowerCase().contains('timeline') || url.toLowerCase().contains('timeline') || name.toLowerCase().contains('timeline') || name.contains('ടൈംലൈൻ')) {
       if (previewQuery != null && previewQuery!.trim().isNotEmpty && !previewQuery!.toLowerCase().contains('timeline')) {
         return previewQuery!.trim();
@@ -272,14 +293,14 @@ class FeatureDemoModel {
     if (isBattle || navigation.toLowerCase().contains('battle') || name.toLowerCase().contains('battle') || name.contains('ബാറ്റിൽ')) {
       return "LDC മോക്ക് എക്സാം ബാറ്റിൽ";
     }
-    if (previewQuery != null && previewQuery!.trim().isNotEmpty && !previewQuery!.toLowerCase().contains('node') && !previewQuery!.toLowerCase().contains('search')) {
+    if (previewQuery != null && previewQuery!.trim().isNotEmpty && !previewQuery!.toLowerCase().contains('node') && !previewQuery!.toLowerCase().contains('search') && !previewQuery!.toLowerCase().contains('exam')) {
       return previewQuery!.trim();
     }
     if (keywords.isNotEmpty && keywords.first.trim().isNotEmpty && keywords.first.toLowerCase() != 'node') {
       return keywords.first.trim();
     }
     final n = name.trim();
-    if (n.isNotEmpty && n != 'Node' && n.toLowerCase() != 'search') return n;
+    if (n.isNotEmpty && n != 'Node' && n.toLowerCase() != 'search' && n.toLowerCase() != 'exam') return n;
     return "നദികൾ";
   }
 
