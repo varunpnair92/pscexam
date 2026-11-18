@@ -12,6 +12,9 @@ class StudySearchPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (ctrl.currentKeyword.value.isNotEmpty && textCtrl.text.isEmpty) {
+      textCtrl.text = ctrl.currentKeyword.value;
+    }
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: Stack(
