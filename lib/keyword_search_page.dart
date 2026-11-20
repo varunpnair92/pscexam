@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'keyword_search_controller.dart';
 
@@ -9,6 +10,7 @@ class KeywordSearchPage extends StatelessWidget {
   static const _bg = Color(0xFFF4FBF4);            // off-white background
   static const _green1 = Color(0xFF1B8A4E);        // deep green
   static const _textDark = Color(0xFF0D3320);      // dark green text
+  static const _textMid = Color(0xFF4D7A5E);
 
   KeywordSearchPage({super.key});
 
@@ -38,6 +40,14 @@ class KeywordSearchPage extends StatelessWidget {
         }),
         centerTitle: true,
         actions: [
+          Obx(() => IconButton(
+            icon: Icon(
+              ctrl.isPointByPointMode.value ? Icons.view_headline_rounded : Icons.stars_rounded,
+              color: _green1,
+            ),
+            tooltip: ctrl.isPointByPointMode.value ? "Show Questions" : "Show Point by Point",
+            onPressed: () => ctrl.togglePointByPointMode(!ctrl.isPointByPointMode.value),
+          )),
           IconButton(
             icon: const Icon(Icons.hub_rounded, color: _green1),
             tooltip: "Open Graph View",
@@ -57,9 +67,16 @@ class KeywordSearchPage extends StatelessWidget {
 
           // ── Keyword Tiles for Multiple Keywords ──
           _keywordTiles(),
+
+          // ── Mode Toggle: Questions vs Point by Point ──
+          _viewModeToggle(),
           
           Expanded(
             child: Obx(() {
+              if (ctrl.isPointByPointMode.value) {
+                return _buildPointsView();
+              }
+
               if (ctrl.isLoading.value) {
                 return const Center(child: CircularProgressIndicator(color: _green1));
               }
@@ -276,6 +293,328 @@ class KeywordSearchPage extends StatelessWidget {
         ),
       );
     });
+  }
+
+  Widget _viewModeToggle() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Container(
+        height: 42,
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: _bg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _green1.withOpacity(0.15), width: 1.2),
+        ),
+        child: Obx(() {
+          final isPoints = ctrl.isPointByPointMode.value;
+          return Row(
+            children: [
+              // ── Tab 1: Questions ──
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(11),
+                  onTap: () => ctrl.togglePointByPointMode(false),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    decoration: BoxDecoration(
+                      color: !isPoints ? _green1 : Colors.transparent,
+                      borderRadius: BorderRadius.circular(11),
+                      boxShadow: !isPoints
+                          ? [
+                              BoxShadow(
+                                color: _green1.withOpacity(0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.quiz_rounded,
+                          size: 15,
+                          color: !isPoints ? Colors.white : _textMid,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          "Questions (${ctrl.questions.length})",
+                          style: TextStyle(
+                            color: !isPoints ? Colors.white : _textDark,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // ── Tab 2: Point by Point (Keyword & Point) ──
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(11),
+                  onTap: () {
+                    ctrl.togglePointByPointMode(true);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    decoration: BoxDecoration(
+                      color: isPoints ? _green1 : Colors.transparent,
+                      borderRadius: BorderRadius.circular(11),
+                      boxShadow: isPoints
+                          ? [
+                              BoxShadow(
+                                color: _green1.withOpacity(0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.stars_rounded,
+                          size: 15,
+                          color: isPoints ? Colors.white : _green1,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          isPoints && ctrl.pointsList.isNotEmpty
+                              ? "Point by Point (${ctrl.pointsList.length})"
+                              : "Point by Point",
+                          style: TextStyle(
+                            color: isPoints ? Colors.white : _textDark,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildPointsView() {
+    if (ctrl.isPointsLoading.value) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: _green1),
+            SizedBox(height: 14),
+            Text(
+              "Loading point-by-point data...",
+              style: TextStyle(color: _textMid, fontSize: 13.5),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (ctrl.pointsList.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.format_list_bulleted_rounded, size: 56, color: Colors.grey.shade300),
+              const SizedBox(height: 14),
+              const Text(
+                "No 'keyword - point' facts found",
+                style: TextStyle(color: _textDark, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                "Try searching another keyword or view questions",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () => ctrl.togglePointByPointMode(false),
+                icon: const Icon(Icons.arrow_back_rounded, size: 16),
+                label: const Text("View Questions"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _green1,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      children: [
+        // Header
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: _green1.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _green1.withOpacity(0.2)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.stars_rounded, color: _green1, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Point by Point (കീവേഡും പോയിന്റും)",
+                      style: TextStyle(
+                        color: _textDark,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      "Showing only keyword & point (${ctrl.pointsList.length} items)",
+                      style: const TextStyle(
+                        color: _textMid,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.copy_rounded, size: 18, color: _green1),
+                tooltip: "Copy all points",
+                onPressed: () {
+                  final text = ctrl.pointsList
+                      .map((e) => "${e['keyword']} - ${e['point']}")
+                      .join("\n");
+                  Clipboard.setData(ClipboardData(text: text));
+                  Get.snackbar(
+                    "Copied",
+                    "${ctrl.pointsList.length} points copied to clipboard",
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: _textDark,
+                    colorText: Colors.white,
+                    duration: const Duration(seconds: 2),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // List of points
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: ctrl.pointsList.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, i) {
+            final item = ctrl.pointsList[i];
+            final kw = item['keyword'] ?? '';
+            final pt = item['point'] ?? '';
+
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _green1.withOpacity(0.15),
+                  width: 1.1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _green1.withOpacity(0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () {
+                  Get.toNamed('/keywordSummary', arguments: {'keyword': kw});
+                },
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 26,
+                      height: 26,
+                      alignment: Alignment.center,
+                      margin: const EdgeInsets.only(top: 1),
+                      decoration: BoxDecoration(
+                        color: _green1.withOpacity(0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        "${i + 1}",
+                        style: const TextStyle(
+                          color: _green1,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            kw,
+                            style: const TextStyle(
+                              color: _textDark,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              height: 1.35,
+                            ),
+                          ),
+                          if (pt.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              pt,
+                              style: const TextStyle(
+                                color: _green1,
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w600,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
   }
 }
 

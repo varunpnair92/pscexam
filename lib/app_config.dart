@@ -66,6 +66,9 @@ static const String updateQualification = "${baseUrl}update-qualification/";
   // ================= KEYWORD SUMMARY =================
   static const String keywordSearchSummary = "${baseUrl}keyword-search-summary/";
 
+  // ================= MASTER KEYWORD POINTS =================
+  static const String masterKeywordPoints = "${baseUrl}master-keyword-points/";
+
   // ================= KEYWORD SUMMARY KNOWLEDGE CAPSULE =================
   static const String keywordSummaryKnowledgeCapsule = "${baseUrl}keyword-summary-knowledge-capsule/";
 

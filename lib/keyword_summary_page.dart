@@ -109,6 +109,19 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
           )),
           centerTitle: true,
           actions: [
+            IconButton(
+              icon: Icon(
+                _showPointByPointOnly ? Icons.view_headline_rounded : Icons.stars_rounded,
+                color: _green1,
+                size: 20,
+              ),
+              tooltip: _showPointByPointOnly ? "Show Full Summary" : "Show Point by Point Only",
+              onPressed: () {
+                setState(() {
+                  _showPointByPointOnly = !_showPointByPointOnly;
+                });
+              },
+            ),
             Obx(() {
               final hasContent = ctrl.description.value.isNotEmpty ||
                   ctrl.summaryLines.isNotEmpty ||
@@ -126,6 +139,9 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
           children: [
             // ── Search bar ──
             _searchBar(),
+
+            // ── Mode Toggle: Full Summary vs Point by Point ──
+            _buildModeBar(),
 
             Expanded(
               child: Obx(() {
@@ -256,6 +272,106 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                   child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     child: Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModeBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Container(
+        height: 42,
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: _bg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _green1.withValues(alpha: 0.15), width: 1.2),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(11),
+                onTap: () {
+                  if (_showPointByPointOnly) {
+                    setState(() => _showPointByPointOnly = false);
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    color: !_showPointByPointOnly ? _green1 : Colors.transparent,
+                    borderRadius: BorderRadius.circular(11),
+                    boxShadow: !_showPointByPointOnly
+                        ? [
+                            BoxShadow(
+                              color: _green1.withValues(alpha: 0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    "Full Summary",
+                    style: TextStyle(
+                      color: !_showPointByPointOnly ? Colors.white : _textDark,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(11),
+                onTap: () {
+                  if (!_showPointByPointOnly) {
+                    setState(() => _showPointByPointOnly = true);
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    color: _showPointByPointOnly ? _green1 : Colors.transparent,
+                    borderRadius: BorderRadius.circular(11),
+                    boxShadow: _showPointByPointOnly
+                        ? [
+                            BoxShadow(
+                              color: _green1.withValues(alpha: 0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.stars_rounded,
+                        size: 15,
+                        color: _showPointByPointOnly ? Colors.white : _green1,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        "Point by Point",
+                        style: TextStyle(
+                          color: _showPointByPointOnly ? Colors.white : _textDark,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
