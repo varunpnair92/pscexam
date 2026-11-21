@@ -20,7 +20,6 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
 
   int _selectedCategoryIndex = -1; // -1 = All
   final Set<int> _collapsedCardIndices = {};
-  bool _showPointByPointOnly = false;
 
   // ─── Theme Palette ──────────────────────────────────────────
   static const _bg = Color(0xFFF4FBF4);            // off-white background
@@ -109,19 +108,6 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
           )),
           centerTitle: true,
           actions: [
-            IconButton(
-              icon: Icon(
-                _showPointByPointOnly ? Icons.view_headline_rounded : Icons.stars_rounded,
-                color: _green1,
-                size: 20,
-              ),
-              tooltip: _showPointByPointOnly ? "Show Full Summary" : "Show Point by Point Only",
-              onPressed: () {
-                setState(() {
-                  _showPointByPointOnly = !_showPointByPointOnly;
-                });
-              },
-            ),
             Obx(() {
               final hasContent = ctrl.description.value.isNotEmpty ||
                   ctrl.summaryLines.isNotEmpty ||
@@ -139,9 +125,6 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
           children: [
             // ── Search bar ──
             _searchBar(),
-
-            // ── Mode Toggle: Full Summary vs Point by Point ──
-            _buildModeBar(),
 
             Expanded(
               child: Obx(() {
@@ -282,106 +265,6 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
     );
   }
 
-  Widget _buildModeBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-      child: Container(
-        height: 42,
-        padding: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          color: _bg,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _green1.withValues(alpha: 0.15), width: 1.2),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                borderRadius: BorderRadius.circular(11),
-                onTap: () {
-                  if (_showPointByPointOnly) {
-                    setState(() => _showPointByPointOnly = false);
-                  }
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  decoration: BoxDecoration(
-                    color: !_showPointByPointOnly ? _green1 : Colors.transparent,
-                    borderRadius: BorderRadius.circular(11),
-                    boxShadow: !_showPointByPointOnly
-                        ? [
-                            BoxShadow(
-                              color: _green1.withValues(alpha: 0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    "Full Summary",
-                    style: TextStyle(
-                      color: !_showPointByPointOnly ? Colors.white : _textDark,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12.5,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: InkWell(
-                borderRadius: BorderRadius.circular(11),
-                onTap: () {
-                  if (!_showPointByPointOnly) {
-                    setState(() => _showPointByPointOnly = true);
-                  }
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  decoration: BoxDecoration(
-                    color: _showPointByPointOnly ? _green1 : Colors.transparent,
-                    borderRadius: BorderRadius.circular(11),
-                    boxShadow: _showPointByPointOnly
-                        ? [
-                            BoxShadow(
-                              color: _green1.withValues(alpha: 0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  alignment: Alignment.center,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.stars_rounded,
-                        size: 15,
-                        color: _showPointByPointOnly ? Colors.white : _green1,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        "Point by Point",
-                        style: TextStyle(
-                          color: _showPointByPointOnly ? Colors.white : _textDark,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildSummaryContentView(BuildContext context) {
     return RefreshIndicator(
       color: _green1,
@@ -401,32 +284,27 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
 
           const SizedBox(height: 14),
 
-          // ── If Point by Point is enabled: show ONLY keyword and point ──
-          if (_showPointByPointOnly) ...[
-            _buildPointByPointOnlySection(),
-          ] else ...[
-            // ── Description Card (Keywordsdescription) ──
-            if (ctrl.description.value.isNotEmpty) ...[
-              _buildDescriptionCard(),
-              const SizedBox(height: 16),
-            ],
+          // ── Description Card (Keywordsdescription) ──
+          if (ctrl.description.value.isNotEmpty) ...[
+            _buildDescriptionCard(),
+            const SizedBox(height: 16),
+          ],
 
-            // ── Summary Cards (Enclosed in # to #) or Legacy Points ──
-            if (ctrl.summaryCards.isNotEmpty) ...[
-              _buildCategoryFilterBar(),
-              const SizedBox(height: 14),
-              _buildSummaryCardsSection(),
-            ] else if (ctrl.summaryLines.isNotEmpty) ...[
-              _buildSummaryPointsSection(),
-            ] else if (ctrl.summary.value.isNotEmpty) ...[
-              _buildRawSummaryCard(),
-            ],
+          // ── Summary Cards (Enclosed in # to #) or Legacy Points ──
+          if (ctrl.summaryCards.isNotEmpty) ...[
+            _buildCategoryFilterBar(),
+            const SizedBox(height: 14),
+            _buildSummaryCardsSection(),
+          ] else if (ctrl.summaryLines.isNotEmpty) ...[
+            _buildSummaryPointsSection(),
+          ] else if (ctrl.summary.value.isNotEmpty) ...[
+            _buildRawSummaryCard(),
+          ],
 
-            // ── Legacy Children fallback (if ever returned) ──
-            if (ctrl.childrenList.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              _buildLegacyChildrenSection(),
-            ],
+          // ── Legacy Children fallback (if ever returned) ──
+          if (ctrl.childrenList.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildLegacyChildrenSection(),
           ],
         ],
       ),
@@ -498,59 +376,6 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                     icon: Icons.checklist_rounded,
                     bg: _green1.withValues(alpha: 0.1),
                     textColor: _green1,
-                  ),
-                if (ctrl.summaryLines.isNotEmpty || ctrl.summaryCards.isNotEmpty)
-                  InkWell(
-                    borderRadius: BorderRadius.circular(20),
-                    onTap: () {
-                      setState(() {
-                        _showPointByPointOnly = !_showPointByPointOnly;
-                      });
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: _showPointByPointOnly ? _green1 : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: _green1,
-                          width: 1.2,
-                        ),
-                        boxShadow: _showPointByPointOnly
-                            ? [
-                                BoxShadow(
-                                  color: _green1.withValues(alpha: 0.25),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _showPointByPointOnly
-                                ? Icons.check_circle_rounded
-                                : Icons.format_list_bulleted_rounded,
-                            size: 14,
-                            color: _showPointByPointOnly ? Colors.white : _green1,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _showPointByPointOnly
-                                ? "Point by Point: ON"
-                                : "Point by Point",
-                            style: TextStyle(
-                              color: _showPointByPointOnly ? Colors.white : _green1,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
               ],
             ),
@@ -1371,246 +1196,6 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildPointByPointOnlySection() {
-    final List<SummaryItem> items = [];
-
-    // Collect all keyword-point pairs from summaryCards or summaryLines
-    if (ctrl.summaryCards.isNotEmpty) {
-      for (final card in ctrl.summaryCards) {
-        for (final it in card.items) {
-          if (it.hasValue) {
-            items.add(it);
-          } else if (it.rawText.contains(' - ')) {
-            final idx = it.rawText.indexOf(' - ');
-            items.add(SummaryItem(
-              label: it.rawText.substring(0, idx).trim().replaceFirst(RegExp(r'^[•\-\*]\s*'), ''),
-              value: it.rawText.substring(idx + 3).trim(),
-              rawText: it.rawText,
-            ));
-          } else if (it.rawText.contains(' : ')) {
-            final idx = it.rawText.indexOf(' : ');
-            items.add(SummaryItem(
-              label: it.rawText.substring(0, idx).trim().replaceFirst(RegExp(r'^[•\-\*]\s*'), ''),
-              value: it.rawText.substring(idx + 3).trim(),
-              rawText: it.rawText,
-            ));
-          }
-        }
-      }
-    } else if (ctrl.summaryLines.isNotEmpty) {
-      for (final line in ctrl.summaryLines) {
-        if (!line.startsWith('#')) {
-          if (line.contains(' - ')) {
-            final idx = line.indexOf(' - ');
-            items.add(SummaryItem(
-              label: line.substring(0, idx).trim().replaceFirst(RegExp(r'^[•\-\*]\s*'), ''),
-              value: line.substring(idx + 3).trim(),
-              rawText: line,
-            ));
-          } else if (line.contains(' : ')) {
-            final idx = line.indexOf(' : ');
-            items.add(SummaryItem(
-              label: line.substring(0, idx).trim().replaceFirst(RegExp(r'^[•\-\*]\s*'), ''),
-              value: line.substring(idx + 3).trim(),
-              rawText: line,
-            ));
-          }
-        }
-      }
-    }
-
-    if (items.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Center(
-          child: Column(
-            children: [
-              Icon(Icons.info_outline_rounded, color: Colors.grey.shade400, size: 36),
-              const SizedBox(height: 8),
-              const Text(
-                "No 'keyword - point' items found in this summary.",
-                style: TextStyle(color: _textMid, fontSize: 14),
-              ),
-              const SizedBox(height: 12),
-              TextButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _showPointByPointOnly = false;
-                  });
-                },
-                icon: const Icon(Icons.arrow_back_rounded, size: 16),
-                label: const Text("Show Full Summary"),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── Header Bar ──
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: _green1.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _green1.withValues(alpha: 0.2)),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.stars_rounded, color: _green1, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Point by Point (കീവേഡും പോയിന്റും)",
-                      style: TextStyle(
-                        color: _textDark,
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      "Showing only keyword & headline point (${items.length} items)",
-                      style: const TextStyle(
-                        color: _textMid,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.copy_rounded, size: 18, color: _green1),
-                tooltip: "Copy all points",
-                onPressed: () {
-                  final text = items.map((e) => "${e.label} - ${e.value}").join("\n");
-                  _copyToClipboard(
-                    customText: text,
-                    customMessage: "${items.length} points copied to clipboard",
-                  );
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.close_rounded, size: 20, color: _textMid),
-                tooltip: "Exit point-by-point view",
-                onPressed: () {
-                  setState(() {
-                    _showPointByPointOnly = false;
-                  });
-                },
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        // ── Points List: Only Keyword & Point ──
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: items.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 10),
-          itemBuilder: (context, index) {
-            final item = items[index];
-            return Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _green1.withValues(alpha: 0.15),
-                  width: 1.1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _green1.withValues(alpha: 0.04),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(8),
-                onTap: () {
-                  _showNoteSheet(
-                    context,
-                    item.label,
-                    fallbackItem: item,
-                    categoryTitle: "Key Point",
-                    pointIndex: index + 1,
-                  );
-                },
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 26,
-                      height: 26,
-                      alignment: Alignment.center,
-                      margin: const EdgeInsets.only(top: 1),
-                      decoration: BoxDecoration(
-                        color: _green1.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        "${index + 1}",
-                        style: const TextStyle(
-                          color: _green1,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.label,
-                            style: const TextStyle(
-                              color: _textDark,
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              height: 1.35,
-                            ),
-                          ),
-                          if (item.value != null && item.value!.isNotEmpty) ...[
-                            const SizedBox(height: 3),
-                            Text(
-                              item.value!,
-                              style: const TextStyle(
-                                color: _green1,
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.w600,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ],
     );
   }
 }

@@ -12,8 +12,9 @@ class KeywordSearchController extends GetxController {
   var keywordsList = <String>[].obs;
   var selectedKeyword = "".obs; // empty string = combined mode (all keywords)
 
-  // ─── Point by Point Mode State ───
-  var isPointByPointMode = false.obs;
+  // ─── Show Point State ───
+  var showPoint = false.obs;
+  RxBool get isPointByPointMode => showPoint;
   var isPointsLoading = false.obs;
   var pointsList = <Map<String, String>>[].obs;
 
@@ -50,7 +51,7 @@ class KeywordSearchController extends GetxController {
     
     selectedKeyword.value = "";
     fetchQuestions();
-    if (isPointByPointMode.value) {
+    if (showPoint.value) {
       fetchPoints();
     }
   }
@@ -66,7 +67,7 @@ class KeywordSearchController extends GetxController {
       selectedKeyword.value = trimmed;
     }
     fetchQuestions();
-    if (isPointByPointMode.value) {
+    if (showPoint.value) {
       fetchPoints();
     }
   }
@@ -80,24 +81,26 @@ class KeywordSearchController extends GetxController {
     }
 
     fetchQuestions();
-    if (isPointByPointMode.value) {
+    if (showPoint.value) {
       fetchPoints();
     }
   }
 
-  void togglePointByPointMode(bool enabled) {
-    isPointByPointMode.value = enabled;
+  void toggleShowPoint(bool enabled) {
+    showPoint.value = enabled;
     if (enabled && pointsList.isEmpty) {
       fetchPoints();
     }
   }
 
-  Future<void> fetchPoints() async {
-    final kw = selectedKeyword.value.isNotEmpty
-        ? selectedKeyword.value
-        : (keywordsList.isNotEmpty ? keywordsList.first : "");
+  void togglePointByPointMode(bool enabled) => toggleShowPoint(enabled);
 
-    if (kw.trim().isEmpty) {
+  Future<void> fetchPoints() async {
+    final List<String> targets = selectedKeyword.value.isNotEmpty
+        ? [selectedKeyword.value]
+        : (keywordsList.isNotEmpty ? keywordsList.toList() : <String>[]);
+
+    if (targets.isEmpty) {
       pointsList.clear();
       return;
     }
@@ -105,49 +108,53 @@ class KeywordSearchController extends GetxController {
     isPointsLoading.value = true;
     final List<Map<String, String>> collected = [];
 
-    try {
-      // 1. Fetch child points for master keyword
-      final urlMaster = "${AppConfig.masterKeywordPoints}?keyword=${Uri.encodeComponent(kw.trim())}";
-      final resMaster = await http.get(Uri.parse(urlMaster)).timeout(const Duration(seconds: 8));
-      if (resMaster.statusCode == 200) {
-        final decoded = jsonDecode(utf8.decode(resMaster.bodyBytes));
-        if (decoded is Map && decoded['items'] is List) {
-          for (var item in decoded['items']) {
-            final k = (item['keyword'] ?? "").toString().trim();
-            final p = (item['point'] ?? item['category'] ?? "").toString().trim();
-            if (k.isNotEmpty && p.isNotEmpty) {
-              collected.add({'keyword': k, 'point': p});
-            }
-          }
-        }
-      }
-    } catch (_) {}
+    for (final kw in targets) {
+      if (kw.trim().isEmpty) continue;
 
-    try {
-      // 2. Fetch summary points
-      final urlSum = "${AppConfig.keywordSearchSummary}?keyword=${Uri.encodeComponent(kw.trim())}&point_by_point=true";
-      final resSum = await http.get(Uri.parse(urlSum)).timeout(const Duration(seconds: 8));
-      if (resSum.statusCode == 200) {
-        final decoded = jsonDecode(utf8.decode(resSum.bodyBytes));
-        if (decoded is Map) {
-          final selfPoint = (decoded['point'] ?? "").toString().trim();
-          final selfKw = (decoded['keyword'] ?? kw).toString().trim();
-          if (selfPoint.isNotEmpty && !collected.any((e) => e['keyword'] == selfKw)) {
-            collected.insert(0, {'keyword': selfKw, 'point': selfPoint});
-          }
-
-          if (decoded['point_by_point'] is List) {
-            for (var item in decoded['point_by_point']) {
+      try {
+        // 1. Fetch child points for master keyword from master-keyword-points API
+        final urlMaster = "${AppConfig.masterKeywordPoints}?keyword=${Uri.encodeComponent(kw.trim())}";
+        final resMaster = await http.get(Uri.parse(urlMaster)).timeout(const Duration(seconds: 8));
+        if (resMaster.statusCode == 200) {
+          final decoded = jsonDecode(utf8.decode(resMaster.bodyBytes));
+          if (decoded is Map && decoded['items'] is List) {
+            for (var item in decoded['items']) {
               final k = (item['keyword'] ?? "").toString().trim();
-              final p = (item['point'] ?? "").toString().trim();
+              final p = (item['point'] ?? item['category'] ?? "").toString().trim();
               if (k.isNotEmpty && p.isNotEmpty && !collected.any((e) => e['keyword'] == k)) {
                 collected.add({'keyword': k, 'point': p});
               }
             }
           }
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
+
+      try {
+        // 2. Fetch summary points from keyword-search-summary API
+        final urlSum = "${AppConfig.keywordSearchSummary}?keyword=${Uri.encodeComponent(kw.trim())}&point_by_point=true";
+        final resSum = await http.get(Uri.parse(urlSum)).timeout(const Duration(seconds: 8));
+        if (resSum.statusCode == 200) {
+          final decoded = jsonDecode(utf8.decode(resSum.bodyBytes));
+          if (decoded is Map) {
+            final selfPoint = (decoded['point'] ?? "").toString().trim();
+            final selfKw = (decoded['keyword'] ?? kw).toString().trim();
+            if (selfPoint.isNotEmpty && !collected.any((e) => e['keyword'] == selfKw)) {
+              collected.insert(0, {'keyword': selfKw, 'point': selfPoint});
+            }
+
+            if (decoded['point_by_point'] is List) {
+              for (var item in decoded['point_by_point']) {
+                final k = (item['keyword'] ?? "").toString().trim();
+                final p = (item['point'] ?? "").toString().trim();
+                if (k.isNotEmpty && p.isNotEmpty && !collected.any((e) => e['keyword'] == k)) {
+                  collected.add({'keyword': k, 'point': p});
+                }
+              }
+            }
+          }
+        }
+      } catch (_) {}
+    }
 
     pointsList.assignAll(collected);
     isPointsLoading.value = false;

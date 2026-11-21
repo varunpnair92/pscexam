@@ -40,14 +40,6 @@ class KeywordSearchPage extends StatelessWidget {
         }),
         centerTitle: true,
         actions: [
-          Obx(() => IconButton(
-            icon: Icon(
-              ctrl.isPointByPointMode.value ? Icons.view_headline_rounded : Icons.stars_rounded,
-              color: _green1,
-            ),
-            tooltip: ctrl.isPointByPointMode.value ? "Show Questions" : "Show Point by Point",
-            onPressed: () => ctrl.togglePointByPointMode(!ctrl.isPointByPointMode.value),
-          )),
           IconButton(
             icon: const Icon(Icons.hub_rounded, color: _green1),
             tooltip: "Open Graph View",
@@ -68,12 +60,12 @@ class KeywordSearchPage extends StatelessWidget {
           // ── Keyword Tiles for Multiple Keywords ──
           _keywordTiles(),
 
-          // ── Mode Toggle: Questions vs Point by Point ──
-          _viewModeToggle(),
+          // ── Checkbox: Show Point ──
+          _showPointCheckbox(),
           
           Expanded(
             child: Obx(() {
-              if (ctrl.isPointByPointMode.value) {
+              if (ctrl.showPoint.value) {
                 return _buildPointsView();
               }
 
@@ -295,117 +287,63 @@ class KeywordSearchPage extends StatelessWidget {
     });
   }
 
-  Widget _viewModeToggle() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Container(
-        height: 42,
-        padding: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          color: _bg,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _green1.withOpacity(0.15), width: 1.2),
+  Widget _showPointCheckbox() {
+    return Obx(() {
+      final isChecked = ctrl.showPoint.value;
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+        child: Row(
+          children: [
+            SizedBox(
+              height: 24,
+              width: 24,
+              child: Checkbox(
+                value: isChecked,
+                activeColor: _green1,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                onChanged: (val) {
+                  ctrl.toggleShowPoint(val ?? false);
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () {
+                ctrl.toggleShowPoint(!isChecked);
+              },
+              child: const Text(
+                "Show Point",
+                style: TextStyle(
+                  color: _textDark,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            const Spacer(),
+            if (isChecked && ctrl.pointsList.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: _green1.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  "${ctrl.pointsList.length} points",
+                  style: const TextStyle(
+                    color: _green1,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+          ],
         ),
-        child: Obx(() {
-          final isPoints = ctrl.isPointByPointMode.value;
-          return Row(
-            children: [
-              // ── Tab 1: Questions ──
-              Expanded(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(11),
-                  onTap: () => ctrl.togglePointByPointMode(false),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    decoration: BoxDecoration(
-                      color: !isPoints ? _green1 : Colors.transparent,
-                      borderRadius: BorderRadius.circular(11),
-                      boxShadow: !isPoints
-                          ? [
-                              BoxShadow(
-                                color: _green1.withOpacity(0.2),
-                                blurRadius: 4,
-                                offset: const Offset(0, 1),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    alignment: Alignment.center,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.quiz_rounded,
-                          size: 15,
-                          color: !isPoints ? Colors.white : _textMid,
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          "Questions (${ctrl.questions.length})",
-                          style: TextStyle(
-                            color: !isPoints ? Colors.white : _textDark,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // ── Tab 2: Point by Point (Keyword & Point) ──
-              Expanded(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(11),
-                  onTap: () {
-                    ctrl.togglePointByPointMode(true);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    decoration: BoxDecoration(
-                      color: isPoints ? _green1 : Colors.transparent,
-                      borderRadius: BorderRadius.circular(11),
-                      boxShadow: isPoints
-                          ? [
-                              BoxShadow(
-                                color: _green1.withOpacity(0.2),
-                                blurRadius: 4,
-                                offset: const Offset(0, 1),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    alignment: Alignment.center,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.stars_rounded,
-                          size: 15,
-                          color: isPoints ? Colors.white : _green1,
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          isPoints && ctrl.pointsList.isNotEmpty
-                              ? "Point by Point (${ctrl.pointsList.length})"
-                              : "Point by Point",
-                          style: TextStyle(
-                            color: isPoints ? Colors.white : _textDark,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildPointsView() {
@@ -417,7 +355,7 @@ class KeywordSearchPage extends StatelessWidget {
             CircularProgressIndicator(color: _green1),
             SizedBox(height: 14),
             Text(
-              "Loading point-by-point data...",
+              "Loading points...",
               style: TextStyle(color: _textMid, fontSize: 13.5),
             ),
           ],
@@ -440,13 +378,13 @@ class KeywordSearchPage extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                "Try searching another keyword or view questions",
+                "Try searching another keyword or uncheck 'Show Point'",
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
-                onPressed: () => ctrl.togglePointByPointMode(false),
+                onPressed: () => ctrl.toggleShowPoint(false),
                 icon: const Icon(Icons.arrow_back_rounded, size: 16),
                 label: const Text("View Questions"),
                 style: ElevatedButton.styleFrom(
