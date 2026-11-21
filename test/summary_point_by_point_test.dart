@@ -73,5 +73,48 @@ void main() {
       expect(allPoints[2]['point'], equals('1957-1959'));
       expect(allPoints[2]['category'], equals('കാലക്രമത്തിൽ'));
     });
+
+    test('Parent keyword children points (e.g. സംഘടനകളും സ്ഥാപകരും) parse and display correctly', () {
+      final childPointItems = [
+        {
+          'keyword': 'ശുദ്ധിപ്രസ്ഥാനം',
+          'parent': 'സംഘടനകളും സ്ഥാപകരും',
+          'category': 'പൊതുവിജ്ഞാനം',
+          'point': 'സ്ഥാപകൻ: ദയാനന്ദ സരസ്വതി',
+          'formatted': 'ശുദ്ധിപ്രസ്ഥാനം - സ്ഥാപകൻ: ദയാനന്ദ സരസ്വതി',
+        },
+        {
+          'keyword': 'ആര്യസമാജം',
+          'parent': 'സംഘടനകളും സ്ഥാപകരും',
+          'category': 'പൊതുവിജ്ഞാനം',
+          'point': 'സ്ഥാപകൻ: ദയാനന്ദ സരസ്വതി',
+          'formatted': 'ആര്യസമാജം - സ്ഥാപകൻ: ദയാനന്ദ സരസ്വതി',
+        },
+      ];
+
+      final Map<String, List<SummaryItem>> grouped = {};
+      for (final p in childPointItems) {
+        final cat = p['category']!;
+        final k = p['keyword']!;
+        final pt = p['point']!;
+        grouped.putIfAbsent(cat, () => []).add(SummaryItem(
+          label: k,
+          value: pt,
+          rawText: '$k - $pt',
+        ));
+      }
+
+      final cards = grouped.entries.map((entry) {
+        return SummaryCardModel(title: entry.key, items: entry.value);
+      }).toList();
+
+      expect(cards.length, equals(1));
+      expect(cards[0].cleanTitle, equals('പൊതുവിജ്ഞാനം'));
+      expect(cards[0].items.length, equals(2));
+      expect(cards[0].items[0].label, equals('ശുദ്ധിപ്രസ്ഥാനം'));
+      expect(cards[0].items[0].value, equals('സ്ഥാപകൻ: ദയാനന്ദ സരസ്വതി'));
+      expect(cards[0].items[1].label, equals('ആര്യസമാജം'));
+      expect(cards[0].items[1].value, equals('സ്ഥാപകൻ: ദയാനന്ദ സരസ്വതി'));
+    });
   });
 }

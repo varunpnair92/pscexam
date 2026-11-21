@@ -125,15 +125,21 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
       }
     }
 
-    // 2. From pointByPointList
-    if (items.isEmpty && ctrl.pointByPointList.isNotEmpty) {
+    // 2. Merge from pointByPointList
+    if (ctrl.pointByPointList.isNotEmpty) {
       for (final p in ctrl.pointByPointList) {
-        items.add(_PointItemData(
-          keyword: p['keyword'] ?? '',
-          point: p['point'] ?? '',
-          category: '',
-          rawText: p['formatted'] ?? '',
-        ));
+        final k = (p['keyword'] ?? '').trim();
+        final pt = (p['point'] ?? '').trim();
+        final cat = (p['category'] ?? '').trim();
+        final raw = (p['formatted'] ?? '').trim();
+        if (k.isNotEmpty && !items.any((it) => it.keyword == k)) {
+          items.add(_PointItemData(
+            keyword: k,
+            point: pt,
+            category: cat,
+            rawText: raw.isNotEmpty ? raw : (pt.isNotEmpty ? "$k - $pt" : k),
+          ));
+        }
       }
     }
 

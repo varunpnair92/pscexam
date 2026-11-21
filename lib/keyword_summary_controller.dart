@@ -126,12 +126,15 @@ class KeywordSummaryController extends GetxController {
             pointByPointList.value = (decoded['point_by_point'] as List).map((item) {
               if (item is Map) {
                 return {
-                  'keyword': (item['keyword'] ?? '').toString().trim(),
+                  'keyword': (item['keyword'] ?? item['name'] ?? '').toString().trim(),
+                  'parent': (item['parent'] ?? '').toString().trim(),
+                  'category': (item['category'] ?? '').toString().trim(),
                   'point': (item['point'] ?? '').toString().trim(),
                   'formatted': (item['formatted'] ?? '').toString().trim(),
+                  'year': (item['year'] ?? '').toString().trim(),
                 };
               }
-              return {'keyword': '', 'point': '', 'formatted': item.toString()};
+              return {'keyword': '', 'parent': '', 'category': '', 'point': '', 'formatted': item.toString(), 'year': ''};
             }).toList();
           } else {
             pointByPointList.clear();
@@ -152,7 +155,28 @@ class KeywordSummaryController extends GetxController {
             childrenData.clear();
           }
 
-          if (summaryCards.isEmpty && summaryLines.isEmpty && pointByPointList.isNotEmpty) {
+          // Merge children points into pointByPointList if not already present
+          if (childrenData.isNotEmpty) {
+            final existingKws = pointByPointList.map((p) => p['keyword'] ?? '').toSet();
+            for (final ch in childrenData) {
+              final name = (ch['name'] ?? ch['keyword'] ?? '').toString().trim();
+              final pt = (ch['point'] ?? '').toString().trim();
+              final cat = (ch['category'] ?? '').toString().trim();
+              if (name.isNotEmpty && pt.isNotEmpty && !existingKws.contains(name)) {
+                pointByPointList.add({
+                  'keyword': name,
+                  'parent': currentKeyword.value,
+                  'category': cat.isNotEmpty ? cat : 'പൊതുവിജ്ഞാനം',
+                  'point': pt,
+                  'formatted': "$name - $pt",
+                  'year': (ch['year'] ?? '').toString().trim(),
+                });
+                existingKws.add(name);
+              }
+            }
+          }
+
+          if (summaryLines.isEmpty && pointByPointList.isNotEmpty) {
             final lines = pointByPointList
                 .map((p) => (p['formatted'] != null && p['formatted']!.isNotEmpty)
                     ? p['formatted']!
@@ -160,6 +184,32 @@ class KeywordSummaryController extends GetxController {
                 .toList();
             summaryLines.value = lines;
             summaryData.value = lines;
+          }
+
+          // If summaryCards is empty but we have point-by-point facts, synthesize categorized cards
+          if (summaryCards.isEmpty && pointByPointList.isNotEmpty) {
+            final Map<String, List<SummaryItem>> grouped = {};
+            for (final p in pointByPointList) {
+              final cat = (p['category'] != null && p['category']!.isNotEmpty)
+                  ? p['category']!
+                  : 'പൊതുവിജ്ഞാനം';
+              final k = p['keyword'] ?? '';
+              final pt = p['point'] ?? '';
+              final raw = (p['formatted'] != null && p['formatted']!.isNotEmpty)
+                  ? p['formatted']!
+                  : (pt.isNotEmpty ? "$k - $pt" : k);
+              grouped.putIfAbsent(cat, () => []).add(SummaryItem(
+                label: k,
+                value: pt.isNotEmpty ? pt : null,
+                rawText: raw,
+              ));
+            }
+            summaryCards.value = grouped.entries.map((entry) {
+              return SummaryCardModel(
+                title: entry.key,
+                items: entry.value,
+              );
+            }).toList();
           }
 
           final hasSummaryContent = description.value.isNotEmpty ||
