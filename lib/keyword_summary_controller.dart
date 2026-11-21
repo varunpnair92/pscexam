@@ -20,6 +20,8 @@ class KeywordSummaryController extends GetxController {
   var summaryData = <String>[].obs;
   var responseType = "unknown".obs; // 'success', 'parent', 'empty', 'error', 'unknown'
   var childrenList = <String>[].obs;
+  var childrenData = <Map<String, dynamic>>[].obs;
+  var pointByPointList = <Map<String, String>>[].obs;
 
   // ─── History Management ───
   var searchHistory = <String>[].obs;
@@ -119,18 +121,52 @@ class KeywordSummaryController extends GetxController {
           summaryLines.value = parsedLines;
           summaryData.value = parsedLines;
 
+          // Parse point_by_point items if present in response
+          if (decoded['point_by_point'] != null && decoded['point_by_point'] is List) {
+            pointByPointList.value = (decoded['point_by_point'] as List).map((item) {
+              if (item is Map) {
+                return {
+                  'keyword': (item['keyword'] ?? '').toString().trim(),
+                  'point': (item['point'] ?? '').toString().trim(),
+                  'formatted': (item['formatted'] ?? '').toString().trim(),
+                };
+              }
+              return {'keyword': '', 'point': '', 'formatted': item.toString()};
+            }).toList();
+          } else {
+            pointByPointList.clear();
+          }
+
           // Parse children if present in response
           var rawChildren = decoded['children'] ?? (decoded['type'] == 'parent' ? decoded['data'] : null);
           if (rawChildren is List && rawChildren.isNotEmpty) {
             childrenList.value = List<dynamic>.from(rawChildren).map((e) => _extractName(e)).toList();
+            childrenData.value = List<dynamic>.from(rawChildren).map((e) {
+              if (e is Map) {
+                return Map<String, dynamic>.from(e);
+              }
+              return {'name': e.toString(), 'point': ''};
+            }).toList();
           } else {
             childrenList.clear();
+            childrenData.clear();
+          }
+
+          if (summaryCards.isEmpty && summaryLines.isEmpty && pointByPointList.isNotEmpty) {
+            final lines = pointByPointList
+                .map((p) => (p['formatted'] != null && p['formatted']!.isNotEmpty)
+                    ? p['formatted']!
+                    : "${p['keyword']} - ${p['point']}")
+                .toList();
+            summaryLines.value = lines;
+            summaryData.value = lines;
           }
 
           final hasSummaryContent = description.value.isNotEmpty ||
               summaryLines.isNotEmpty ||
               summaryCards.isNotEmpty ||
-              summary.value.isNotEmpty;
+              summary.value.isNotEmpty ||
+              pointByPointList.isNotEmpty;
 
           if (hasSummaryContent) {
             responseType.value = 'success';

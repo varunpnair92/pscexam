@@ -84,6 +84,108 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
     );
   }
 
+  List<_PointItemData> _getPointsOnlyItems() {
+    final List<_PointItemData> items = [];
+
+    // 1. From parsed summaryCards (highest fidelity: structured label and value)
+    if (ctrl.summaryCards.isNotEmpty) {
+      for (final card in ctrl.summaryCards) {
+        for (final item in card.items) {
+          if (item.hasValue) {
+            items.add(_PointItemData(
+              keyword: item.label,
+              point: item.value!,
+              category: card.cleanTitle,
+              rawText: item.rawText,
+            ));
+          } else if (item.rawText.isNotEmpty) {
+            final delimiter = item.rawText.contains(' — ')
+                ? ' — '
+                : (item.rawText.contains(' - ') ? ' - ' : (item.rawText.contains(' : ') ? ' : ' : null));
+            if (delimiter != null) {
+              final parts = item.rawText.split(delimiter);
+              final k = parts[0].trim().replaceFirst(RegExp(r'^[•\-\*\d\.\s]+'), '').trim();
+              final p = parts.sublist(1).join(delimiter).trim();
+              items.add(_PointItemData(
+                keyword: k,
+                point: p,
+                category: card.cleanTitle,
+                rawText: item.rawText,
+              ));
+            } else {
+              items.add(_PointItemData(
+                keyword: item.rawText,
+                point: '',
+                category: card.cleanTitle,
+                rawText: item.rawText,
+              ));
+            }
+          }
+        }
+      }
+    }
+
+    // 2. From pointByPointList
+    if (items.isEmpty && ctrl.pointByPointList.isNotEmpty) {
+      for (final p in ctrl.pointByPointList) {
+        items.add(_PointItemData(
+          keyword: p['keyword'] ?? '',
+          point: p['point'] ?? '',
+          category: '',
+          rawText: p['formatted'] ?? '',
+        ));
+      }
+    }
+
+    // 3. Fallback from summaryLines
+    if (items.isEmpty && ctrl.summaryLines.isNotEmpty) {
+      for (final line in ctrl.summaryLines) {
+        if (line.startsWith('#')) continue;
+        final delimiter = line.contains(' — ')
+            ? ' — '
+            : (line.contains(' - ') ? ' - ' : (line.contains(' : ') ? ' : ' : null));
+        if (delimiter != null) {
+          final parts = line.split(delimiter);
+          final k = parts[0].trim().replaceFirst(RegExp(r'^[•\-\*\d\.\s]+'), '').trim();
+          final p = parts.sublist(1).join(delimiter).trim();
+          items.add(_PointItemData(
+            keyword: k,
+            point: p,
+            category: '',
+            rawText: line,
+          ));
+        } else {
+          items.add(_PointItemData(
+            keyword: line,
+            point: '',
+            category: '',
+            rawText: line,
+          ));
+        }
+      }
+    }
+
+    // 4. Children with points
+    if (ctrl.childrenData.isNotEmpty) {
+      for (final child in ctrl.childrenData) {
+        final pt = (child['point'] ?? '').toString().trim();
+        final name = (child['name'] ?? child['keyword'] ?? '').toString().trim();
+        if (pt.isNotEmpty && name.isNotEmpty) {
+          if (!items.any((it) => it.keyword == name && it.point == pt)) {
+            items.add(_PointItemData(
+              keyword: name,
+              point: pt,
+              category: (child['category'] ?? '').toString().trim(),
+              rawText: "$name - $pt",
+            ));
+          }
+        }
+      }
+    }
+
+    return items;
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -478,6 +580,9 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
   }
 
   Widget _buildCategoryFilterBar() {
+    final pointsItems = _getPointsOnlyItems();
+    final int pointsCount = pointsItems.length;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -545,25 +650,43 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
-            itemCount: ctrl.summaryCards.length + 1,
+            itemCount: ctrl.summaryCards.length + 2,
             separatorBuilder: (context, index) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
               final isAll = index == 0;
-              final isSelected = isAll
-                  ? _selectedCategoryIndex == -1
-                  : _selectedCategoryIndex == (index - 1);
-              final label = isAll
-                  ? "All (${ctrl.summaryCards.length})"
-                  : ctrl.summaryCards[index - 1].shortTitle;
-              final Color activeColor = isAll
-                  ? _green1
-                  : ctrl.summaryCards[index - 1].accentColor;
+              final isPointsOnly = index == 1;
+
+              final bool isSelected;
+              final String label;
+              final Color activeColor;
+
+              if (isAll) {
+                isSelected = _selectedCategoryIndex == -1;
+                label = "All (${ctrl.summaryCards.length})";
+                activeColor = _green1;
+              } else if (isPointsOnly) {
+                isSelected = _selectedCategoryIndex == -2;
+                label = pointsCount > 0 ? "Points Only ($pointsCount)" : "Points Only";
+                activeColor = _green1;
+              } else {
+                final cardIndex = index - 2;
+                isSelected = _selectedCategoryIndex == cardIndex;
+                final card = ctrl.summaryCards[cardIndex];
+                label = card.shortTitle;
+                activeColor = card.accentColor;
+              }
 
               return InkWell(
                 borderRadius: BorderRadius.circular(20),
                 onTap: () {
                   setState(() {
-                    _selectedCategoryIndex = isAll ? -1 : (index - 1);
+                    if (isAll) {
+                      _selectedCategoryIndex = -1;
+                    } else if (isPointsOnly) {
+                      _selectedCategoryIndex = -2;
+                    } else {
+                      _selectedCategoryIndex = index - 2;
+                    }
                   });
                 },
                 child: AnimatedContainer(
@@ -587,14 +710,34 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                         : null,
                   ),
                   child: Center(
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : _textDark,
-                        fontSize: 12.5,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                      ),
-                    ),
+                    child: isPointsOnly
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.checklist_rounded,
+                                size: 14,
+                                color: isSelected ? Colors.white : _green1,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                label,
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : _textDark,
+                                  fontSize: 12.5,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            label,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : _textDark,
+                              fontSize: 12.5,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
               );
@@ -606,6 +749,10 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
   }
 
   Widget _buildSummaryCardsSection() {
+    if (_selectedCategoryIndex == -2) {
+      return _buildPointsOnlySection();
+    }
+
     final List<int> cardIndicesToShow;
     if (_selectedCategoryIndex >= 0 &&
         _selectedCategoryIndex < ctrl.summaryCards.length) {
@@ -624,6 +771,228 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
         final card = ctrl.summaryCards[cardIndex];
         return _buildSummaryCard(card, cardIndex);
       },
+    );
+  }
+
+  Widget _buildPointsOnlySection() {
+    final items = _getPointsOnlyItems();
+
+    if (items.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: const Center(
+          child: Text(
+            "No point-by-point facts available for this topic.",
+            style: TextStyle(color: _textMid, fontSize: 14),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _green1.withValues(alpha: 0.22),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _green1.withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  _green1.withValues(alpha: 0.08),
+                  Colors.white,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _green1.withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.checklist_rounded, color: _green1, size: 18),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "പോയിന്റുകൾ (Points Only)",
+                        style: TextStyle(
+                          color: _textDark,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        "${items.length} Key Facts / Points",
+                        style: const TextStyle(
+                          color: _green1,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.copy_rounded, size: 18),
+                  color: _green1,
+                  tooltip: "Copy all points",
+                  onPressed: () {
+                    final textToCopy = items.map((it) {
+                      if (it.hasPoint) {
+                        return "${it.keyword} — ${it.point}";
+                      }
+                      return it.rawText;
+                    }).join("\n");
+                    _copyToClipboard(
+                      customText: textToCopy,
+                      customMessage: "All points copied to clipboard",
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: _green1.withValues(alpha: 0.15)),
+          // Body with numbered list
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            itemCount: items.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, idx) {
+              final item = items[idx];
+              return InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () {
+                  final targetKw = item.hasPoint ? item.point : item.keyword;
+                  _showNoteSheet(
+                    context,
+                    targetKw,
+                    categoryTitle: item.category.isNotEmpty ? item.category : "Points Only",
+                    pointIndex: idx + 1,
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 22,
+                        height: 22,
+                        alignment: Alignment.center,
+                        margin: const EdgeInsets.only(top: 2),
+                        decoration: BoxDecoration(
+                          color: _green1.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          "${idx + 1}",
+                          style: const TextStyle(
+                            color: _green1,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: item.hasPoint
+                            ? Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: item.keyword,
+                                      style: const TextStyle(
+                                        color: _textDark,
+                                        fontSize: 14.5,
+                                        fontWeight: FontWeight.w600,
+                                        height: 1.45,
+                                      ),
+                                    ),
+                                    const TextSpan(
+                                      text: " — ",
+                                      style: TextStyle(
+                                        color: _textMid,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: item.point,
+                                      style: const TextStyle(
+                                        color: _green1,
+                                        fontSize: 14.5,
+                                        fontWeight: FontWeight.w800,
+                                        height: 1.45,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : Text(
+                                item.rawText,
+                                style: const TextStyle(
+                                  color: _textDark,
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.45,
+                                ),
+                              ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.copy_rounded, size: 16, color: _textMid),
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                        tooltip: "Copy point",
+                        onPressed: () {
+                          final str = item.hasPoint ? "${item.keyword} — ${item.point}" : item.rawText;
+                          _copyToClipboard(
+                            customText: str,
+                            customMessage: "Point copied to clipboard",
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -924,15 +1293,7 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: SelectableText(
-                      line,
-                      style: const TextStyle(
-                        color: _textDark,
-                        fontSize: 14.5,
-                        height: 1.55,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    child: _buildRichSummaryLine(line),
                   ),
                 ],
               ),
@@ -940,6 +1301,62 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildRichSummaryLine(String line) {
+    final delimiter = line.contains(' — ')
+        ? ' — '
+        : (line.contains(' - ') ? ' - ' : (line.contains(' : ') ? ' : ' : null));
+
+    if (delimiter != null) {
+      final parts = line.split(delimiter);
+      final k = parts[0].trim().replaceFirst(RegExp(r'^[•\-\*\d\.\s]+'), '').trim();
+      final p = parts.sublist(1).join(delimiter).trim();
+      if (k.isNotEmpty && p.isNotEmpty) {
+        return Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: k,
+                style: const TextStyle(
+                  color: _textDark,
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w600,
+                  height: 1.45,
+                ),
+              ),
+              const TextSpan(
+                text: " — ",
+                style: TextStyle(
+                  color: _textMid,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              TextSpan(
+                text: p,
+                style: const TextStyle(
+                  color: _green1,
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w800,
+                  height: 1.45,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+
+    return SelectableText(
+      line,
+      style: const TextStyle(
+        color: _textDark,
+        fontSize: 14.5,
+        height: 1.55,
+        fontWeight: FontWeight.w500,
+      ),
     );
   }
 
@@ -1034,6 +1451,8 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
       physics: const BouncingScrollPhysics(),
       itemBuilder: (context, index) {
         final childName = ctrl.childrenList[index];
+        final childData = index < ctrl.childrenData.length ? ctrl.childrenData[index] : null;
+        final childPoint = (childData?['point'] ?? '').toString().trim();
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
@@ -1069,13 +1488,29 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: Text(
-                        childName,
-                        style: const TextStyle(
-                          color: _textDark,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            childName,
+                            style: const TextStyle(
+                              color: _textDark,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (childPoint.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              childPoint,
+                              style: const TextStyle(
+                                color: _green1,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                     TextButton.icon(
@@ -1822,4 +2257,20 @@ class _StudyNoteSheetWidgetState extends State<_StudyNoteSheetWidget> {
       ),
     );
   }
+}
+
+class _PointItemData {
+  final String keyword;
+  final String point;
+  final String category;
+  final String rawText;
+
+  _PointItemData({
+    required this.keyword,
+    required this.point,
+    this.category = '',
+    required this.rawText,
+  });
+
+  bool get hasPoint => point.trim().isNotEmpty;
 }
