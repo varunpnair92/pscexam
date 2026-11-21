@@ -84,34 +84,53 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
     );
   }
 
+  static final RegExp _leadingBulletRegex = RegExp(r'^[•\-\*\d\.\s]+');
+  List<_PointItemData>? _cachedPointsItems;
+  int _lastCardsCount = -1;
+  int _lastPointsCount = -1;
+  String _lastKeyword = '';
+
   List<_PointItemData> _getPointsOnlyItems() {
+    if (_cachedPointsItems != null &&
+        _lastCardsCount == ctrl.summaryCards.length &&
+        _lastPointsCount == ctrl.pointByPointList.length &&
+        _lastKeyword == ctrl.currentKeyword.value) {
+      return _cachedPointsItems!;
+    }
+
     final List<_PointItemData> items = [];
+    final Set<String> seenKeywords = {};
 
     // 1. From parsed summaryCards (highest fidelity: structured label and value)
     if (ctrl.summaryCards.isNotEmpty) {
       for (final card in ctrl.summaryCards) {
         for (final item in card.items) {
           if (item.hasValue) {
-            items.add(_PointItemData(
-              keyword: item.label,
-              point: item.value!,
-              category: card.cleanTitle,
-              rawText: item.rawText,
-            ));
+            final kw = item.label.trim();
+            if (kw.isNotEmpty && seenKeywords.add(kw.toLowerCase())) {
+              items.add(_PointItemData(
+                keyword: item.label,
+                point: item.value!,
+                category: card.cleanTitle,
+                rawText: item.rawText,
+              ));
+            }
           } else if (item.rawText.isNotEmpty) {
             final delimiter = item.rawText.contains(' — ')
                 ? ' — '
                 : (item.rawText.contains(' - ') ? ' - ' : (item.rawText.contains(' : ') ? ' : ' : null));
             if (delimiter != null) {
               final parts = item.rawText.split(delimiter);
-              final k = parts[0].trim().replaceFirst(RegExp(r'^[•\-\*\d\.\s]+'), '').trim();
+              final k = parts[0].trim().replaceFirst(_leadingBulletRegex, '').trim();
               final p = parts.sublist(1).join(delimiter).trim();
-              items.add(_PointItemData(
-                keyword: k,
-                point: p,
-                category: card.cleanTitle,
-                rawText: item.rawText,
-              ));
+              if (k.isNotEmpty && seenKeywords.add(k.toLowerCase())) {
+                items.add(_PointItemData(
+                  keyword: k,
+                  point: p,
+                  category: card.cleanTitle,
+                  rawText: item.rawText,
+                ));
+              }
             } else {
               items.add(_PointItemData(
                 keyword: item.rawText,
@@ -132,7 +151,7 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
         final pt = (p['point'] ?? '').trim();
         final cat = (p['category'] ?? '').trim();
         final raw = (p['formatted'] ?? '').trim();
-        if (k.isNotEmpty && !items.any((it) => it.keyword == k)) {
+        if (k.isNotEmpty && seenKeywords.add(k.toLowerCase())) {
           items.add(_PointItemData(
             keyword: k,
             point: pt,
@@ -152,14 +171,16 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
             : (line.contains(' - ') ? ' - ' : (line.contains(' : ') ? ' : ' : null));
         if (delimiter != null) {
           final parts = line.split(delimiter);
-          final k = parts[0].trim().replaceFirst(RegExp(r'^[•\-\*\d\.\s]+'), '').trim();
+          final k = parts[0].trim().replaceFirst(_leadingBulletRegex, '').trim();
           final p = parts.sublist(1).join(delimiter).trim();
-          items.add(_PointItemData(
-            keyword: k,
-            point: p,
-            category: '',
-            rawText: line,
-          ));
+          if (k.isNotEmpty && seenKeywords.add(k.toLowerCase())) {
+            items.add(_PointItemData(
+              keyword: k,
+              point: p,
+              category: '',
+              rawText: line,
+            ));
+          }
         } else {
           items.add(_PointItemData(
             keyword: line,
@@ -176,19 +197,22 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
       for (final child in ctrl.childrenData) {
         final pt = (child['point'] ?? '').toString().trim();
         final name = (child['name'] ?? child['keyword'] ?? '').toString().trim();
-        if (pt.isNotEmpty && name.isNotEmpty) {
-          if (!items.any((it) => it.keyword == name && it.point == pt)) {
-            items.add(_PointItemData(
-              keyword: name,
-              point: pt,
-              category: (child['category'] ?? '').toString().trim(),
-              rawText: "$name - $pt",
-            ));
-          }
+        final cat = (child['category'] ?? '').toString().trim();
+        if (pt.isNotEmpty && name.isNotEmpty && seenKeywords.add(name.toLowerCase())) {
+          items.add(_PointItemData(
+            keyword: name,
+            point: pt,
+            category: cat,
+            rawText: "$name - $pt",
+          ));
         }
       }
     }
 
+    _lastCardsCount = ctrl.summaryCards.length;
+    _lastPointsCount = ctrl.pointByPointList.length;
+    _lastKeyword = ctrl.currentKeyword.value;
+    _cachedPointsItems = items;
     return items;
   }
 
@@ -381,6 +405,7 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
         await ctrl.fetchSummary(
           ctrl.currentKeyword.value,
           kid: ctrl.keywordId.value > 0 ? ctrl.keywordId.value : null,
+          forceRefresh: true,
         );
       },
       child: ListView(

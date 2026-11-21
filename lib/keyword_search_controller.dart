@@ -112,25 +112,7 @@ class KeywordSearchController extends GetxController {
       if (kw.trim().isEmpty) continue;
 
       try {
-        // 1. Fetch child points for master keyword from master-keyword-points API
-        final urlMaster = "${AppConfig.masterKeywordPoints}?keyword=${Uri.encodeComponent(kw.trim())}";
-        final resMaster = await http.get(Uri.parse(urlMaster)).timeout(const Duration(seconds: 8));
-        if (resMaster.statusCode == 200) {
-          final decoded = jsonDecode(utf8.decode(resMaster.bodyBytes));
-          if (decoded is Map && decoded['items'] is List) {
-            for (var item in decoded['items']) {
-              final k = (item['keyword'] ?? "").toString().trim();
-              final p = (item['point'] ?? item['category'] ?? "").toString().trim();
-              if (k.isNotEmpty && p.isNotEmpty && !collected.any((e) => e['keyword'] == k)) {
-                collected.add({'keyword': k, 'point': p});
-              }
-            }
-          }
-        }
-      } catch (_) {}
-
-      try {
-        // 2. Fetch summary points from keyword-search-summary API
+        // Fetch from keyword-search-summary API (returns full self & child points in 1 request)
         final urlSum = "${AppConfig.keywordSearchSummary}?keyword=${Uri.encodeComponent(kw.trim())}&point_by_point=true";
         final resSum = await http.get(Uri.parse(urlSum)).timeout(const Duration(seconds: 8));
         if (resSum.statusCode == 200) {
@@ -154,6 +136,26 @@ class KeywordSearchController extends GetxController {
           }
         }
       } catch (_) {}
+
+      // Fallback to masterKeywordPoints only if no points found
+      if (collected.isEmpty) {
+        try {
+          final urlMaster = "${AppConfig.masterKeywordPoints}?keyword=${Uri.encodeComponent(kw.trim())}";
+          final resMaster = await http.get(Uri.parse(urlMaster)).timeout(const Duration(seconds: 5));
+          if (resMaster.statusCode == 200) {
+            final decoded = jsonDecode(utf8.decode(resMaster.bodyBytes));
+            if (decoded is Map && decoded['items'] is List) {
+              for (var item in decoded['items']) {
+                final k = (item['keyword'] ?? "").toString().trim();
+                final p = (item['point'] ?? item['category'] ?? "").toString().trim();
+                if (k.isNotEmpty && p.isNotEmpty && !collected.any((e) => e['keyword'] == k)) {
+                  collected.add({'keyword': k, 'point': p});
+                }
+              }
+            }
+          }
+        } catch (_) {}
+      }
     }
 
     pointsList.assignAll(collected);
