@@ -123,100 +123,90 @@ class SummaryCardModel {
 
   /// Parses card models from raw summary text or summary_lines list
   static List<SummaryCardModel> parse(String? rawSummary, {List<dynamic>? rawLines}) {
-    List<String> lines = [];
-    if (rawSummary != null && rawSummary.trim().isNotEmpty) {
-      lines = rawSummary.split('\n').map((l) => l.trim()).toList();
-    } else if (rawLines != null && rawLines.isNotEmpty) {
-      lines = rawLines.map((e) => e.toString().trim()).toList();
-    }
-
-    if (lines.isEmpty) return [];
-
-    // Check if there are # category # markers or category lines
-    final bool hasHashMarkers = lines.any((l) => l.startsWith('#') || l.endsWith('#'));
-
-    if (hasHashMarkers) {
+    // 1. Try parsing from rawSummary string if it contains '#'
+    if (rawSummary != null && rawSummary.contains('#')) {
       final List<SummaryCardModel> cards = [];
-      String currentTitle = "വിവരം (Info)";
-      List<SummaryItem> currentItems = [];
-      List<String> currentBlockLines = [];
+      final parts = rawSummary.split('#');
 
-      for (final line in lines) {
-        if (line.isEmpty) continue;
+      for (final part in parts) {
+        final lines = part
+            .split('\n')
+            .map((l) => l.trim())
+            .where((l) => l.isNotEmpty && l != '#')
+            .toList();
 
-        // Is this line a category header? e.g. # Category # or # Category
-        if (line.startsWith('#') && (line.endsWith('#') || !line.contains(' - '))) {
-          if (currentItems.isNotEmpty || (cards.isNotEmpty && currentBlockLines.isNotEmpty)) {
-            cards.add(SummaryCardModel(
-              title: currentTitle,
-              items: List.from(currentItems),
-              rawBlock: currentBlockLines.join('\n'),
-            ));
-            currentItems.clear();
-            currentBlockLines.clear();
-          }
-          String clean = line.replaceAll('#', '').trim();
-          currentTitle = clean.isNotEmpty ? clean : "വിവരം (Info)";
-          currentBlockLines.add(line);
-        } else {
-          currentBlockLines.add(line);
+        if (lines.isEmpty) continue;
+
+        final title = lines.first;
+        final List<SummaryItem> items = [];
+
+        for (int i = 1; i < lines.length; i++) {
+          final line = lines[i];
           if (line.contains(' - ')) {
             final idx = line.indexOf(' - ');
-            currentItems.add(SummaryItem(
-              label: line.substring(0, idx).trim().replaceFirst(RegExp(r'^[•\-\*]\s*'), ''),
+            items.add(SummaryItem(
+              label: line.substring(0, idx).trim(),
               value: line.substring(idx + 3).trim(),
               rawText: line,
             ));
           } else if (line.contains(' : ')) {
             final idx = line.indexOf(' : ');
-            currentItems.add(SummaryItem(
-              label: line.substring(0, idx).trim().replaceFirst(RegExp(r'^[•\-\*]\s*'), ''),
+            items.add(SummaryItem(
+              label: line.substring(0, idx).trim(),
               value: line.substring(idx + 3).trim(),
               rawText: line,
             ));
           } else {
-            currentItems.add(SummaryItem(
-              label: line.replaceFirst(RegExp(r'^[•\-\*]\s*'), ''),
+            items.add(SummaryItem(
+              label: line,
               value: null,
               rawText: line,
             ));
           }
         }
-      }
 
-      if (currentItems.isNotEmpty || currentBlockLines.isNotEmpty) {
-        cards.add(SummaryCardModel(
-          title: currentTitle,
-          items: List.from(currentItems),
-          rawBlock: currentBlockLines.join('\n'),
-        ));
+        if (lines.length == 1) {
+          if (lines.first.contains(' - ')) {
+            final idx = lines.first.indexOf(' - ');
+            items.add(SummaryItem(
+              label: lines.first.substring(0, idx).trim(),
+              value: lines.first.substring(idx + 3).trim(),
+              rawText: lines.first,
+            ));
+            cards.add(SummaryCardModel(title: "വിവരം (Info)", items: items, rawBlock: part));
+          } else {
+            cards.add(SummaryCardModel(title: lines.first, items: [], rawBlock: part));
+          }
+        } else {
+          cards.add(SummaryCardModel(title: title, items: items, rawBlock: part));
+        }
       }
 
       if (cards.isNotEmpty) return cards;
     }
 
-    // Fallback if no # category markers: parse all lines as items in a single card
-    final List<SummaryItem> items = [];
-    for (final line in lines) {
-      if (line.isEmpty) continue;
-      if (line.contains(' - ')) {
-        final idx = line.indexOf(' - ');
-        items.add(SummaryItem(
-          label: line.substring(0, idx).trim().replaceFirst(RegExp(r'^[•\-\*]\s*'), ''),
-          value: line.substring(idx + 3).trim(),
-          rawText: line,
-        ));
-      } else {
-        items.add(SummaryItem(
-          label: line.replaceFirst(RegExp(r'^[•\-\*]\s*'), ''),
-          value: null,
-          rawText: line,
-        ));
-      }
-    }
+    // 2. Fallback to rawLines if it contains '#'
+    if (rawLines != null && rawLines.isNotEmpty && rawLines.any((e) => e.toString().trim() == '#')) {
+      final List<SummaryCardModel> cards = [];
+      List<String> current = [];
 
-    if (items.isNotEmpty) {
-      return [SummaryCardModel(title: "വിവരം (Info)", items: items, rawBlock: lines.join('\n'))];
+      for (final e in rawLines) {
+        final line = e.toString().trim();
+        if (line == '#') {
+          if (current.isNotEmpty) {
+            _addBlockFromLines(cards, current);
+            current = [];
+          }
+        } else if (line.isNotEmpty) {
+          current.add(line);
+        }
+      }
+
+      if (current.isNotEmpty) {
+        _addBlockFromLines(cards, current);
+      }
+
+      if (cards.isNotEmpty) return cards;
     }
 
     return [];

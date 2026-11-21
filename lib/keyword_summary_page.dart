@@ -20,6 +20,7 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
 
   int _selectedCategoryIndex = -1; // -1 = All
   final Set<int> _collapsedCardIndices = {};
+  bool _showPointOnly = false;
 
   // ─── Theme Palette ──────────────────────────────────────────
   static const _bg = Color(0xFFF4FBF4);            // off-white background
@@ -125,6 +126,9 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
           children: [
             // ── Search bar ──
             _searchBar(),
+
+            // ── Checkbox: Show Point ──
+            _showPointCheckbox(),
 
             Expanded(
               child: Obx(() {
@@ -265,7 +269,71 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
     );
   }
 
+  Widget _showPointCheckbox() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Row(
+        children: [
+          SizedBox(
+            height: 24,
+            width: 24,
+            child: Checkbox(
+              value: _showPointOnly,
+              activeColor: _green1,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+              onChanged: (val) {
+                setState(() {
+                  _showPointOnly = val ?? false;
+                });
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _showPointOnly = !_showPointOnly;
+              });
+            },
+            child: const Text(
+              "Show Point",
+              style: TextStyle(
+                color: _textDark,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          const Spacer(),
+          if (_showPointOnly)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: _green1.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                "Only Keyword - Point",
+                style: TextStyle(
+                  color: _green1,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSummaryContentView(BuildContext context) {
+    if (_showPointOnly) {
+      return _buildPointByPointOnlyView();
+    }
+
     return RefreshIndicator(
       color: _green1,
       backgroundColor: Colors.white,
@@ -1196,6 +1264,198 @@ class _KeywordSummaryPageState extends State<KeywordSummaryPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPointByPointOnlyView() {
+    final List<SummaryItem> points = ctrl.summaryCards
+        .expand((c) => c.items)
+        .where((i) => i.hasValue)
+        .toList();
+
+    if (points.isEmpty && ctrl.summaryLines.isNotEmpty) {
+      for (final line in ctrl.summaryLines) {
+        if (line.contains(' - ')) {
+          final idx = line.indexOf(' - ');
+          points.add(SummaryItem(
+            label: line.substring(0, idx).trim(),
+            value: line.substring(idx + 3).trim(),
+            rawText: line,
+          ));
+        }
+      }
+    }
+
+    if (points.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.format_list_bulleted_rounded, size: 56, color: Colors.grey.shade300),
+              const SizedBox(height: 14),
+              const Text(
+                "No 'keyword - point' items found",
+                style: TextStyle(color: _textDark, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                "Uncheck 'Show Point' to view the full summary",
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() => _showPointOnly = false);
+                },
+                icon: const Icon(Icons.arrow_back_rounded, size: 16),
+                label: const Text("View Full Summary"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _green1,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: _green1.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _green1.withValues(alpha: 0.2)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.stars_rounded, color: _green1, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      ctrl.currentKeyword.value.isNotEmpty
+                          ? ctrl.currentKeyword.value
+                          : "Key Points",
+                      style: const TextStyle(
+                        color: _textDark,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      "Showing ${points.length} points",
+                      style: const TextStyle(color: _textMid, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.copy_rounded, size: 18, color: _green1),
+                tooltip: "Copy all points",
+                onPressed: () {
+                  final text = points.map((e) => "${e.label} - ${e.value}").join("\n");
+                  _copyToClipboard(
+                    customText: text,
+                    customMessage: "${points.length} points copied to clipboard",
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: points.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 10),
+          itemBuilder: (context, index) {
+            final item = points[index];
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _green1.withValues(alpha: 0.15),
+                  width: 1.1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _green1.withValues(alpha: 0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 26,
+                    height: 26,
+                    alignment: Alignment.center,
+                    margin: const EdgeInsets.only(top: 1),
+                    decoration: BoxDecoration(
+                      color: _green1.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      "${index + 1}",
+                      style: const TextStyle(
+                        color: _green1,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.label,
+                          style: const TextStyle(
+                            color: _textDark,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            height: 1.35,
+                          ),
+                        ),
+                        if (item.value != null && item.value!.isNotEmpty) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            item.value!,
+                            style: const TextStyle(
+                              color: _green1,
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }
