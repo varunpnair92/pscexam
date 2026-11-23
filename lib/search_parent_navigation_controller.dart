@@ -143,6 +143,14 @@ class SearchParentNavigationController extends GetxController {
       return;
     }
 
+    if (nav == 'masterkeyword' || nav == '/masterkeyword') {
+      Get.toNamed('/masterkeyword', arguments: {
+        "keyword": (node.keywords != null && node.keywords!.isNotEmpty) ? node.keywords!.last : node.name,
+        "title": node.name,
+      });
+      return;
+    }
+
     if (nav.contains('timeline')) {
       Map<String, dynamic> args = {'title': node.name};
       if (node.keywords != null && node.keywords!.isNotEmpty) {

@@ -18,6 +18,9 @@ class AppConfig {
   // (OLD METHOD – can remove if unused)
   static const String hierarchy = "${baseUrl}hirarchykey";
 
+  // ================= MASTER KEYWORD HIERARCHY =================
+  static const String masterKeyword = "${baseUrl}masterkeyword/";
+
   // ================= QUESTIONS =================
   static const String keywordQuestions =
       "${baseUrl}qbkeywordmultiplecombinedsimilar";

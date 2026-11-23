@@ -46,6 +46,7 @@ import 'study_search_page.dart';
 import 'exam_create_page.dart';
 import 'exam_battle_page.dart';
 import 'feature_demo_controller.dart';
+import 'master_keyword_navigation_page.dart';
 
 
 @pragma('vm:entry-point')
@@ -176,6 +177,10 @@ class MyApp extends StatelessWidget {
 
         // ⚔️ EXAM BATTLE
         GetPage(name: '/exambattle', page: () => const ExamBattlePage()),
+
+        // 🌟 MASTER KEYWORD HIERARCHY NAVIGATION
+        GetPage(name: '/masterkeyword', page: () => const MasterKeywordNavigationPage()),
+        GetPage(name: '/masterKeyword', page: () => const MasterKeywordNavigationPage()),
       ],
     );
   }

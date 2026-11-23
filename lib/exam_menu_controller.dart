@@ -87,6 +87,19 @@ class ExamMenuController extends GetxController {
       return;
     }
 
+    if (nav.toLowerCase() == 'masterkeyword' || nav.toLowerCase() == '/masterkeyword') {
+      String? kw = item["keyword"]?.toString();
+      if (item["keywords"] != null && (item["keywords"] as List).isNotEmpty) {
+        kw = (item["keywords"] as List).last.toString();
+      }
+      Map<String, dynamic> args = {'title': name};
+      if (kw != null && kw.trim().isNotEmpty) {
+        args['keyword'] = kw.trim();
+      }
+      Get.toNamed('/masterkeyword', arguments: args);
+      return;
+    }
+
     if (navStr.toLowerCase().contains('timeline')) {
       String? kw = item["keyword"]?.toString();
       if (item["keywords"] != null && (item["keywords"] as List).isNotEmpty) {

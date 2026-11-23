@@ -277,6 +277,21 @@ class HomeController extends GetxController {
       return;
     }
 
+    if (nav.toLowerCase() == 'masterkeyword' || nav.toLowerCase() == '/masterkeyword') {
+      List<String> keywords = [];
+      if (item["keywords"] != null) {
+        keywords = List<String>.from(item["keywords"]);
+      } else if (item["keyword"] != null) {
+        keywords = [item["keyword"].toString()];
+      }
+      String kw = keywords.isNotEmpty ? keywords.last.trim() : (item["name"] ?? "").toString().trim();
+      Get.toNamed('/masterkeyword', arguments: {
+        'keyword': kw,
+        'title': name,
+      });
+      return;
+    }
+
     if (nav.toLowerCase().contains('timeline') || url.toLowerCase().contains('keywordtimeline')) {
       List<String> keywords = [];
       if (item["keywords"] != null) {

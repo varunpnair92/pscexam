@@ -232,6 +232,14 @@ class StudyController extends GetxController {
       return;
     }
 
+    if (navigation.toLowerCase() == "masterkeyword" || navigation.toLowerCase() == "/masterkeyword") {
+      Get.toNamed("/masterkeyword", arguments: {
+        "keyword": lastKeyword,
+        "title": name,
+      });
+      return;
+    }
+
     if (navigation.toLowerCase() == "examcreate" || navigation.toLowerCase() == "/examcreate") {
       Get.toNamed("/examcreate", arguments: {
         "endpoint": item["url"] ?? "",

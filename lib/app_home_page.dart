@@ -899,6 +899,12 @@ class AppHomePage extends StatelessWidget {
         'color': const Color(0xFF7F56D9),
       },
       {
+        'icon': Icons.account_tree_rounded,
+        'label': 'Hierarchy',
+        'route': '/masterkeyword',
+        'color': const Color(0xFF0284C7),
+      },
+      {
         'icon': Icons.bar_chart_rounded,
         'label': 'Analysis',
         'route': '/globalAnalysis',
