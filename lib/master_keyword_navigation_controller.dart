@@ -153,6 +153,22 @@ class MasterKeywordNavigationController extends GetxController {
         // Case B: Multiple fuzzy matches
         else if (data['matches'] != null && (data['matches'] as List).isNotEmpty) {
           final List matches = data['matches'];
+          final first = matches.first;
+          final String firstKw = (first['keyword'] ?? '').toString().trim();
+          final String normTrimmed = trimmed.replaceAll('കേരളം ', 'കേരള ').replaceAll('keralam ', 'kerala ').trim();
+          final String normFirst = firstKw.replaceAll('കേരളം ', 'കേരള ').replaceAll('keralam ', 'kerala ').trim();
+
+          // Auto drill-down if the primary match closely corresponds to the search (e.g. കേരളം ചരിത്രം -> കേരള ചരിത്രം)
+          if (normTrimmed.toLowerCase() == normFirst.toLowerCase() ||
+              trimmed.toLowerCase() == firstKw.toLowerCase() ||
+              matches.length == 1) {
+            final int matchId = first['id'] is int ? first['id'] : int.tryParse(first['id']?.toString() ?? '0') ?? 0;
+            if (matchId > 0) {
+              drillDownById(matchId, firstKw);
+              return;
+            }
+          }
+
           nodes.assignAll(matches.map((e) => MasterKeywordNode.fromJson(e)).toList());
           currentChildrenCount.value = nodes.length;
           breadcrumbs.clear();
@@ -238,6 +254,7 @@ class MasterKeywordNavigationController extends GetxController {
       "title": cleanKw,
       "keywords": [cleanKw],
       "id": id,
+      "initialTab": 1,
     };
 
     if (Get.isRegistered<StudyController>()) {

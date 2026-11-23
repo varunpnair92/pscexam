@@ -33,6 +33,7 @@ class StudyPage extends StatelessWidget {
                   child: controller.showQuestions.value
                       ? DefaultTabController(
                           length: 3,
+                          initialIndex: controller.initialTab.value.clamp(0, 2),
                           child: Column(
                             children: [
                               // ─── Custom TabBar ───
@@ -95,7 +96,30 @@ class StudyPage extends StatelessWidget {
     return Obx(() {
       final pages = controller.descriptionPages;
       if (pages.isEmpty) {
-        return const Center(child: Text("No Description Available", style: TextStyle(color: Colors.grey)));
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.description_outlined, size: 48, color: Colors.grey.shade400),
+                const SizedBox(height: 12),
+                const Text(
+                  "No Description Available",
+                  style: TextStyle(color: Colors.grey, fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  controller.questions.isNotEmpty
+                      ? "Switch to Questions tab to view ${controller.questions.length} question(s)."
+                      : "No questions or descriptions available for this topic.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        );
       }
 
       return Column(

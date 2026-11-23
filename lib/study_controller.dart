@@ -45,6 +45,7 @@ class StudyController extends GetxController {
   var examAnswers = <int, String>{}.obs;
 
   var isDirectLoad = false.obs;
+  var initialTab = 0.obs;
 
   @override
   void onInit() {
@@ -81,6 +82,9 @@ class StudyController extends GetxController {
 
     keys.clear();
     keys.add(title);
+    if (args["initialTab"] != null) {
+      initialTab.value = int.tryParse(args["initialTab"].toString()) ?? 0;
+    }
     showQuestions.value = true;
     fetchQuestionsByKeyword(kws);
 
@@ -410,7 +414,7 @@ class StudyController extends GetxController {
     );
 
     if (res.statusCode == 200) {
-      questions.value = jsonDecode(res.body);
+      questions.value = jsonDecode(utf8.decode(res.bodyBytes));
     }
   }
 
