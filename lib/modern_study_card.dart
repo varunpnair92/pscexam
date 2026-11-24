@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'auth_controller.dart';
 import 'math_formula.dart';
+import 'smart_explanation_card.dart';
 
 class ModernStudyCard extends StatefulWidget {
   final Map<String, dynamic> q;
@@ -139,52 +140,15 @@ class _ModernStudyCardState extends State<ModernStudyCard> {
                     ),
                   ),
 
-                  // Option Explanation (if exists)
+                  // ── Smart Explanation Card (Intellectual Summary Mode) ──
                   if (description.isNotEmpty && description.toLowerCase() != "null") ...[
-                    const SizedBox(height: 12),
-                    Theme(
-                      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                      child: ExpansionTile(
-                        tilePadding: const EdgeInsets.symmetric(horizontal: 4),
-                        childrenPadding: const EdgeInsets.only(bottom: 12, left: 4, right: 4),
-                        iconColor: Colors.blue.shade600,
-                        collapsedIconColor: Colors.grey.shade600,
-                        title: Row(
-                          children: [
-                            Icon(Icons.lightbulb_outline_rounded, color: Colors.blue.shade500, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              "Explanation",
-                              style: TextStyle(
-                                color: Colors.blue.shade700,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.blue.shade100),
-                            ),
-                            child: MathText(
-                              text: description,
-                              style: TextStyle(
-                                color: Colors.blue.shade900,
-                                height: 1.5,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                    const SizedBox(height: 8),
+                    SmartExplanationCard(
+                      description: description,
+                      category: widget.q["category"]?.toString(),
+                      keyword: widget.q["keyword"]?.toString() ?? widget.q["master_keyword"]?.toString(),
                     ),
-                  ]
+                  ],
                 ],
               ),
             ),

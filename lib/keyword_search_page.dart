@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'keyword_search_controller.dart';
 import 'math_formula.dart';
+import 'smart_explanation_card.dart';
 
 class KeywordSearchPage extends StatelessWidget {
   final KeywordSearchController ctrl = Get.put(KeywordSearchController());
@@ -676,42 +677,13 @@ class _SearchResultCardState extends State<SearchResultCard> {
                     ),
                   ),
 
-                  // ── Explanation Option ──
+                  // ── Smart Explanation Card ──
                   if (description.isNotEmpty && description.toLowerCase() != "null") ...[
                     const SizedBox(height: 8),
-                    Theme(
-                      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                      child: ExpansionTile(
-                        tilePadding: EdgeInsets.zero,
-                        childrenPadding: const EdgeInsets.only(bottom: 8),
-                        iconColor: Colors.blue.shade600,
-                        collapsedIconColor: Colors.grey.shade600,
-                        title: Row(
-                          children: [
-                            Icon(Icons.lightbulb_outline_rounded, color: Colors.blue.shade500, size: 18),
-                            const SizedBox(width: 8),
-                            Text(
-                              "Explanation",
-                              style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.bold, fontSize: 13),
-                            ),
-                          ],
-                        ),
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50.withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.blue.shade100.withOpacity(0.5)),
-                            ),
-                            child: MathText(
-                              text: description,
-                              style: TextStyle(color: Colors.blue.shade900, height: 1.5, fontSize: 14, fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                        ],
-                      ),
+                    SmartExplanationCard(
+                      description: description,
+                      category: q["category"]?.toString(),
+                      keyword: keywords.isNotEmpty ? keywords.first : null,
                     ),
                   ],
                 ],

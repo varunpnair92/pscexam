@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:psc_exam/home_page.dart';
 import 'package:psc_exam/math_formula.dart';
+import 'package:psc_exam/smart_explanation_card.dart';
 import 'test_controller.dart';
 import 'package:psc_exam/app_config.dart';
 
@@ -611,19 +612,17 @@ class _ReviewPageState extends State<ReviewPage> {
                         ],
                       ),
 
-                      const SizedBox(height: 16),
-
-                      // Description Box
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.green.shade100),
+                      // Smart Explanation Card
+                      if (q['description'] != null &&
+                          q['description'].toString().trim().isNotEmpty &&
+                          q['description'].toString().toLowerCase() != 'null') ...[
+                        const SizedBox(height: 12),
+                        SmartExplanationCard(
+                          description: q['description'].toString(),
+                          category: q['category']?.toString(),
+                          keyword: q['keyword']?.toString() ?? q['master_keyword']?.toString(),
                         ),
-                        child: MathText(text: q['description']),
-                      ),
+                      ],
                     ],
                   ),
                 );
