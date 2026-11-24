@@ -224,6 +224,7 @@ class DynamicMenuController extends GetxController {
         "title": title,
         "endpoint": urlStr,
         "items": item["children"],
+        "initialTab": 1,
       };
       if (item["id"] != null) {
         routeArgs["id"] = int.tryParse(item["id"].toString()) ?? 0;

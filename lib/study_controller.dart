@@ -84,6 +84,8 @@ class StudyController extends GetxController {
     keys.add(title);
     if (args["initialTab"] != null) {
       initialTab.value = int.tryParse(args["initialTab"].toString()) ?? 0;
+    } else {
+      initialTab.value = 1;
     }
     showQuestions.value = true;
     fetchQuestionsByKeyword(kws);
