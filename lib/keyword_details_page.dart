@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'keyword_details_controller.dart';
+import 'math_formula.dart';
 
 class KeywordDetailsPage extends StatelessWidget {
   final KeywordDetailsController ctrl = Get.put(KeywordDetailsController());
@@ -184,8 +185,8 @@ class KeywordDetailsPage extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
-                                  child: Text(
-                                    charName,
+                                  child: MathText(
+                                    text: charName,
                                     style: const TextStyle(
                                       color: _textDark, 
                                       fontSize: 17, 
@@ -218,8 +219,8 @@ class KeywordDetailsPage extends StatelessWidget {
                                       child: Icon(Icons.check_circle_rounded, color: _green2, size: 18),
                                     ),
                                     Expanded(
-                                      child: Text(
-                                        ans,
+                                      child: MathText(
+                                        text: ans,
                                         style: const TextStyle(
                                           color: _green1,
                                           fontSize: 16,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'keyword_search_controller.dart';
+import 'math_formula.dart';
 
 class KeywordSearchPage extends StatelessWidget {
   final KeywordSearchController ctrl = Get.put(KeywordSearchController());
@@ -520,8 +521,8 @@ class KeywordSearchPage extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            kw,
+                          MathText(
+                            text: kw,
                             style: const TextStyle(
                               color: _textDark,
                               fontSize: 15,
@@ -531,8 +532,8 @@ class KeywordSearchPage extends StatelessWidget {
                           ),
                           if (pt.isNotEmpty) ...[
                             const SizedBox(height: 3),
-                            Text(
-                              pt,
+                            MathText(
+                              text: pt,
                               style: const TextStyle(
                                 color: _green1,
                                 fontSize: 14.5,
@@ -618,8 +619,8 @@ class _SearchResultCardState extends State<SearchResultCard> {
             const SizedBox(height: 12),
 
             // ── Question ──
-            Text(
-              q["question"] ?? "No question text",
+            MathText(
+              text: q["question"] ?? "No question text",
               style: const TextStyle(color: _textDark, fontSize: 16, fontWeight: FontWeight.bold, height: 1.4),
             ),
             const SizedBox(height: 20),
@@ -666,8 +667,8 @@ class _SearchResultCardState extends State<SearchResultCard> {
                         const Icon(Icons.check_circle_rounded, color: _green2, size: 20),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            answer,
+                          child: MathText(
+                            text: answer,
                             style: const TextStyle(color: _green1, fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -704,8 +705,8 @@ class _SearchResultCardState extends State<SearchResultCard> {
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.blue.shade100.withOpacity(0.5)),
                             ),
-                            child: Text(
-                              description,
+                            child: MathText(
+                              text: description,
                               style: TextStyle(color: Colors.blue.shade900, height: 1.5, fontSize: 14, fontWeight: FontWeight.w500),
                             ),
                           ),
