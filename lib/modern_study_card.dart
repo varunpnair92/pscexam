@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'auth_controller.dart';
+import 'math_formula.dart';
 
 class ModernStudyCard extends StatefulWidget {
   final Map<String, dynamic> q;
@@ -50,8 +51,8 @@ class _ModernStudyCardState extends State<ModernStudyCard> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    widget.q["question"] ?? "",
+                  child: MathText(
+                    text: widget.q["question"] ?? "",
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -125,8 +126,8 @@ class _ModernStudyCardState extends State<ModernStudyCard> {
                         const Icon(Icons.check_circle_rounded, color: Colors.green),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            answer,
+                          child: MathText(
+                            text: answer,
                             style: TextStyle(
                               color: Colors.green.shade900,
                               fontWeight: FontWeight.bold,
@@ -171,8 +172,8 @@ class _ModernStudyCardState extends State<ModernStudyCard> {
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.blue.shade100),
                             ),
-                            child: Text(
-                              description,
+                            child: MathText(
+                              text: description,
                               style: TextStyle(
                                 color: Colors.blue.shade900,
                                 height: 1.5,
