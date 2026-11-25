@@ -64,8 +64,12 @@ class ParentNavigationController extends GetxController {
     }
 
     if (nav == 'masterkeyword' || nav == '/masterkeyword') {
+      String? kw;
+      if (node.keywords != null && node.keywords!.isNotEmpty) {
+        kw = node.keywords!.last.trim();
+      }
       Get.toNamed('/masterkeyword', arguments: {
-        "keyword": (node.keywords != null && node.keywords!.isNotEmpty) ? node.keywords!.last : node.name,
+        if (kw != null && kw.isNotEmpty) "keyword": kw,
         "title": node.name,
       });
       return;

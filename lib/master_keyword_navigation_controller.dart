@@ -27,17 +27,14 @@ class MasterKeywordNavigationController extends GetxController {
         parentTitle.value = args['title'].toString();
       }
       String targetKw = "";
-      if (args['keyword'] != null && args['keyword'].toString().isNotEmpty) {
-        targetKw = args['keyword'].toString();
+      if (args['keyword'] != null && args['keyword'].toString().trim().isNotEmpty) {
+        targetKw = args['keyword'].toString().trim();
       } else if (args['keywords'] != null) {
         if (args['keywords'] is List && (args['keywords'] as List).isNotEmpty) {
-          targetKw = (args['keywords'] as List).last.toString();
-        } else if (args['keywords'] is String) {
-          targetKw = args['keywords'].toString();
+          targetKw = (args['keywords'] as List).last.toString().trim();
+        } else if (args['keywords'] is String && args['keywords'].toString().trim().isNotEmpty) {
+          targetKw = args['keywords'].toString().trim();
         }
-      }
-      if (targetKw.isEmpty && args['title'] != null && args['title'].toString().isNotEmpty) {
-        targetKw = args['title'].toString();
       }
 
       int? targetId;
@@ -48,12 +45,12 @@ class MasterKeywordNavigationController extends GetxController {
       if (targetId != null) {
         drillDownById(targetId, targetKw.isNotEmpty ? targetKw : "Keyword");
       } else if (targetKw.isNotEmpty) {
-        currentKeyword.value = targetKw;
-        parentTitle.value = targetKw;
-        // When keyword is present, direct show that in study!
-        openStudy(targetKw, id: targetId);
+        // Keyword present in hierarchy node: show data related to that!
+        searchInputController.text = targetKw;
         search(targetKw);
       } else {
+        // Otherwise: enable search option so user can search!
+        searchInputController.clear();
         fetchRoots();
       }
     } else {
@@ -197,19 +194,14 @@ class MasterKeywordNavigationController extends GetxController {
     }
   }
 
-  // Drill down or study a node
+  // Drill down into a node
   void onNodeTap(MasterKeywordNode node) {
-    if (node.keyword.trim().isNotEmpty) {
-      // Keyword present in node -> directly show that in study!
-      openStudy(node.keyword, id: node.id);
-    } else if (node.hasChildren || node.childrenCount > 0) {
+    if (node.hasChildren || node.childrenCount > 0) {
       drillDownById(node.id, node.keyword);
+    } else {
+      // Leaf node with no children -> show Questions and Description in Study Page
+      openStudy(node.keyword, id: node.id);
     }
-  }
-
-  // Drill down explicitly into a node's sub-categories
-  void drillDownNode(MasterKeywordNode node) {
-    drillDownById(node.id, node.keyword);
   }
 
   // Fetch children of a keyword by its ID
@@ -262,7 +254,7 @@ class MasterKeywordNavigationController extends GetxController {
       "title": cleanKw,
       "keywords": [cleanKw],
       "id": id,
-      "initialTab": 0, // Direct show Note tab for student
+      "initialTab": 0,
     };
 
     if (Get.isRegistered<StudyController>()) {

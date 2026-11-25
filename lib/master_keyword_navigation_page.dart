@@ -25,15 +25,6 @@ class MasterKeywordNavigationPage extends StatelessWidget {
                   title: controller.parentTitle.value,
                   onBack: () => controller.goBack(),
                   actions: [
-                    if (controller.currentKeyword.value.isNotEmpty)
-                      IconButton(
-                        icon: const Icon(Icons.search_rounded, color: AppTheme.primary),
-                        tooltip: "Search Topics",
-                        onPressed: () {
-                          controller.currentKeyword.value = "";
-                          controller.searchInputController.clear();
-                        },
-                      ),
                     if (controller.breadcrumbs.isNotEmpty ||
                         controller.currentKeyword.value.isNotEmpty)
                       IconButton(
@@ -44,11 +35,11 @@ class MasterKeywordNavigationPage extends StatelessWidget {
                   ],
                 ),
 
-                // Search Option: Show ONLY when no keyword is selected
-                if (controller.currentKeyword.value.isEmpty) ...[
-                  _buildSearchBar(controller, context),
-                  _buildRecentSearchChips(controller),
-                ],
+                // Search Bar
+                _buildSearchBar(controller, context),
+
+                // Recent Search Chips
+                _buildRecentSearchChips(controller),
 
                 // Breadcrumb Navigation
                 if (controller.breadcrumbs.isNotEmpty)
@@ -404,55 +395,24 @@ class MasterKeywordNavigationPage extends StatelessWidget {
                                 ),
                               ),
                               const Spacer(),
-                              if (node.hasChildren)
-                                Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () => ctrl.drillDownNode(node),
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.25),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            "${node.childrenCount}",
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 2),
-                                          const Icon(Icons.arrow_forward_ios_rounded,
-                                              size: 8, color: Colors.white),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              else
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Text(
-                                    "Study",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  node.hasChildren
+                                      ? "${node.childrenCount}"
+                                      : "Study",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
+                              ),
                             ],
                           ),
                           const Spacer(),
@@ -465,10 +425,10 @@ class MasterKeywordNavigationPage extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             node.hasChildren
-                                ? "Tap: Study • ${node.childrenCount} subtopics"
-                                : "Tap: Study (Note & Qs)",
+                                ? "Sub-categories"
+                                : "Questions & Notes",
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.85),
+                              color: Colors.white.withValues(alpha: 0.8),
                               fontSize: 10,
                             ),
                           ),

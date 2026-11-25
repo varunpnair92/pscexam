@@ -175,8 +175,14 @@ class DynamicMenuController extends GetxController {
       }
 
       if (navStr.toLowerCase() == 'masterkeyword' || navStr.toLowerCase() == '/masterkeyword') {
+        String? kw;
+        if (item["keywords"] != null && (item["keywords"] as List).isNotEmpty) {
+          kw = (item["keywords"] as List).last.toString().trim();
+        } else if (item["keyword"] != null && item["keyword"].toString().trim().isNotEmpty) {
+          kw = item["keyword"].toString().trim();
+        }
         Get.toNamed('/masterkeyword', arguments: {
-          'keyword': item["keywords"] != null && item["keywords"].isNotEmpty ? item["keywords"].last : (item["keyword"] ?? title),
+          if (kw != null && kw.isNotEmpty) 'keyword': kw,
           'title': title,
         });
         return;

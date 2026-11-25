@@ -284,9 +284,9 @@ class HomeController extends GetxController {
       } else if (item["keyword"] != null) {
         keywords = [item["keyword"].toString()];
       }
-      String kw = keywords.isNotEmpty ? keywords.last.trim() : (item["name"] ?? "").toString().trim();
+      String? kw = keywords.isNotEmpty ? keywords.last.trim() : null;
       Get.toNamed('/masterkeyword', arguments: {
-        'keyword': kw,
+        if (kw != null && kw.isNotEmpty) 'keyword': kw,
         'title': name,
       });
       return;

@@ -239,7 +239,13 @@ class StudyController extends GetxController {
 
     final name = item["name"];
     final List kws = item["keywords"] ?? [];
-    final String lastKeyword = kws.isNotEmpty ? kws.last : name;
+    String? explicitKeyword;
+    if (item["keyword"] != null && item["keyword"].toString().trim().isNotEmpty) {
+      explicitKeyword = item["keyword"].toString().trim();
+    } else if (kws.isNotEmpty && kws.last.toString().trim().isNotEmpty) {
+      explicitKeyword = kws.last.toString().trim();
+    }
+    final String lastKeyword = explicitKeyword ?? (kws.isNotEmpty ? kws.last : name);
     final String navigation = (item["navigation"] ?? "").toString().trim();
 
     if (navigation.toLowerCase() == "exambattle" || navigation.toLowerCase() == "/exambattle") {
@@ -249,7 +255,7 @@ class StudyController extends GetxController {
 
     if (navigation.toLowerCase() == "masterkeyword" || navigation.toLowerCase() == "/masterkeyword") {
       Get.toNamed("/masterkeyword", arguments: {
-        "keyword": lastKeyword,
+        if (explicitKeyword != null) "keyword": explicitKeyword,
         "title": name,
       });
       return;
