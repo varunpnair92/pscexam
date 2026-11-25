@@ -15,13 +15,11 @@ class MasterKeywordNavigationController extends GetxController {
   var currentKeywordId = Rx<int?>(null);
   var currentChildrenCount = 0.obs;
   var searchHistory = <String>[].obs;
-  var isSearchExpanded = false.obs;
+  var hasNodeKeyword = false.obs;
+  var initialKeyword = "".obs;
+  int initialBreadcrumbDepth = 0;
 
   final TextEditingController searchInputController = TextEditingController();
-
-  void toggleSearch() {
-    isSearchExpanded.toggle();
-  }
 
   @override
   void onInit() {
@@ -48,17 +46,29 @@ class MasterKeywordNavigationController extends GetxController {
       }
 
       if (targetId != null) {
-        drillDownById(targetId, targetKw.isNotEmpty ? targetKw : "Keyword");
+        hasNodeKeyword.value = true;
+        initialKeyword.value = targetKw.isNotEmpty ? targetKw : "Keyword";
+        currentKeyword.value = initialKeyword.value;
+        drillDownById(targetId, initialKeyword.value);
       } else if (targetKw.isNotEmpty) {
-        // Keyword present in hierarchy node: show data related to that!
-        searchInputController.text = targetKw;
+        // Keyword present in hierarchy node: show data directly, NO search box!
+        hasNodeKeyword.value = true;
+        initialKeyword.value = targetKw;
+        currentKeyword.value = targetKw;
+        parentTitle.value = targetKw;
         search(targetKw);
       } else {
-        // Otherwise: enable search option so user can search!
+        // Otherwise: no keyword in node -> enable search option so user can search!
+        hasNodeKeyword.value = false;
+        initialKeyword.value = "";
+        currentKeyword.value = "";
         searchInputController.clear();
         fetchRoots();
       }
     } else {
+      hasNodeKeyword.value = false;
+      initialKeyword.value = "";
+      currentKeyword.value = "";
       fetchRoots();
     }
   }
@@ -102,7 +112,6 @@ class MasterKeywordNavigationController extends GetxController {
 
   // Search keyword or drill down by search query
   Future<void> search(String query) async {
-    isSearchExpanded.value = false;
     final trimmed = query.trim();
     if (trimmed.isEmpty) return;
 
@@ -141,6 +150,9 @@ class MasterKeywordNavigationController extends GetxController {
             newBreadcrumb.add({'id': kwId, 'keyword': kwName});
           }
           breadcrumbs.assignAll(newBreadcrumb);
+          if (hasNodeKeyword.value && initialBreadcrumbDepth == 0) {
+            initialBreadcrumbDepth = breadcrumbs.length;
+          }
 
           // Sub-children
           if (data['children'] != null && (data['children'] as List).isNotEmpty) {
@@ -212,7 +224,6 @@ class MasterKeywordNavigationController extends GetxController {
 
   // Fetch children of a keyword by its ID
   Future<void> drillDownById(int id, String keyword) async {
-    isSearchExpanded.value = false;
     isLoading.value = true;
     try {
       final res = await http.get(Uri.parse("${AppConfig.masterKeyword}?id=$id"));
@@ -234,6 +245,9 @@ class MasterKeywordNavigationController extends GetxController {
           newBreadcrumb.add({'id': id, 'keyword': keyword});
         }
         breadcrumbs.assignAll(newBreadcrumb);
+        if (hasNodeKeyword.value && initialBreadcrumbDepth == 0) {
+          initialBreadcrumbDepth = breadcrumbs.length;
+        }
 
         if (data['children'] != null && (data['children'] as List).isNotEmpty) {
           final List ch = data['children'];
@@ -285,10 +299,16 @@ class MasterKeywordNavigationController extends GetxController {
 
   // Reset to root view
   void resetToRoots() {
-    isSearchExpanded.value = false;
-    searchInputController.clear();
-    breadcrumbs.clear();
-    fetchRoots();
+    if (hasNodeKeyword.value && initialKeyword.value.isNotEmpty) {
+      search(initialKeyword.value);
+    } else {
+      searchInputController.clear();
+      breadcrumbs.clear();
+      currentKeyword.value = "";
+      currentKeywordId.value = null;
+      parentTitle.value = "Master Keywords";
+      fetchRoots();
+    }
   }
 
   // Clear current search
@@ -304,12 +324,20 @@ class MasterKeywordNavigationController extends GetxController {
 
   // Handle back button
   void goBack() {
-    if (breadcrumbs.length > 1) {
-      navigateToBreadcrumb(breadcrumbs.length - 2);
-    } else if (breadcrumbs.length == 1) {
-      resetToRoots();
+    if (hasNodeKeyword.value) {
+      if (breadcrumbs.length > initialBreadcrumbDepth && breadcrumbs.length > 1) {
+        navigateToBreadcrumb(breadcrumbs.length - 2);
+      } else {
+        Get.back();
+      }
     } else {
-      Get.back();
+      if (breadcrumbs.length > 1) {
+        navigateToBreadcrumb(breadcrumbs.length - 2);
+      } else if (breadcrumbs.length == 1) {
+        resetToRoots();
+      } else {
+        Get.back();
+      }
     }
   }
 }
