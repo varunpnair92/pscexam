@@ -25,6 +25,19 @@ class MasterKeywordNavigationPage extends StatelessWidget {
                   title: controller.parentTitle.value,
                   onBack: () => controller.goBack(),
                   actions: [
+                    if (controller.currentKeyword.value.isNotEmpty)
+                      IconButton(
+                        icon: Icon(
+                          controller.isSearchExpanded.value
+                              ? Icons.search_off_rounded
+                              : Icons.search_rounded,
+                          color: AppTheme.primary,
+                        ),
+                        tooltip: controller.isSearchExpanded.value
+                            ? "Hide Search"
+                            : "Search Topics",
+                        onPressed: () => controller.toggleSearch(),
+                      ),
                     if (controller.breadcrumbs.isNotEmpty ||
                         controller.currentKeyword.value.isNotEmpty)
                       IconButton(
@@ -35,11 +48,12 @@ class MasterKeywordNavigationPage extends StatelessWidget {
                   ],
                 ),
 
-                // Search Bar
-                _buildSearchBar(controller, context),
-
-                // Recent Search Chips
-                _buildRecentSearchChips(controller),
+                // Search Bar & Recent Search Chips (Shown ONLY when NO keyword is present, or toggled)
+                if (controller.currentKeyword.value.isEmpty ||
+                    controller.isSearchExpanded.value) ...[
+                  _buildSearchBar(controller, context),
+                  _buildRecentSearchChips(controller),
+                ],
 
                 // Breadcrumb Navigation
                 if (controller.breadcrumbs.isNotEmpty)

@@ -15,8 +15,13 @@ class MasterKeywordNavigationController extends GetxController {
   var currentKeywordId = Rx<int?>(null);
   var currentChildrenCount = 0.obs;
   var searchHistory = <String>[].obs;
+  var isSearchExpanded = false.obs;
 
   final TextEditingController searchInputController = TextEditingController();
+
+  void toggleSearch() {
+    isSearchExpanded.toggle();
+  }
 
   @override
   void onInit() {
@@ -97,6 +102,7 @@ class MasterKeywordNavigationController extends GetxController {
 
   // Search keyword or drill down by search query
   Future<void> search(String query) async {
+    isSearchExpanded.value = false;
     final trimmed = query.trim();
     if (trimmed.isEmpty) return;
 
@@ -206,6 +212,7 @@ class MasterKeywordNavigationController extends GetxController {
 
   // Fetch children of a keyword by its ID
   Future<void> drillDownById(int id, String keyword) async {
+    isSearchExpanded.value = false;
     isLoading.value = true;
     try {
       final res = await http.get(Uri.parse("${AppConfig.masterKeyword}?id=$id"));
@@ -278,6 +285,7 @@ class MasterKeywordNavigationController extends GetxController {
 
   // Reset to root view
   void resetToRoots() {
+    isSearchExpanded.value = false;
     searchInputController.clear();
     breadcrumbs.clear();
     fetchRoots();
