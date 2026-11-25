@@ -393,40 +393,10 @@ class TimelinePage extends StatelessWidget {
                   ),
                 ),
 
-                if (event.point.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary.withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppTheme.primary.withOpacity(0.15)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.star_rounded, size: 15, color: AppTheme.primary),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            event.point,
-                            style: const TextStyle(
-                              color: AppTheme.textDark,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              height: 1.35,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-
-                if (event.description.isNotEmpty) ...[
+                if (cleanText(event.description).isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
-                    event.description,
+                    cleanText(event.description),
                     style: TextStyle(
                       color: AppTheme.textMid,
                       fontSize: 13,
@@ -442,6 +412,24 @@ class TimelinePage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  static String cleanText(String text) {
+    if (text.isEmpty) return "";
+    String cleaned = text
+        .replaceAll(RegExp(r'\[cite:\s*\d+\]', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\[citation:\s*\d+\]', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\[citation:[^\]]+\]', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\[\d+\]'), '')
+        .trim();
+    final lines = cleaned.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
+    final unique = <String>[];
+    for (var line in lines) {
+      if (!unique.contains(line)) {
+        unique.add(line);
+      }
+    }
+    return unique.join('\n');
   }
 
   // ── Show Detail Summary Bottom Sheet when clicked ──
@@ -576,7 +564,7 @@ class TimelinePage extends StatelessWidget {
                       const SizedBox(height: 14),
                     ],
 
-                    if (event.description.isNotEmpty) ...[
+                    if (cleanText(event.description).isNotEmpty) ...[
                       const Text(
                         "Description",
                         style: TextStyle(
@@ -587,7 +575,7 @@ class TimelinePage extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        event.description,
+                        cleanText(event.description),
                         style: const TextStyle(
                           color: AppTheme.textDark,
                           fontSize: 15,
