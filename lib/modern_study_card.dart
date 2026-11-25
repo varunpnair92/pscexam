@@ -19,7 +19,7 @@ class _ModernStudyCardState extends State<ModernStudyCard> {
   @override
   Widget build(BuildContext context) {
     final answer = (widget.q["answer"] ?? "").toString().trim();
-    final description = (widget.q["description"] ?? "").toString().trim();
+    final note = (widget.q["note"] ?? widget.q["notes"] ?? widget.q["description"] ?? "").toString().trim();
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -168,14 +168,14 @@ class _ModernStudyCardState extends State<ModernStudyCard> {
                     ),
                   ),
 
-                  // ── Study Notes (Classified Point-by-Point Learning Mode) ──
-                  if (description.isNotEmpty && description.toLowerCase() != "null") ...[
+                  // ── Note (Classified Point-by-Point Learning Mode) ──
+                  if (note.isNotEmpty && note.toLowerCase() != "null") ...[
                     const SizedBox(height: 10),
                     SmartExplanationCard(
-                      description: description,
+                      description: note,
                       category: widget.q["category"]?.toString(),
                       keyword: widget.q["keyword"]?.toString() ?? widget.q["master_keyword"]?.toString(),
-                      title: "Study Notes",
+                      title: "Note",
                     ),
                   ],
                 ],

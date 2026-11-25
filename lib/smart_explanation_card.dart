@@ -184,10 +184,10 @@ class _SmartExplanationCardState extends State<SmartExplanationCard> {
                           Row(
                             children: [
                               Text(
-                                widget.title ?? "Study Notes",
+                                widget.title ?? "Note",
                                 style: const TextStyle(
                                   color: _textDark,
-                                  fontSize: 14.5,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: -0.2,
                                 ),
@@ -235,7 +235,7 @@ class _SmartExplanationCardState extends State<SmartExplanationCard> {
                               ),
                               const SizedBox(width: 6),
                               const Text(
-                                "പഠന കുറിപ്പുകൾ",
+                                "കുറിപ്പ് (Note)",
                                 style: TextStyle(
                                   color: _textMid,
                                   fontSize: 11,
@@ -252,15 +252,15 @@ class _SmartExplanationCardState extends State<SmartExplanationCard> {
                     IconButton(
                       icon: const Icon(Icons.copy_rounded, size: 16),
                       color: accentColor,
-                      tooltip: "Copy study notes",
+                      tooltip: "Copy Note",
                       visualDensity: VisualDensity.compact,
                       onPressed: () {
                         Clipboard.setData(ClipboardData(
                           text: _toShareText(notes, topic),
                         ));
                         Get.snackbar(
-                          "Notes Copied",
-                          "Study notes copied to clipboard",
+                          "Note Copied",
+                          "Note copied to clipboard",
                           snackPosition: SnackPosition.BOTTOM,
                           duration: const Duration(seconds: 2),
                           backgroundColor: _textDark,
@@ -302,7 +302,7 @@ class _SmartExplanationCardState extends State<SmartExplanationCard> {
                   // 2. Fast Facts File (Key-Value items)
                   if (notes.fastFacts.isNotEmpty) ...[
                     if (notes.coreFact != null) const SizedBox(height: 12),
-                    _buildFastFactsSection(notes.fastFacts, accentColor),
+                    _buildFastFactsSection(notes.fastFacts, accentColor, topic),
                   ],
 
                   // 3. Point-by-Point Revision Notes
@@ -312,21 +312,49 @@ class _SmartExplanationCardState extends State<SmartExplanationCard> {
                     _buildStudyPointsSection(notes.studyPoints, accentColor),
                   ],
 
-                  // Micro encouragement footer
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Icon(Icons.school_outlined, size: 13, color: Colors.grey.shade400),
-                      const SizedBox(width: 6),
-                      Text(
-                        "ക്വിക്ക് റിവിഷൻ • Quick Exam Revision",
-                        style: TextStyle(
-                          color: Colors.grey.shade500,
-                          fontSize: 10.5,
-                          fontStyle: FontStyle.italic,
+                  // ── Interactive Note Footer (Summary Page Link) ──
+                  const SizedBox(height: 12),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: () {
+                        Get.toNamed('/keywordSummary', arguments: {"keyword": topic});
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: accentColor.withValues(alpha: 0.16)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.menu_book_rounded, size: 14, color: accentColor),
+                            const SizedBox(width: 6),
+                            Text(
+                              "കുറിപ്പ് • Note",
+                              style: TextStyle(
+                                color: accentColor,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              "Open in Summary Page",
+                              style: TextStyle(
+                                color: accentColor,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(Icons.arrow_forward_ios_rounded, size: 11, color: accentColor),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
@@ -383,8 +411,8 @@ class _SmartExplanationCardState extends State<SmartExplanationCard> {
     );
   }
 
-  /// ⚡ Fast Facts Section (Key-Value Facts Grid / Strip)
-  Widget _buildFastFactsSection(List<FastFact> facts, Color accentColor) {
+  /// ⚡ Fast Facts Section (Key-Value Facts Grid / Strip matching Summary Page)
+  Widget _buildFastFactsSection(List<FastFact> facts, Color accentColor, String topic) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -404,54 +432,88 @@ class _SmartExplanationCardState extends State<SmartExplanationCard> {
         ),
         const SizedBox(height: 6),
         for (int i = 0; i < facts.length; i++) ...[
-          if (i > 0) const SizedBox(height: 6),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
+          if (i > 0) const SizedBox(height: 7),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: accentColor.withValues(alpha: 0.20)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  facts[i].label,
-                  style: TextStyle(
-                    color: Colors.grey.shade800,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  "•",
-                  style: TextStyle(
-                    color: accentColor.withValues(alpha: 0.5),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: MathText(
-                    text: facts[i].value,
-                    style: TextStyle(
-                      color: accentColor,
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.bold,
-                      height: 1.35,
+              onTap: () {
+                Get.toNamed('/keywordSummary', arguments: {"keyword": facts[i].label});
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8.5),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: accentColor.withValues(alpha: 0.20)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 20,
+                      height: 20,
+                      alignment: Alignment.center,
+                      margin: const EdgeInsets.only(top: 1, right: 8),
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        "${i + 1}",
+                        style: TextStyle(
+                          color: accentColor,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: facts[i].label,
+                              style: const TextStyle(
+                                color: _textDark,
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                height: 1.4,
+                              ),
+                            ),
+                            TextSpan(
+                              text: " — ",
+                              style: TextStyle(
+                                color: _textMid.withValues(alpha: 0.8),
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            TextSpan(
+                              text: facts[i].value,
+                              style: TextStyle(
+                                color: accentColor,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios_rounded, size: 10, color: accentColor.withValues(alpha: 0.6)),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -738,7 +800,7 @@ class _SmartExplanationCardState extends State<SmartExplanationCard> {
   /// Formats all notes for clean clipboard sharing
   static String _toShareText(ClassifiedNotes notes, String topic) {
     final buffer = StringBuffer();
-    buffer.writeln("📝 $topic • Study Notes");
+    buffer.writeln("📝 $topic • Note (കുറിപ്പ്)");
     buffer.writeln("─────────────────────────");
     if (notes.coreFact != null) {
       buffer.writeln("🎯 പ്രധാന വസ്തുത:");
@@ -748,7 +810,7 @@ class _SmartExplanationCardState extends State<SmartExplanationCard> {
     if (notes.fastFacts.isNotEmpty) {
       buffer.writeln("📌 ഫാക്ട് ഫയൽ (Key Facts):");
       for (final f in notes.fastFacts) {
-        buffer.writeln("• ${f.label}: ${f.value}");
+        buffer.writeln("• ${f.label} — ${f.value}");
       }
       buffer.writeln();
     }
