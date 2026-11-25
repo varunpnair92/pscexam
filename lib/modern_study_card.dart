@@ -116,37 +116,66 @@ class _ModernStudyCardState extends State<ModernStudyCard> {
                 children: [
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade50,
+                      color: const Color(0xFFF0FDF4),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.green.shade400, width: 1.5),
+                      border: Border.all(color: const Color(0xFF22C55E), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF22C55E).withValues(alpha: 0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.check_circle_rounded, color: Colors.green),
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF22C55E),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.check, color: Colors.white, size: 16),
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: MathText(
-                            text: answer,
-                            style: TextStyle(
-                              color: Colors.green.shade900,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "ശരിയായ ഉത്തരം (Correct Answer)",
+                                style: TextStyle(
+                                  color: Colors.green.shade800,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              MathText(
+                                text: answer,
+                                style: const TextStyle(
+                                  color: Color(0xFF14532D),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  // ── Smart Explanation Card (Intellectual Summary Mode) ──
+                  // ── Study Notes (Classified Point-by-Point Learning Mode) ──
                   if (description.isNotEmpty && description.toLowerCase() != "null") ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     SmartExplanationCard(
                       description: description,
                       category: widget.q["category"]?.toString(),
                       keyword: widget.q["keyword"]?.toString() ?? widget.q["master_keyword"]?.toString(),
+                      title: "Study Notes",
                     ),
                   ],
                 ],
