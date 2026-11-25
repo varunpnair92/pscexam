@@ -48,7 +48,10 @@ class MasterKeywordNavigationController extends GetxController {
       if (targetId != null) {
         drillDownById(targetId, targetKw.isNotEmpty ? targetKw : "Keyword");
       } else if (targetKw.isNotEmpty) {
-        searchInputController.text = targetKw;
+        currentKeyword.value = targetKw;
+        parentTitle.value = targetKw;
+        // When keyword is present, direct show that in study!
+        openStudy(targetKw, id: targetId);
         search(targetKw);
       } else {
         fetchRoots();
@@ -194,14 +197,19 @@ class MasterKeywordNavigationController extends GetxController {
     }
   }
 
-  // Drill down into a node
+  // Drill down or study a node
   void onNodeTap(MasterKeywordNode node) {
-    if (node.hasChildren || node.childrenCount > 0) {
-      drillDownById(node.id, node.keyword);
-    } else {
-      // Leaf node with no children -> show Questions and Description in Study Page
+    if (node.keyword.trim().isNotEmpty) {
+      // Keyword present in node -> directly show that in study!
       openStudy(node.keyword, id: node.id);
+    } else if (node.hasChildren || node.childrenCount > 0) {
+      drillDownById(node.id, node.keyword);
     }
+  }
+
+  // Drill down explicitly into a node's sub-categories
+  void drillDownNode(MasterKeywordNode node) {
+    drillDownById(node.id, node.keyword);
   }
 
   // Fetch children of a keyword by its ID
@@ -254,7 +262,7 @@ class MasterKeywordNavigationController extends GetxController {
       "title": cleanKw,
       "keywords": [cleanKw],
       "id": id,
-      "initialTab": 1,
+      "initialTab": 0, // Direct show Note tab for student
     };
 
     if (Get.isRegistered<StudyController>()) {

@@ -686,7 +686,12 @@ class _SmartExplanationCardState extends State<SmartExplanationCard> {
 
   /// Classifies description text into Core Fact, Fast Facts, and Study Points
   static ClassifiedNotes _classifyDescription(String rawText, {required String topicTitle}) {
-    final text = rawText.trim();
+    // Strip citation markers like [citation:1], [citation:4], [1], etc.
+    final text = rawText
+        .replaceAll(RegExp(r'\[citation:\s*\d+\]', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\[citation:[^\]]+\]', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\[\d+\]'), '')
+        .trim();
     final List<FastFact> fastFacts = [];
     final List<StudyPoint> studyPoints = [];
     String? coreFact;
@@ -773,7 +778,17 @@ class _SmartExplanationCardState extends State<SmartExplanationCard> {
         .replaceAll('Mrs.', 'Mrs__DOT__')
         .replaceAll('Prof.', 'Prof__DOT__')
         .replaceAll('e.g.', 'e__DOT__g__DOT__')
-        .replaceAll('i.e.', 'i__DOT__e__DOT__');
+        .replaceAll('i.e.', 'i__DOT__e__DOT__')
+        // Protect single Malayalam letters with dots (initials like ആർ., കെ., എം., etc.)
+        .replaceAllMapped(
+          RegExp(r'([\u0D00-\u0D7F]{1,3})\.\s*'),
+          (m) => '${m.group(1)}__MALDOT__ ',
+        )
+        // Protect single English letter initials like A., B., C.
+        .replaceAllMapped(
+          RegExp(r'\b([A-Za-z])\.\s*'),
+          (m) => '${m.group(1)}__ENGDOT__ ',
+        );
 
     final pieces = protected.split(RegExp(r'(?<=[\.\?!])\s+'));
     for (var s in pieces) {
@@ -789,6 +804,8 @@ class _SmartExplanationCardState extends State<SmartExplanationCard> {
           .replaceAll('Prof__DOT__', 'Prof.')
           .replaceAll('e__DOT__g__DOT__', 'e.g.')
           .replaceAll('i__DOT__e__DOT__', 'i.e.')
+          .replaceAll('__MALDOT__', '.')
+          .replaceAll('__ENGDOT__', '.')
           .trim();
       if (restored.isNotEmpty) {
         result.add(restored);

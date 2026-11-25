@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'study_controller.dart';
 import 'modern_study_card.dart';
+import 'smart_explanation_card.dart';
 import 'auth_controller.dart';
 import 'ui_utils.dart';
 import 'app_theme.dart';
@@ -63,7 +64,7 @@ class StudyPage extends StatelessWidget {
                                   unselectedLabelColor: AppTheme.textMid,
                                   labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                                   tabs: const [
-                                    Tab(text: "Description"),
+                                    Tab(text: "Note"),
                                     Tab(text: "Questions"),
                                     Tab(text: "Exam"),
                                   ],
@@ -102,17 +103,17 @@ class StudyPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.description_outlined, size: 48, color: Colors.grey.shade400),
+                Icon(Icons.notes_rounded, size: 48, color: Colors.grey.shade400),
                 const SizedBox(height: 12),
                 const Text(
-                  "No Description Available",
+                  "No Note Available",
                   style: TextStyle(color: Colors.grey, fontSize: 15, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   controller.questions.isNotEmpty
                       ? "Switch to Questions tab to view ${controller.questions.length} question(s)."
-                      : "No questions or descriptions available for this topic.",
+                      : "No questions or notes available for this topic.",
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
                 ),
@@ -122,6 +123,8 @@ class StudyPage extends StatelessWidget {
         );
       }
 
+      final topicName = controller.keys.isNotEmpty ? controller.keys.last : "Note";
+
       return Column(
         children: [
           Expanded(
@@ -130,57 +133,41 @@ class StudyPage extends StatelessWidget {
               onPageChanged: (i) => controller.currentPage.value = i,
               itemBuilder: (_, i) {
                 return Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.8),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.white.withOpacity(0.5)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(24),
-                    child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      child: Text(
-                        pages[i],
-                        style: const TextStyle(
-                          fontSize: 17,
-                          color: AppTheme.textDark,
-                          height: 1.7,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: SmartExplanationCard(
+                      description: pages[i],
+                      keyword: topicName,
+                      category: topicName,
+                      title: "Note",
+                      initiallyExpanded: true,
                     ),
                   ),
                 );
               },
             ),
           ),
-          // Page Indicator
-          Padding(
-            padding: const EdgeInsets.only(bottom: 24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(pages.length, (index) {
-                return Obx(() => AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      height: 6,
-                      width: controller.currentPage.value == index ? 24 : 6,
-                      decoration: BoxDecoration(
-                        color: controller.currentPage.value == index ? primary : Colors.white.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ));
-              }),
+          // Page Indicator (shown only if multiple pages exist)
+          if (pages.length > 1)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(pages.length, (index) {
+                  return Obx(() => AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        height: 6,
+                        width: controller.currentPage.value == index ? 24 : 6,
+                        decoration: BoxDecoration(
+                          color: controller.currentPage.value == index ? primary : Colors.white.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ));
+                }),
+              ),
             ),
-          ),
         ],
       );
     });

@@ -121,24 +121,34 @@ class StudySearchController extends GetxController {
 
       if (res.statusCode == 200) {
         final data = jsonDecode(utf8.decode(res.bodyBytes));
-        description.value = data["description"] ?? "";
+        String rawDesc = (data["note"] ?? data["notes"] ?? data["description"] ?? "").toString();
+        rawDesc = rawDesc
+            .replaceAll(RegExp(r'\[citation:\s*\d+\]', caseSensitive: false), '')
+            .replaceAll(RegExp(r'\[citation:[^\]]+\]', caseSensitive: false), '')
+            .replaceAll(RegExp(r'\[\d+\]'), '')
+            .trim();
+
+        description.value = rawDesc;
         descriptionPages.value = splitDescription(description.value);
         currentPage.value = 0;
       } else {
-        description.value = "No description available for \"$keyword\".";
+        description.value = "No note available for \"$keyword\".";
         descriptionPages.value = splitDescription(description.value);
         currentPage.value = 0;
       }
     } catch (e) {
-      description.value = "Failed to load description.";
+      description.value = "Failed to load note.";
       descriptionPages.value = [];
     }
   }
 
-  /// Split description text into paginated chunks (8 lines each)
+  /// Split description text into paginated chunks
   List<String> splitDescription(String text) {
-    const int linesPerPage = 8;
-    final cleaned = text.trim();
+    final cleaned = text
+        .replaceAll(RegExp(r'\[citation:\s*\d+\]', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\[citation:[^\]]+\]', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\[\d+\]'), '')
+        .trim();
     if (cleaned.isEmpty) return [];
 
     final lines = cleaned
@@ -147,6 +157,11 @@ class StudySearchController extends GetxController {
         .where((l) => l.isNotEmpty)
         .toList();
 
+    if (cleaned.length < 1500 && lines.length <= 15) {
+      return [cleaned];
+    }
+
+    const int linesPerPage = 10;
     List<String> pages = [];
     for (int i = 0; i < lines.length; i += linesPerPage) {
       final chunk = lines.sublist(i, (i + linesPerPage).clamp(0, lines.length));

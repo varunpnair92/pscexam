@@ -100,10 +100,13 @@ class StudyController extends GetxController {
     }
   }
 
-  /// 🔥 SPLIT DESCRIPTION INTO PAGES USING NEWLINES
+  /// 🔥 SPLIT DESCRIPTION INTO PAGES (OR SINGLE UNIFIED VIEW IF SUITABLE)
   List<String> splitDescription(String text) {
-    const int linesPerPage = 8;
-    final cleaned = text.trim();
+    final cleaned = text
+        .replaceAll(RegExp(r'\[citation:\s*\d+\]', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\[citation:[^\]]+\]', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\[\d+\]'), '')
+        .trim();
     if (cleaned.isEmpty) return [];
 
     final lines = cleaned
@@ -112,6 +115,12 @@ class StudyController extends GetxController {
         .where((l) => l.isNotEmpty)
         .toList();
 
+    // If description fits comfortably in one page, keep it unified for Smart Card
+    if (cleaned.length < 1500 && lines.length <= 15) {
+      return [cleaned];
+    }
+
+    const int linesPerPage = 10;
     List<String> pages = [];
     for (int i = 0; i < lines.length; i += linesPerPage) {
       final chunk = lines.sublist(i, (i + linesPerPage).clamp(0, lines.length));
@@ -428,19 +437,26 @@ class StudyController extends GetxController {
       );
 
       if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
+        final data = jsonDecode(utf8.decode(res.bodyBytes));
 
-        description.value = data["description"] ?? "";
+        String rawDesc = (data["note"] ?? data["notes"] ?? data["description"] ?? "").toString();
+        rawDesc = rawDesc
+            .replaceAll(RegExp(r'\[citation:\s*\d+\]', caseSensitive: false), '')
+            .replaceAll(RegExp(r'\[citation:[^\]]+\]', caseSensitive: false), '')
+            .replaceAll(RegExp(r'\[\d+\]'), '')
+            .trim();
+
+        description.value = rawDesc;
 
         /// 🔥 SPLIT HERE
         descriptionPages.value = splitDescription(description.value);
 
         currentPage.value = 0;
       } else {
-        description.value = "No description available";
+        description.value = "No note available";
       }
     } catch (e) {
-      description.value = "Failed to load description";
+      description.value = "Failed to load note";
     }
   }
 
