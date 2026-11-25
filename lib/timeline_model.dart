@@ -4,6 +4,7 @@ class TimelineEvent {
   final String description;
   final String summary;
   final String category;
+  final String point;
 
   TimelineEvent({
     required this.kid,
@@ -11,6 +12,7 @@ class TimelineEvent {
     required this.description,
     required this.summary,
     required this.category,
+    this.point = "",
   });
 
   factory TimelineEvent.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,7 @@ class TimelineEvent {
       description: (json['description'] ?? '').toString().trim(),
       summary: (json['summary'] ?? '').toString().trim(),
       category: (json['category'] ?? '').toString().trim(),
+      point: (json['point'] ?? '').toString().trim(),
     );
   }
 }
