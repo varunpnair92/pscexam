@@ -65,7 +65,8 @@ class DynamicExamListPage extends StatelessWidget {
 
                       /// 🔎 FILTER EXAMS
                       var exams = examController.exams.where((e) {
-                        return e.specialization.toLowerCase().contains(search.value);
+                        return e.specialization.toLowerCase().contains(search.value) ||
+                               e.category.toLowerCase().contains(search.value);
                       }).toList();
 
                       if (exams.isEmpty) {
@@ -80,7 +81,7 @@ class DynamicExamListPage extends StatelessWidget {
                           crossAxisCount: 2,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
-                          childAspectRatio: 1.15, // Shorter, more compact tiles
+                          childAspectRatio: 1.08, // Fits title, optional category badge, and progress
                         ),
                         itemBuilder: (_, i) {
                           final exam = exams[i];
@@ -179,7 +180,22 @@ class DynamicExamListPage extends StatelessWidget {
                                                   maxLines: 2,
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
-                                                const SizedBox(height: 8),
+                                                if (exam.category.isNotEmpty &&
+                                                    exam.category.toLowerCase() != "custom" &&
+                                                    exam.category.toLowerCase() != name.toLowerCase()) ...[
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    exam.category,
+                                                    style: TextStyle(
+                                                      color: Colors.white.withOpacity(0.7),
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ],
+                                                const SizedBox(height: 6),
                                                 
                                                 // Progress Section
                                                 Row(

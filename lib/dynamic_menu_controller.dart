@@ -189,7 +189,7 @@ class DynamicMenuController extends GetxController {
       }
 
       if ((navStr == 'dynamicExamList' || navStr == 'examstorypage') && urlStr.isNotEmpty) {
-        Get.toNamed('/$navStr', arguments: {'endpoint': urlStr});
+        Get.toNamed('/$navStr', arguments: {'endpoint': urlStr, 'title': title});
         return;
       }
 
