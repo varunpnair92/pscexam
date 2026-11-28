@@ -105,7 +105,6 @@ class AppHomePage extends StatelessWidget {
                                 ),
                               ),
 
-                            /*
                             if (ctrl.examCategories.isNotEmpty)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 20),
@@ -120,7 +119,6 @@ class AppHomePage extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                            */
 
                             _boxedSection(child: _quickActions()),
                             const SizedBox(height: 32),

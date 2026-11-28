@@ -22,6 +22,9 @@ class DynamicExamListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final args = Get.arguments ?? {};
     final String endpoint = args["endpoint"] ?? "";
+    final String pageTitle = (args["title"] != null && args["title"].toString().isNotEmpty)
+        ? args["title"].toString()
+        : "Select Exam";
 
     if (endpoint.isNotEmpty) {
       examController.loadFromEndpoint(endpoint);
@@ -38,7 +41,7 @@ class DynamicExamListPage extends StatelessWidget {
                 children: [
                   // ─── CUSTOM APP BAR ───
                   AppTheme.buildPremiumAppBar(
-                    title: "Select Exam",
+                    title: pageTitle,
                     onBack: () => Get.back(),
                   ),
 

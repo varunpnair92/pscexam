@@ -336,7 +336,10 @@ class HomeController extends GetxController {
     }
 
     if (nav == 'dynamicExamList' && url.isNotEmpty) {
-      Get.toNamed('/dynamicExamList', arguments: {'endpoint': url});
+      Get.toNamed('/dynamicExamList', arguments: {
+        'endpoint': url,
+        'title': item['name'] ?? '',
+      });
       return;
     }
 
@@ -421,7 +424,10 @@ class HomeController extends GetxController {
         'title': item['name'] ?? '',
       });
     } else if (nav == 'dynamicExamList' && url.isNotEmpty) {
-      Get.toNamed('/dynamicExamList', arguments: {'endpoint': url});
+      Get.toNamed('/dynamicExamList', arguments: {
+        'endpoint': url,
+        'title': item['name'] ?? '',
+      });
     } else if (nav == 'examstorypage' && url.isNotEmpty) {
       Get.toNamed('/examstorypage', arguments: {'endpoint': url});
     } else if (item['children'] != null &&

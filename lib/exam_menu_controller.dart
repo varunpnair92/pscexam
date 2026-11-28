@@ -153,7 +153,11 @@ class ExamMenuController extends GetxController {
     }
 
     if (item["url"] != null && item["url"] != "" && nav.isNotEmpty) {
-      Get.toNamed(nav, arguments: {"endpoint": item["url"]});
+      final route = nav.startsWith('/') ? nav : '/$nav';
+      Get.toNamed(route, arguments: {
+        "endpoint": item["url"],
+        "title": name,
+      });
       return;
     }
 
